@@ -903,7 +903,8 @@
   animation: sp-toolbar-in 0.2s ease both;
   pointer-events: all;
 }
- 
+
+ 
  /* -- Picking overlay -- */
 .sp-pick-overlay {
   position: absolute;
@@ -1250,4 +1251,27 @@
   pointer-events: none !important;
 }
 .ikpg-kel-label::before { display: none !important; }
+
+/* Pastikan panel di atas peta */
+.sp-panel {
+  z-index: 1000 !important;
+}
+
+/* Overlay di bawah panel, di atas peta */
+.sp-overlay {
+  z-index: 999 !important;
+}
+
+/* Header dan tombol menu di atas peta */
+.sp-header, .sp-top-right {
+  z-index: 1001 !important;
+}
+
+/* Map container di paling bawah */
+.leaflet-container {
+  z-index: 1 !important;
+}
+.sp-app {
+  position: relative;
+}
 
