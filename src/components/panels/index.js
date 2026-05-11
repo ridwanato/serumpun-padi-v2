@@ -5,3 +5,4 @@ export { default as SawahDetail } from './SawahDetail';
 export { default as StatusSawah } from './StatusSawah';
 export { default as RekapLuas } from './RekapLuas';
 export { default as RekapProduksi } from './RekapProduksi';
+export { default as Dashboard } from './Dashboard';

@@ -4,7 +4,7 @@ import { useKMZLoader } from './hooks/useKMZLoader';
 import { MapView, KecamatanLayer, KelurahanLayer, SawahLayer } from './components/map';
 import { ALL_KEC, ALL_KEL, KEL_TO_KEC } from './config/wilayah';
 import * as turf from '@turf/turf';
-import { DrawToolbar, PanelHeader, GambarPoligon, SawahDetail, StatusSawah, RekapLuas, RekapProduksi } from './components/panels';
+import { DrawToolbar, PanelHeader, GambarPoligon, SawahDetail, StatusSawah, RekapLuas, RekapProduksi, Dashboard } from './components/panels';
 
 function App() {
   const mapRef = useRef();
@@ -149,25 +149,18 @@ function App() {
 
   const renderPanelContent = () => {
     switch (panelView) {
-      case 'dashboard':
+            case 'dashboard':
         return (
-          <div style={{ padding: 16 }}>
-            <div className="sp-info-box">
-              <p style={{ textAlign: 'center', fontSize: 14, fontWeight: 700 }}>🌾 Selamat Datang</p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 16 }}>
-                <button className="sp-btn sp-btn-primary" onClick={() => openPanel('gambar_poligon')}>🗺️ Gambar Poligon</button>
-                <button className="sp-btn sp-btn-primary" onClick={() => openPanel('status_sawah')}>🌾 Status Sawah</button>
-                <button className="sp-btn sp-btn-primary" onClick={() => openPanel('rekap_luas')}>📊 Rekap Luas Tanam</button>
-                <button className="sp-btn sp-btn-secondary" onClick={closePanel}>🗺️ Lihat Peta</button>
-                <button className="sp-btn sp-btn-primary" onClick={() => openPanel('rekap_produksi')}>📊 Rekap Produksi</button>
-              </div>
-            </div>
-            <div className="sp-info-box" style={{ marginTop: 12 }}>
-              <p style={{ fontSize: 11, color: '#999', textAlign: 'center' }}>
-                ✅ {layers.sawah.length} sawah | {layers.kecamatan.length} kecamatan | {layers.kelurahan.length} kelurahan
-              </p>
-            </div>
-          </div>
+          <Dashboard
+            filteredSawah={filteredSawah}
+            sawahStatus={sawahStatus}
+            kolamBudidaya={[]}
+            budidayaList={[]}
+            nelayanTangkap={[]}
+            tangkapList={[]}
+            onOpenPanel={openPanel}
+            onClosePanel={closePanel}
+          />
         );
       case 'gambar_poligon':
         return (

@@ -1274,4 +1274,110 @@
 .sp-app {
   position: relative;
 }
+/* Panel width & header consistency */
+.sp-panel {
+  width: 360px !important;
+  max-width: 90vw !important;
+}
 
+.sp-panel__header {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+}
+
+.sp-panel__title {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 13px !important;
+}
+
+/* Dashboard header khusus */
+.sp-panel__header--dashboard .sp-panel__title {
+  font-size: 13px !important;
+}
+/* ===== FIX: Tombol X tidak berbayang ===== */
+.sp-panel__close-btn {
+  position: relative;
+  z-index: 1100 !important;
+  background: none;
+  border: none;
+  cursor: pointer;
+  opacity: 1 !important;
+}
+
+.sp-panel__header {
+  position: relative;
+  z-index: 1100 !important;
+}
+
+/* Overlay tidak menutupi close button */
+.sp-overlay {
+  z-index: 998 !important;
+  pointer-events: auto;
+}
+
+.sp-panel {
+  z-index: 999 !important;
+}
+
+/* ===== FIX: Zoom & Locate pindah ke kiri ===== */
+.leaflet-control-zoom {
+  position: fixed !important;
+  left: 12px !important;
+  bottom: 20px !important;
+  top: auto !important;
+  right: auto !important;
+  z-index: 500 !important;
+}
+
+.leaflet-control-zoom a {
+  width: 34px !important;
+  height: 34px !important;
+  line-height: 34px !important;
+  font-size: 18px !important;
+}
+
+/* ===== FIX: Locate Me Button ===== */
+.sp-locate-btn {
+  position: fixed !important;
+  left: 12px !important;
+  bottom: 100px !important;
+  top: auto !important;
+  right: auto !important;
+  z-index: 500 !important;
+  width: 34px !important;
+  height: 34px !important;
+  background: #fff !important;
+  border: 2px solid rgba(0,0,0,0.2) !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Tampilkan SVG di dalam tombol */
+.sp-locate-btn {
+  position: fixed !important;
+  left: 12px !important;
+  bottom: 200px !important;  /* ⬅️ Naikkan dari 100px ke 200px */
+  top: auto !important;
+  right: auto !important;
+  z-index: 500 !important;
+  width: 34px !important;
+  height: 34px !important;
+  background: #fff !important;
+  border: 2px solid rgba(0,0,0,0.2) !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
