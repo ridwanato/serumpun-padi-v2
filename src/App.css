@@ -107,10 +107,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
 
 .sp-ikpg-panel {
   position: absolute; top: calc(100% + 4px);
-  right: 0; left: auto;          /* anchor ke kanan agar tidak overflow */
+  right: 0; left: auto;
   z-index: 1300;
-  width: 260px;
-  max-width: calc(100vw - 12px); /* tidak pernah melewati lebar layar */
+  width: 280px;
   box-sizing: border-box;
   overflow: hidden;
 }
@@ -359,7 +358,22 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
   .leaflet-control-zoom-out { border-radius: 0 0 8px 0 !important; }
   .sp-locate-btn { border-radius: 0 8px 8px 0 !important; }
 
-  /* FSVA/SKPG & Pilih Pin dropdown — jangan overflow layar */
-  .sp-ikpg-panel { width: min(260px, calc(100vw - 12px)); }
-  .sp-layer-panel { max-width: calc(100vw - 16px); }
+  /* FSVA/SKPG panel di mobile: fixed di bawah header, lebar penuh layar */
+  .sp-ikpg-panel {
+    position: fixed !important;
+    top: 90px !important;
+    left: 8px !important;
+    right: 8px !important;
+    width: auto !important;
+    max-width: none !important;
+  }
+
+  /* Pilih Pin dropdown juga fixed di mobile */
+  .sp-layer-panel {
+    position: fixed !important;
+    top: 90px !important;
+    left: 8px !important;
+    right: 8px !important;
+    min-width: unset !important;
+  }
 }
