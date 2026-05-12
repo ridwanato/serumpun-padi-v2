@@ -231,7 +231,7 @@ export function useKMZLoader(mapRef) {
     } finally {
       setLoading(false);
     }
-  }, [processKML]);
+  }, [processKML, mkPin]); // eslint-disable-line
 
   const loadFromFile = useCallback(async (file) => {
     const fn = file.name.toLowerCase();

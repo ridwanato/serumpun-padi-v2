@@ -1,5 +1,5 @@
 import React from 'react';
-import { ALL_KEC, ALL_KEL, KEL_TO_KEC } from '../../config/wilayah';
+import { ALL_KEC, KEL_TO_KEC } from '../../config/wilayah';
 
 function GambarPoligon({
   layers,

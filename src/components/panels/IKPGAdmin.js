@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { ALL_KEL } from '../../config/wilayah';
-import { getFSVACategory, getBordaDesil, FSVA_LEGEND, BORDA_LEGEND } from '../../config/ikpg';
+import { getFSVACategory, getBordaDesil, BORDA_LEGEND } from '../../config/ikpg';
 
 function IKPGAdmin({ user, supabase, fsvaData, skpgData, onRefresh }) {
   const [uploadStatus, setUploadStatus] = useState({ fsva: '', skpg: '' });

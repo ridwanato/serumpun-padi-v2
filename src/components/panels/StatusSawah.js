@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import * as turf from '@turf/turf';
 import { STATUS_CONFIG } from '../../config/komoditas';
-import { hitungStatusOtomatis, fmtHa } from '../../utils/agronomi';
+import { hitungStatusOtomatis } from '../../utils/agronomi';
 
 function StatusSawah({
   filteredSawah,

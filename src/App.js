@@ -13,8 +13,6 @@ function App() {
   const featureGroupRef = useRef();
   const drawnLayersRef = useRef({});
 
-  const { layers, sawahStatus, setSawahStatus, loading: kmzLoading, error: kmzError, loadFromURL, loadFromFile } = useKMZLoader(mapRef);
-
   const [mapZoom, setMapZoom] = useState(13);
   const [showSawah, setShowSawah] = useState(true);
   const [fillOpacity, setFillOpacity] = useState(0.5);
@@ -24,13 +22,11 @@ function App() {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [panelView, setPanelView] = useState('dashboard');
   const [user, setUser] = useState(null);
-  const [showAuth, setShowAuth] = useState(false);
   const [activeSawahId, setActiveSawahId] = useState(null);
   const [activeIKPGLayer, setActiveIKPGLayer] = useState(null);
   const [ikpgOpacity, setIkpgOpacity] = useState(0.55);
   const [showIKPGPanel, setShowIKPGPanel] = useState(true);
-  const [showLayerDropdown, setShowLayerDropdown] = useState(false);
-
+  
   const [selectedKec, setSelectedKec] = useState(() => { const i = {}; ALL_KEC.forEach(k => i[k] = true); return i; });
   const [selectedKel, setSelectedKel] = useState(() => { const i = {}; ALL_KEL.forEach(k => i[k] = true); return i; });
   const [expandKec, setExpandKec] = useState(false);

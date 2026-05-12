@@ -1,6 +1,5 @@
 import React from 'react';
 import * as turf from '@turf/turf';
-import { STATUS_CONFIG } from '../../config/komoditas';
 import { hitungProduksi, hitungStatusOtomatis } from '../../utils/agronomi';
 
 function Dashboard({
