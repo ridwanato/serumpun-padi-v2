@@ -402,7 +402,7 @@ function App() {
           onPickLocation={startPickLocation} />;
       case 'palawija':
         return <Palawija
-          palawijaKMZ={palawijaKMZ} palawijaList={[]} showPin={showPalawijaPin}
+          palawijaKMZ={palawijaKMZ} palawijaList={palawijaList} showPin={showPalawijaPin}
           onToggleShow={setShowPalawijaPin} user={user} mapRef={mapRef}
           supabase={supabase} onRefresh={refreshSupabase}
           onPickLocation={startPickLocation} />;

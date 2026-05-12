@@ -4,38 +4,70 @@ import { PALAWIJA_CONFIG } from '../../config/komoditas';
 import { fmtTgl, hitungHariTanam } from '../../utils/agronomi';
 
 function Palawija({ palawijaKMZ, palawijaList, showPin, onToggleShow, user, mapRef, supabase, onRefresh, onPickLocation }) {
-  const [form, setForm] = useState({ komoditas: 'jagung', nama_pemilik: '', kapasitas_value: '', kapasitas_satuan: 'luas_m2', tanggal_tanam: '', catatan: '' });
+  const initForm = { komoditas: 'jagung', nama_pemilik: '', kapasitas_value: '', kapasitas_satuan: 'luas_m2', tanggal_tanam: '', catatan: '' };
+  const [form, setForm]           = useState(initForm);
   const [pendingPin, setPendingPin] = useState(null);
+  const [editTarget, setEditTarget] = useState(null);
+  const [saving, setSaving]       = useState(false);
+
+  const openAdd = () => { setForm(initForm); setEditTarget(null); setPendingPin(null); };
+  const openEdit = (p) => {
+    setForm({
+      komoditas: p.komoditas || 'jagung',
+      nama_pemilik: p.nama_pemilik || '',
+      kapasitas_value: p.kapasitas_value || '',
+      kapasitas_satuan: p.kapasitas_satuan || 'luas_m2',
+      tanggal_tanam: p.tanggal_tanam || '',
+      catatan: p.catatan || '',
+    });
+    setPendingPin(p.lat && p.lon ? { lat: p.lat, lng: p.lon } : null);
+    setEditTarget(p);
+  };
 
   const handleSave = async () => {
     if (!user) return alert('Silakan login terlebih dahulu.');
     if (!form.nama_pemilik) return alert('Nama pemilik wajib diisi.');
+    setSaving(true);
     const cfg = PALAWIJA_CONFIG[form.komoditas];
     const tgl = form.tanggal_tanam || null;
     const prediksi = tgl && cfg ? new Date(new Date(tgl).getTime() + cfg.umur * 864e5).toISOString().split('T')[0] : null;
-    const { error } = await supabase.from('komoditas_palawija').insert({
-      user_id: user.id, komoditas: form.komoditas, nama_pemilik: form.nama_pemilik,
-      lat: pendingPin?.lat || 0, lon: pendingPin?.lng || 0,
+    const payload = {
+      komoditas: form.komoditas,
+      nama_pemilik: form.nama_pemilik,
+      lat: pendingPin?.lat || 0,
+      lon: pendingPin?.lng || 0,
       kapasitas_value: form.kapasitas_value || null,
-      kapasitas_satuan: form.kapasitas_satuan, tanggal_tanam: tgl,
-      prediksi_panen: prediksi, catatan: form.catatan,
-    });
+      kapasitas_satuan: form.kapasitas_satuan,
+      tanggal_tanam: tgl,
+      prediksi_panen: prediksi,
+      catatan: form.catatan,
+    };
+    let error;
+    if (editTarget) {
+      ({ error } = await supabase.from('komoditas_palawija').update(payload).eq('id', editTarget.id));
+    } else {
+      payload.user_id = user.id;
+      ({ error } = await supabase.from('komoditas_palawija').insert(payload));
+    }
+    setSaving(false);
     if (error) { alert('Gagal simpan: ' + error.message); return; }
-    setPendingPin(null);
-    setForm({ komoditas: 'jagung', nama_pemilik: '', kapasitas_value: '', kapasitas_satuan: 'luas_m2', tanggal_tanam: '', catatan: '' });
+    setForm(initForm); setEditTarget(null); setPendingPin(null);
     if (onRefresh) onRefresh();
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Hapus?')) return;
-    await supabase.from('komoditas_palawija').delete().eq('id', id);
+    if (!window.confirm('Hapus data ini?')) return;
+    const { error } = await supabase.from('komoditas_palawija').delete().eq('id', id);
+    if (error) { alert('Gagal hapus: ' + error.message); return; }
     if (onRefresh) onRefresh();
   };
 
-  const flyTo = (lat, lng) => { if (mapRef?.current) mapRef.current.flyTo([lat, lng], 17, { duration: 1 }); };
+  const flyTo = (lat, lon) => { if (mapRef?.current) mapRef.current.flyTo([lat, lon], 17, { duration: 1 }); };
+  const isEditing = !!editTarget;
 
   return (
     <div style={{ padding: 12 }}>
+      {/* KMZ Pins */}
       {palawijaKMZ && palawijaKMZ.length > 0 && (
         <div className="sp-info-box">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -45,52 +77,87 @@ function Palawija({ palawijaKMZ, palawijaList, showPin, onToggleShow, user, mapR
               <span style={{ fontSize: 10 }}>Tampilkan</span>
             </label>
           </div>
-          {palawijaKMZ.map(p => (
-            <div key={p._id} className="sp-drawn-item" style={{ borderLeft: '3px solid #74c69d', marginTop: 6 }}
-              onClick={() => flyTo(p._lat, p._lng)}>
-              <b style={{ fontSize: 11 }}>🌿 {p._name}</b>
-              <div style={{ fontSize: 10, color: '#888' }}>{p._komoditas} {p._pemilik && '👤 ' + p._pemilik} {p._luas && '📐 ' + p._luas + ' m²'}</div>
-              {p._tgl_tanam && <div style={{ fontSize: 10, color: '#74c69d' }}>📅 Tanam: {p._tgl_tanam}</div>}
-            </div>
-          ))}
         </div>
       )}
 
+      {/* Form Tambah/Edit */}
       {user && (
         <div className="sp-info-box">
-          <div className="sp-info-box__title">➕ Tambah Palawija</div>
+          <div className="sp-info-box__title">
+            {isEditing ? '✏️ Edit Palawija' : '➕ Tambah Palawija'}
+            {isEditing && (
+              <button onClick={openAdd} style={{ float: 'right', fontSize: 10, background: '#f0f0f0', border: 'none', borderRadius: 4, padding: '2px 8px', cursor: 'pointer' }}>
+                + Tambah Baru
+              </button>
+            )}
+          </div>
+
           <select className="sp-select" value={form.komoditas} onChange={e => setForm(p => ({ ...p, komoditas: e.target.value }))}>
             {Object.entries(PALAWIJA_CONFIG).map(([k, c]) => <option key={k} value={k}>{c.icon} {c.label} ({c.umur} hr)</option>)}
           </select>
-          <input className="sp-input" placeholder="Nama pemilik" value={form.nama_pemilik} onChange={e => setForm(p => ({ ...p, nama_pemilik: e.target.value }))} style={{ marginTop: 8 }} />
-          <input type="date" className="sp-input" value={form.tanggal_tanam} onChange={e => setForm(p => ({ ...p, tanggal_tanam: e.target.value }))} style={{ marginTop: 8 }} />
-          <input className="sp-input" placeholder="Catatan" value={form.catatan} onChange={e => setForm(p => ({ ...p, catatan: e.target.value }))} style={{ marginTop: 8 }} />
-          <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-            <button className="sp-btn sp-btn-secondary" style={{ flex: 2 }}
-              onClick={() => onPickLocation && onPickLocation((latlng) => setPendingPin(latlng))}>
-              📍 {pendingPin ? '✅ ' + pendingPin.lat.toFixed(5) : 'Pilih Lokasi di Peta'}
+          <input className="sp-input" placeholder="Nama pemilik *" value={form.nama_pemilik}
+            onChange={e => setForm(p => ({ ...p, nama_pemilik: e.target.value }))} style={{ marginTop: 8 }} />
+          <input type="date" className="sp-input" value={form.tanggal_tanam}
+            onChange={e => setForm(p => ({ ...p, tanggal_tanam: e.target.value }))} style={{ marginTop: 8 }} />
+          <input className="sp-input" placeholder="Catatan" value={form.catatan}
+            onChange={e => setForm(p => ({ ...p, catatan: e.target.value }))} style={{ marginTop: 8 }} />
+
+          <button className="sp-btn sp-btn-secondary" style={{ width: '100%', marginTop: 10 }}
+            onClick={() => onPickLocation && onPickLocation((latlng) => setPendingPin(latlng))}>
+            📍 {pendingPin ? `✅ ${pendingPin.lat.toFixed(5)}, ${pendingPin.lng.toFixed(5)}` : 'Pilih Lokasi di Peta (opsional)'}
+          </button>
+
+          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+            {isEditing && (
+              <button className="sp-btn" style={{ flex: 1, background: '#f0f0f0', color: '#555' }}
+                onClick={openAdd}>✕ Batal</button>
+            )}
+            <button className="sp-btn sp-btn-primary" style={{ flex: 2 }}
+              disabled={saving} onClick={handleSave}>
+              {saving ? '⏳...' : (isEditing ? '💾 Update' : '💾 Simpan')}
             </button>
-            <button className="sp-btn sp-btn-primary" style={{ flex: 1 }} onClick={handleSave}>💾 Simpan</button>
           </div>
         </div>
       )}
 
+      {/* Daftar Data */}
       <div className="sp-info-box">
         <div className="sp-info-box__title">📋 Data Palawija ({palawijaList?.length || 0})</div>
-        {!palawijaList || palawijaList.length === 0 ? <p style={{ color: '#999', fontSize: 12 }}>Belum ada data.</p> :
-          palawijaList.map(p => {
-            const cfg = PALAWIJA_CONFIG[p.komoditas] || {};
-            const hari = hitungHariTanam(p.tanggal_tanam);
-            return (
-              <div key={p.id} style={{ background: '#fff', border: '1px solid #f0f0f0', borderRadius: 8, padding: '8px 10px', marginBottom: 6 }}>
-                <b>{cfg.icon} {cfg.label || p.komoditas}</b>
-                {p.nama_pemilik && <span style={{ color: '#888', fontSize: 11 }}> · {p.nama_pemilik}</span>}
-                <div style={{ fontSize: 11, color: '#888' }}>📅 Tanam: {fmtTgl(p.tanggal_tanam)} {hari !== null ? `(${hari} HST)` : ''}</div>
-                {p.prediksi_panen && <div style={{ fontSize: 11, color: '#52b788' }}>🌾 Panen: {fmtTgl(p.prediksi_panen)}</div>}
-                {user && <button className="sp-btn sp-btn-danger" style={{ fontSize: 10, padding: '2px 6px', marginTop: 4 }} onClick={() => handleDelete(p.id)}>🗑️</button>}
-              </div>
-            );
-          })}
+        {!palawijaList || palawijaList.length === 0
+          ? <p style={{ color: '#999', fontSize: 12 }}>Belum ada data.</p>
+          : palawijaList.map(p => {
+              const cfg = PALAWIJA_CONFIG[p.komoditas] || {};
+              const hari = hitungHariTanam(p.tanggal_tanam);
+              return (
+                <div key={p.id} style={{ background: '#fff', border: '1px solid #e8f5e9', borderLeft: '3px solid #74c69d', borderRadius: 8, padding: '8px 10px', marginBottom: 6 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div style={{ flex: 1 }}>
+                      <b style={{ fontSize: 12 }}>{cfg.icon} {cfg.label || p.komoditas}</b>
+                      {p.nama_pemilik && <span style={{ color: '#666', fontSize: 11 }}> · {p.nama_pemilik}</span>}
+                      <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>
+                        📅 Tanam: {fmtTgl(p.tanggal_tanam)} {hari !== null ? `(${hari} HST)` : ''}
+                      </div>
+                      {p.prediksi_panen && <div style={{ fontSize: 11, color: '#52b788' }}>🌾 Est. Panen: {fmtTgl(p.prediksi_panen)}</div>}
+                      {p.catatan && <div style={{ fontSize: 10, color: '#aaa' }}>{p.catatan}</div>}
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginLeft: 6 }}>
+                      {p.lat && p.lat !== 0 && (
+                        <button style={{ background: '#e8f5e9', border: 'none', borderRadius: 4, padding: '3px 7px', fontSize: 11, cursor: 'pointer' }}
+                          onClick={() => flyTo(p.lat, p.lon)}>📍</button>
+                      )}
+                      {user && (
+                        <>
+                          <button style={{ background: '#fff3e0', border: 'none', borderRadius: 4, padding: '3px 7px', fontSize: 11, cursor: 'pointer' }}
+                            onClick={() => openEdit(p)}>✏️</button>
+                          <button style={{ background: '#fde8e8', border: 'none', borderRadius: 4, padding: '3px 7px', fontSize: 11, cursor: 'pointer', color: '#c0392b' }}
+                            onClick={() => handleDelete(p.id)}>🗑️</button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
       </div>
     </div>
   );
