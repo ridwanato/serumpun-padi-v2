@@ -9,8 +9,9 @@ function FSVASelector({ activeLayer, onLayerChange, ikpgOpacity, onOpacityChange
 
   return (
     <div style={{
-      background: '#fff', borderRadius: 12, padding: 14,
-      boxShadow: '0 4px 20px rgba(0,0,0,0.2)', minWidth: 280,
+      background: '#fff', borderRadius: 14, padding: '14px 16px',
+      boxShadow: '0 6px 24px rgba(0,0,0,0.18)',
+      width: '100%', boxSizing: 'border-box',
     }}>
       <div style={{ fontSize: 12, fontWeight: 700, color: '#166534', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>
         LAYER KETAHANAN PANGAN
@@ -54,7 +55,7 @@ function FSVASelector({ activeLayer, onLayerChange, ikpgOpacity, onOpacityChange
           type="range" min="0.1" max="1" step="0.05"
           value={ikpgOpacity}
           onChange={e => onOpacityChange(parseFloat(e.target.value))}
-          style={{ width: '100%', accentColor: '#166534' }}
+          style={{ width: '100%', accentColor: '#166534', display: 'block', boxSizing: 'border-box' }}
         />
       </div>
 
