@@ -282,7 +282,7 @@ function App() {
         nama:          props.pemilik || props.nama || props.name || props.Name || `Sawah ${activeSawah._id}`,
         kecamatan:     props.kecamatan || props.WADMKC || null,
         kelurahan:     props.kelurahan || props.WADMKD || null,
-        luas:          props.luas_ha || (props.Shape_Area ? props.Shape_Area / 10000 : 0),
+        luas_m2:       props.Shape_Area || (props.luas_ha ? props.luas_ha * 10000 : 0),
         status:        status.status      || null,
         varietas:      status.varietas    || null,
         tanggal_tanam: status.tanggalTanam|| null,
