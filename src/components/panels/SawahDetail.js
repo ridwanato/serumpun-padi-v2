@@ -154,7 +154,12 @@ function SawahDetail({
         <button
           className="sp-btn sp-btn-primary"
           style={{ width: '100%', marginTop: 4, marginBottom: 8, fontSize: 13, padding: '10px' }}
-          onClick={() => onSave(activeSawah._id, sd)}
+          onClick={() => onSave(activeSawah._id, sd, {
+            nama,
+            kelurahan: kel,
+            kecamatan: kec,
+            luas,
+          })}
         >
           💾 Simpan Status Sawah ke Cloud
         </button>

@@ -124,15 +124,15 @@ function App() {
       if (!ht.error) setHortiList(ht.data || []);
       if (!wo.error) setWarningList(wo.data || []);
       if (!pl.error) setPalawijaList(pl.data || []);
-      // Hydrate sawahStatus dari cloud agar tidak hilang saat refresh
+      // Hydrate sawahStatus dari cloud — pakai kolom sawah_id sesuai skema v1
       if (!sw.error && sw.data?.length) {
         const map = {};
         sw.data.forEach(r => {
-          map[r.feature_id] = {
-            status: r.status,
-            varietas: r.varietas,
+          map[r.sawah_id] = {
+            status:       r.status,
+            varietas:     r.varietas,
             tanggalTanam: r.tanggal_tanam,
-            hasilUbinan: r.hasil_ubinan,
+            hasilUbinan:  r.hasil_ubinan,
           };
         });
         setSawahStatus(map);
@@ -273,13 +273,22 @@ function App() {
   const updateStatus = (id, field, value) => {
     setSawahStatus(prev => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
   };
-  const saveSawahStatus = useCallback(async (id, status) => {
+  const saveSawahStatus = useCallback(async (id, status, featureMeta) => {
     if (!id || !status) return;
     const { error } = await supabase.from('sawah_status').upsert(
-      { feature_id: id, status: status.status||null, varietas: status.varietas||null,
-        tanggal_tanam: status.tanggalTanam||null, hasil_ubinan: status.hasilUbinan||null,
-        updated_at: new Date().toISOString() },
-      { onConflict: 'feature_id' }
+      {
+        sawah_id:     id,
+        nama:         featureMeta?.nama         || null,
+        kelurahan:    featureMeta?.kelurahan    || null,
+        kecamatan:    featureMeta?.kecamatan    || null,
+        luas:         featureMeta?.luas         || null,
+        status:       status.status             || null,
+        varietas:     status.varietas           || null,
+        tanggal_tanam: status.tanggalTanam      || null,
+        hasil_ubinan:  status.hasilUbinan       || null,
+        updated_at:   new Date().toISOString(),
+      },
+      { onConflict: 'sawah_id' }
     );
     if (error) alert('Gagal simpan: ' + error.message);
     else alert('✅ Status sawah tersimpan!');
