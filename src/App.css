@@ -784,3 +784,12 @@
 .sp-ikpg-btn:hover {
   background: rgba(255,255,255,0.2);
 }
+/* ── Permanent kelurahan label (no box) ── */
+.ikpg-kel-label {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  pointer-events: none !important;
+}
+.ikpg-kel-label::before { display: none !important; }

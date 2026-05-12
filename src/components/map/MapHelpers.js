@@ -13,7 +13,7 @@ export function MoveZoomControl() {
   const map = useMap();
   useEffect(() => {
     map.zoomControl.remove();
-    map.zoomControl.setPosition('bottomright');
+    map.zoomControl.setPosition('bottomleft');
     map.zoomControl.addTo(map);
   }, [map]);
   return null;
