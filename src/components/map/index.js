@@ -15,4 +15,5 @@ export {
   NelayanDBPins,
   PoktanDBPins,
   HortiDBPins,
+  WarningDBPins,
 } from './MapLayers';

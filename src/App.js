@@ -8,7 +8,7 @@ import {
   KecamatanLayer, KelurahanLayer, SawahLayer,
   HortiPins, PalawijaPins, PoktanPins, WarningPins,
   KolamPins, NelayanPins, KolamDBPins,
-  NelayanDBPins, PoktanDBPins, HortiDBPins,
+  NelayanDBPins, PoktanDBPins, HortiDBPins, WarningDBPins,
 } from './components/map';
 import {
   DrawToolbar, PanelHeader,
@@ -89,6 +89,7 @@ function App() {
   const [ikpgUploadStatus, setIkpgUploadStatus] = useState({ fsva: '', skpg: '' });
   const [poktanList, setPoktanList]         = useState([]);
   const [hortiList, setHortiList]           = useState([]);
+  const [warningList, setWarningList]       = useState([]);
 
   /* ── Auto-load on mount ── */
   useEffect(() => { loadFromURL(); }, []); // eslint-disable-line
@@ -111,13 +112,15 @@ function App() {
       supabase.from('poktan_kwt').select('*'),
       supabase.from('komoditas_hortikultura').select('*'),
       supabase.from('sawah_status').select('*'),
-    ]).then(([bd, nl, fv, sk, pk, ht, sw]) => {
+      supabase.from('warning_opt').select('*'),
+    ]).then(([bd, nl, fv, sk, pk, ht, sw, wo]) => {
       if (!bd.error) setBudidayaList(bd.data || []);
       if (!nl.error) setTangkapList(nl.data || []);
       if (!fv.error) setFsvaData(fv.data || []);
       if (!sk.error) setSkpgData(sk.data || []);
       if (!pk.error) setPoktanList(pk.data || []);
       if (!ht.error) setHortiList(ht.data || []);
+      if (!wo.error) setWarningList(wo.data || []);
       // Hydrate sawahStatus dari cloud agar tidak hilang saat refresh
       if (!sw.error && sw.data?.length) {
         const map = {};
@@ -324,13 +327,14 @@ function App() {
     setTimeout(() => openPanel('sawah_detail'), 1300);
   };
   const refreshSupabase = useCallback(async () => {
-    const [bd, nl, fv, sk, pk, ht] = await Promise.all([
+    const [bd, nl, fv, sk, pk, ht, wo] = await Promise.all([
       supabase.from('kolam_budidaya').select('*'),
       supabase.from('nelayan_tangkap').select('*'),
       supabase.from('fsva_kelurahan').select('*'),
       supabase.from('skpg_kelurahan').select('*'),
       supabase.from('poktan_kwt').select('*'),
       supabase.from('komoditas_hortikultura').select('*'),
+      supabase.from('warning_opt').select('*'),
     ]);
     if (!bd.error) setBudidayaList(bd.data || []);
     if (!nl.error) setTangkapList(nl.data || []);
@@ -338,6 +342,7 @@ function App() {
     if (!sk.error) setSkpgData(sk.data || []);
     if (!pk.error) setPoktanList(pk.data || []);
     if (!ht.error) setHortiList(ht.data || []);
+    if (!wo.error) setWarningList(wo.data || []);
   }, []);
 
   /* ── Panel content ── */
@@ -400,7 +405,7 @@ function App() {
           onPickLocation={startPickLocation} />;
       case 'warning':
         return <WarningOPT
-          warningKMZ={warningKMZ} warnings={[]} showPin={showWarningPin}
+          warningKMZ={warningKMZ} warnings={warningList} showPin={showWarningPin}
           onToggleShow={setShowWarningPin} user={user}
           supabase={supabase} onRefresh={refreshSupabase}
           onPickLocation={startPickLocation} />;
@@ -578,6 +583,7 @@ function App() {
           <NelayanDBPins data={tangkapList}  show={showNelayan} />
           <PoktanDBPins  data={poktanList}   showPoktan={showPoktanPin} showKWT={showKWTPin} showGapoktan={showGapoktanPin} />
           <HortiDBPins   data={hortiList}    show={showHortiPin} />
+          <WarningDBPins data={warningList}  show={showWarningPin} />
 
         </MapView>
       </div>

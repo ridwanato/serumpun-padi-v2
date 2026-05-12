@@ -58,19 +58,26 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
     if(!user) return alert('Login dulu.');
     if(!formB.nama_pemilik) return alert('Nama pemilik wajib diisi.');
     setSaving(true);
-    const kolamStr   = JSON.stringify(formB.kolam_units);
+    const kolamStr    = JSON.stringify(formB.kolam_units);
     const totalLuasM2 = Object.values(formB.kolam_units).reduce((s,v)=>s+parseFloat(v||0),0);
-    const jenisIkan  = Object.keys(formB.ikan_units).filter(k=>formB.ikan_units[k]).join(',');
-    const payload    = { nama_pemilik:formB.nama_pemilik, jenis_ikan:jenisIkan, luas_m2:totalLuasM2, jenis_kolam:kolamStr, status_kolam:formB.status_kolam };
-    if(pendingPin){ payload.lat=pendingPin.lat; payload.lng=pendingPin.lng; }
-    if(editTarget){
-      await supabase.from('kolam_budidaya').update(payload).eq('id',editTarget.id);
+    const jenisIkan   = Object.keys(formB.ikan_units).filter(k=>formB.ikan_units[k]).join(',');
+    const payload     = {
+      nama_pemilik: formB.nama_pemilik, jenis_ikan: jenisIkan,
+      luas_m2: totalLuasM2, jenis_kolam: kolamStr,
+      status_kolam: formB.status_kolam,
+      lat: pendingPin?.lat || 0, lng: pendingPin?.lng || 0,
+    };
+    let error;
+    if(editTarget) {
+      ({ error } = await supabase.from('kolam_budidaya').update(payload).eq('id', editTarget.id));
     } else {
-      payload.lat=pendingPin?.lat||0; payload.lng=pendingPin?.lng||0;
-      await supabase.from('kolam_budidaya').insert(payload);
+      payload.user_id = user.id;
+      ({ error } = await supabase.from('kolam_budidaya').insert(payload));
     }
-    setSaving(false); setMode(null); setEditTarget(null); setPendingPin(null); setFormB(initForm);
-    onRefresh&&onRefresh();
+    setSaving(false);
+    if(error) { alert('Gagal simpan: ' + error.message); return; }
+    setMode(null); setEditTarget(null); setPendingPin(null); setFormB(initForm);
+    onRefresh && onRefresh();
   };
 
   /* ── Simpan produksi ke pembudidaya tertentu ── */

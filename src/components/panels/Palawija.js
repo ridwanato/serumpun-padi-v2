@@ -8,17 +8,19 @@ function Palawija({ palawijaKMZ, palawijaList, showPin, onToggleShow, user, mapR
   const [pendingPin, setPendingPin] = useState(null);
 
   const handleSave = async () => {
-    if (!user) return alert('Silakan login.');
-    if (!pendingPin) return alert('Klik peta untuk lokasi pin.');
+    if (!user) return alert('Silakan login terlebih dahulu.');
+    if (!form.nama_pemilik) return alert('Nama pemilik wajib diisi.');
     const cfg = PALAWIJA_CONFIG[form.komoditas];
     const tgl = form.tanggal_tanam || null;
     const prediksi = tgl && cfg ? new Date(new Date(tgl).getTime() + cfg.umur * 864e5).toISOString().split('T')[0] : null;
     const { error } = await supabase.from('komoditas_palawija').insert({
       user_id: user.id, komoditas: form.komoditas, nama_pemilik: form.nama_pemilik,
-      lat: pendingPin.lat, lon: pendingPin.lng, kapasitas_value: form.kapasitas_value || null,
-      kapasitas_satuan: form.kapasitas_satuan, tanggal_tanam: tgl, prediksi_panen: prediksi, catatan: form.catatan,
+      lat: pendingPin?.lat || 0, lon: pendingPin?.lng || 0,
+      kapasitas_value: form.kapasitas_value || null,
+      kapasitas_satuan: form.kapasitas_satuan, tanggal_tanam: tgl,
+      prediksi_panen: prediksi, catatan: form.catatan,
     });
-    if (error) { alert('Gagal: ' + error.message); return; }
+    if (error) { alert('Gagal simpan: ' + error.message); return; }
     setPendingPin(null);
     setForm({ komoditas: 'jagung', nama_pemilik: '', kapasitas_value: '', kapasitas_satuan: 'luas_m2', tanggal_tanam: '', catatan: '' });
     if (onRefresh) onRefresh();

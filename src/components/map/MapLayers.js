@@ -246,3 +246,17 @@ export function HortiDBPins({ data, show }) {
       )} />
   ));
 }
+
+/* ─── DB Warning OPT Pins ─── */
+export function WarningDBPins({ data, show }) {
+  if (!show || !data?.length) return null;
+  const icon = makeIcon('⚠️', '#e63946');
+  return data.filter(r => r.lat && r.lat !== 0).map((r, i) => (
+    <GeoJSON key={`warning-db-${i}`}
+      data={{ type: 'Feature', geometry: { type: 'Point', coordinates: [r.lng, r.lat] }, properties: {} }}
+      pointToLayer={(_, ll) => L.marker(ll, { icon })}
+      onEachFeature={(_, l) => l.bindPopup(
+        `<b style="color:#e63946">⚠️ ${r.nama_opt || r.jenis_warning || 'Warning'}</b><br/>📍 ${r.kelurahan || '—'}${r.luas_terdampak ? '<br/>Luas: '+r.luas_terdampak+' '+r.satuan_luas : ''}`
+      )} />
+  ));
+}
