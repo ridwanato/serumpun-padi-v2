@@ -273,11 +273,16 @@ function App() {
   const updateStatus = (id, field, value) => {
     setSawahStatus(prev => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
   };
-  const saveSawahStatus = useCallback(async (id, status) => {
-    if (!id || !status) return;
+  const saveSawahStatus = useCallback(async (activeSawah, status) => {
+    if (!activeSawah || !status) return;
+    const props = activeSawah.properties || {};
     const { error } = await supabase.from('sawah_status').upsert(
       {
-        sawah_id:      id,
+        sawah_id:      activeSawah._id,
+        nama:          props.pemilik || props.nama || props.name || props.Name || `Sawah ${activeSawah._id}`,
+        kecamatan:     props.kecamatan || props.WADMKC || null,
+        kelurahan:     props.kelurahan || props.WADMKD || null,
+        luas:          props.luas_ha || (props.Shape_Area ? props.Shape_Area / 10000 : 0),
         status:        status.status      || null,
         varietas:      status.varietas    || null,
         tanggal_tanam: status.tanggalTanam|| null,
@@ -382,7 +387,7 @@ function App() {
         return <SawahDetail
           activeSawah={activeSawah} sawahStatus={sawahStatus} fillOpacity={fillOpacity}
           onFillOpacityChange={setFillOpacity} onUpdateStatus={updateStatus}
-          onSave={(id, st) => saveSawahStatus(id, st)} />;
+          onSave={(activeSawah, st) => saveSawahStatus(activeSawah, st)} />;
       case 'status_sawah':
         return <StatusSawah
           filteredSawah={filteredSawah} sawahStatus={sawahStatus}

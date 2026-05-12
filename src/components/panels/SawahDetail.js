@@ -111,7 +111,12 @@ function SawahDetail({
 
         <label style={{ fontSize: 11, color: '#888', marginTop: 8, display: 'block' }}>Tanggal Tanam</label>
         <input type="date" className="sp-input" value={sd.tanggalTanam || ''}
-          onChange={e => onUpdateStatus(activeSawah._id, 'tanggalTanam', e.target.value)} />
+          onChange={e => {
+            onUpdateStatus(activeSawah._id, 'tanggalTanam', e.target.value);
+            if (!sd.status || sd.status === 'belum') {
+              onUpdateStatus(activeSawah._id, 'status', 'otomatis');
+            }
+          }} />
       </div>
 
       {/* Progress HST */}
@@ -154,7 +159,7 @@ function SawahDetail({
         <button
           className="sp-btn sp-btn-primary"
           style={{ width: '100%', marginTop: 4, marginBottom: 8, fontSize: 13, padding: '10px' }}
-          onClick={() => onSave(activeSawah._id, sd)}
+          onClick={() => onSave(activeSawah, sd)}
         >
           💾 Simpan Status Sawah ke Cloud
         </button>
