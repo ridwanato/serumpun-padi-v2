@@ -315,13 +315,12 @@ function App() {
   const onEachKecamatan = (f, l) => l.bindPopup(`<b style="color:#c0392b">🏛️ ${f.properties?.name || ''}</b>`);
   const onEachKelurahan = (f, l) => {
     const nama = f.properties?.name || '';
-    if (showKelNama) {
-      const fs = Math.max(7, Math.min(13, (mapZoom - 8) * 1.5)).toFixed(1);
-      l.bindTooltip(
-        `<span style="font-size:${fs}px;font-weight:700;color:#fff;text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;white-space:nowrap">${nama}</span>`,
-        { permanent: true, direction: 'center', className: 'ikpg-kel-label', interactive: false }
-      );
-    }
+    // Selalu bind tooltip — visibility dikontrol oleh CSS class di map container
+    const fs = Math.max(7, Math.min(13, (mapZoom - 8) * 1.5)).toFixed(1);
+    l.bindTooltip(
+      `<span style="font-size:${fs}px;font-weight:700;color:#fff;text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;white-space:nowrap">${nama}</span>`,
+      { permanent: true, direction: 'center', className: 'ikpg-kel-label', interactive: false }
+    );
     l.bindPopup(`<b style="color:#0d9488">🏘️ ${nama}</b>`);
   };
 
@@ -557,7 +556,7 @@ function App() {
       )}
 
       {/* ── Peta ── */}
-      <div style={{ height: '100vh', width: '100vw' }}>
+      <div style={{ height: '100vh', width: '100vw' }} className={!showKelNama ? 'sp-hide-kel-names' : ''}>
         <MapView
           mapRef={mapRef} featureGroupRef={featureGroupRef}
           mapZoom={mapZoom} setMapZoom={setMapZoom}

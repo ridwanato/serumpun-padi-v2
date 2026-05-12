@@ -334,6 +334,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
 .ikpg-kel-label { background: transparent !important; border: none !important; box-shadow: none !important; padding: 0 !important; pointer-events: none !important; }
 .ikpg-kel-label::before { display: none !important; }
 
+/* hide semua label saat toggle dimatikan */
+.sp-hide-kel-names .ikpg-kel-label { display: none !important; }
+.sp-hide-kel-names .leaflet-tooltip.ikpg-kel-label { visibility: hidden !important; opacity: 0 !important; }
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 480px) { .sp-panel { width: 100%; max-width: 100vw; } .sp-menu2-grid { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 768px) { .sp-panel { width: 88vw; } .sp-menu2-grid { grid-template-columns: 1fr 1fr 1fr 1fr; } }
