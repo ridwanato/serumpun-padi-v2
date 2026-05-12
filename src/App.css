@@ -65,8 +65,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
 .sp-header__title { font-size: 13px; font-weight: 800; letter-spacing: 0.8px; white-space: nowrap; }
 
 /* Baris 2: Pilih Pin + FSVA/SKPG */
-.sp-header-btn-row { display: flex; width: 100%; }
-.sp-layer-wrap, .sp-ikpg-wrap { position: relative; flex: 1; }
+.sp-header-btn-row { display: flex; width: 100%; position: relative; }
+.sp-layer-wrap { position: relative; flex: 1; }
+.sp-ikpg-wrap { position: static; flex: 1; }
 
 .sp-layer-btn {
   display: flex; align-items: center; justify-content: center; gap: 5px;
@@ -107,9 +108,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
 
 .sp-ikpg-panel {
   position: absolute; top: calc(100% + 6px);
-  right: 0; left: auto;
+  right: 0; left: 0;
+  width: 100%;
   z-index: 1300;
-  width: 290px;
   box-sizing: border-box;
   border-radius: 14px;
   /* overflow visible agar toggle tidak terpotong */
