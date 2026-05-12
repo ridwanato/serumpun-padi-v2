@@ -303,7 +303,7 @@ function App() {
       ? hitungStatusOtomatis(sd.tanggalTanam, varCfg.umur)
       : sd.status || 'belum';
     const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.belum;
-    return { color: cfg.color || '#4ade80', weight: 2, fillOpacity, fillColor: cfg.fillColor || '#cccccc' };
+    return { color: '#00ff00', weight: 2, fillOpacity, fillColor: cfg.fillColor || '#cccccc' };
   };
   const onEachSawah    = (feature, layer) => {
     layer.on('click', (e) => {
