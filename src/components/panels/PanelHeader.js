@@ -26,7 +26,7 @@ const ExitIcon = () => (
   </svg>
 );
 
-function PanelHeader({ panelView, onClose, onBack, user, onLogin, onLogout }) {
+function PanelHeader({ panelView, onClose, onBack }) {
   const today = new Date().toLocaleDateString('id-ID', {
     weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
   });
@@ -43,26 +43,12 @@ function PanelHeader({ panelView, onClose, onBack, user, onLogin, onLogout }) {
   // Header Dashboard
   if (panelView === 'dashboard') {
     return (
-      <div className="sp-panel__header sp-panel__header--dashboard"
-           style={{ paddingRight: 60 /* beri ruang untuk hamburger fixed */ }}>
+      <div className="sp-panel__header sp-panel__header--dashboard">
         <div className="sp-panel__header-titleblock">
           <span className="sp-panel__title">{t.icon} {t.text}</span>
           <span className="sp-panel__date">{today}</span>
         </div>
         <div className="sp-panel__header-right">
-          {user ? (
-            <button className="sp-panel__user-btn" onClick={onLogout} title="Keluar">
-              <span className="sp-panel__user-name"
-                style={{ maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 10 }}>
-                {user.email?.split('@')[0]}
-              </span>
-              <ExitIcon />
-            </button>
-          ) : (
-            <button className="sp-panel__user-btn sp-panel__user-btn--login" onClick={onLogin}>
-              🔐 Login
-            </button>
-          )}
           {closeBtn}
         </div>
       </div>
