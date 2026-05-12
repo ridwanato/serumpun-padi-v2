@@ -45,7 +45,7 @@ function LocateMe() {
         return btn;
       }
     });
-    const ctrl = new LocateBtn({ position: 'bottomright' });
+    const ctrl = new LocateBtn({ position: 'bottomleft' });
     ctrl.addTo(map);
 
     const onLocate = (e) => {
