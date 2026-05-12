@@ -3,10 +3,9 @@ import React, { useState } from 'react';
 import { PALAWIJA_CONFIG } from '../../config/komoditas';
 import { fmtTgl, hitungHariTanam } from '../../utils/agronomi';
 
-function Palawija({ palawijaKMZ, palawijaList, showPin, onToggleShow, user, mapRef, supabase, onRefresh }) {
+function Palawija({ palawijaKMZ, palawijaList, showPin, onToggleShow, user, mapRef, supabase, onRefresh, onPickLocation }) {
   const [form, setForm] = useState({ komoditas: 'jagung', nama_pemilik: '', kapasitas_value: '', kapasitas_satuan: 'luas_m2', tanggal_tanam: '', catatan: '' });
   const [pendingPin, setPendingPin] = useState(null);
-  const [picking, setPicking] = useState(false);
 
   const handleSave = async () => {
     if (!user) return alert('Silakan login.');
@@ -20,7 +19,7 @@ function Palawija({ palawijaKMZ, palawijaList, showPin, onToggleShow, user, mapR
       kapasitas_satuan: form.kapasitas_satuan, tanggal_tanam: tgl, prediksi_panen: prediksi, catatan: form.catatan,
     });
     if (error) { alert('Gagal: ' + error.message); return; }
-    setPendingPin(null); setPicking(false);
+    setPendingPin(null);
     setForm({ komoditas: 'jagung', nama_pemilik: '', kapasitas_value: '', kapasitas_satuan: 'luas_m2', tanggal_tanam: '', catatan: '' });
     if (onRefresh) onRefresh();
   };
@@ -65,8 +64,9 @@ function Palawija({ palawijaKMZ, palawijaList, showPin, onToggleShow, user, mapR
           <input type="date" className="sp-input" value={form.tanggal_tanam} onChange={e => setForm(p => ({ ...p, tanggal_tanam: e.target.value }))} style={{ marginTop: 8 }} />
           <input className="sp-input" placeholder="Catatan" value={form.catatan} onChange={e => setForm(p => ({ ...p, catatan: e.target.value }))} style={{ marginTop: 8 }} />
           <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-            <button className="sp-btn sp-btn-secondary" style={{ flex: 2 }} onClick={() => setPicking(true)}>
-              📍 {pendingPin ? '✅ ' + pendingPin.lat.toFixed(5) : 'Pilih Lokasi'}
+            <button className="sp-btn sp-btn-secondary" style={{ flex: 2 }}
+              onClick={() => onPickLocation && onPickLocation((latlng) => setPendingPin(latlng))}>
+              📍 {pendingPin ? '✅ ' + pendingPin.lat.toFixed(5) : 'Pilih Lokasi di Peta'}
             </button>
             <button className="sp-btn sp-btn-primary" style={{ flex: 1 }} onClick={handleSave}>💾 Simpan</button>
           </div>

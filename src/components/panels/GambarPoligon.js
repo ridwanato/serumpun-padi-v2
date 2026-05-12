@@ -188,10 +188,10 @@ function GambarPoligon({
               <div key={p.id} className="sp-drawn-item">
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--sp-green-800)' }}>
-                    🔷 {p.name}
+                    🔷 {p.name || `Poligon #${p.id}`}
                   </div>
                   <div style={{ fontSize: '10px', color: 'var(--sp-muted)' }}>
-                    {(p.luas / 10000).toFixed(4)} Ha · {p.luas.toFixed(0)} m²
+                    {((p.area||0) / 10000).toFixed(4)} Ha · {(p.area||0).toFixed(0)} m²
                   </div>
                 </div>
                 <button onClick={() => deleteDrawnPolygon(p.id)} style={{

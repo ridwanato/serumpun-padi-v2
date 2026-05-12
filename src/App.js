@@ -104,7 +104,7 @@ function App() {
 
   useEffect(() => {
     Promise.all([
-      supabase.from('budidaya_ikan').select('*'),
+      supabase.from('kolam_budidaya').select('*'),
       supabase.from('nelayan_tangkap').select('*'),
       supabase.from('fsva_kelurahan').select('*'),
       supabase.from('skpg_kelurahan').select('*'),
@@ -261,7 +261,7 @@ function App() {
     const area = turf.area(geojson);
     const id = Date.now().toString();
     drawnLayersRef.current[id] = e.layer;
-    setDrawnPolygons(prev => [...prev, { id, geojson, area }]);
+    setDrawnPolygons(prev => [...prev, { id, name: `Poligon #${prev.length + 1}`, geojson, area }]);
   };
 
   const updateStatus = (id, field, value) => {
@@ -325,7 +325,7 @@ function App() {
   };
   const refreshSupabase = useCallback(async () => {
     const [bd, nl, fv, sk, pk, ht] = await Promise.all([
-      supabase.from('budidaya_ikan').select('*'),
+      supabase.from('kolam_budidaya').select('*'),
       supabase.from('nelayan_tangkap').select('*'),
       supabase.from('fsva_kelurahan').select('*'),
       supabase.from('skpg_kelurahan').select('*'),
