@@ -194,3 +194,55 @@ export function KolamDBPins({ data, show }) {
       onEachFeature={(_, l) => l.bindPopup(`<b style="color:#0096c7">🐟 ${r.nama_pemilik || '—'}</b><br/>🐠 ${r.jenis_ikan}<br/>📐 ${r.luas_m2 ? r.luas_m2 + ' m²' : '—'} · ${r.status_kolam}`)} />
   ));
 }
+
+/* ─── DB Nelayan Pins (from nelayan_tangkap table) ─── */
+export function NelayanDBPins({ data, show }) {
+  if (!show || !data?.length) return null;
+  const icon = makeIcon('⛵', '#2ec4b6', 28);
+  return data.filter(r => r.lat && r.lng && r.lat !== 0).map((r, i) => (
+    <GeoJSON key={`nelayan-db-${i}`}
+      data={{ type: 'Feature', geometry: { type: 'Point', coordinates: [r.lng, r.lat] }, properties: {} }}
+      pointToLayer={(_, ll) => L.marker(ll, { icon })}
+      onEachFeature={(_, l) => l.bindPopup(`<b style="color:#2ec4b6">⛵ ${r.nama_nelayan || '—'}</b><br/>🎣 ${r.alat_tangkap || '—'}<br/>👥 ${r.no_hp || '?'} orang`)} />
+  ));
+}
+
+/* ─── DB Poktan/KWT/Gapoktan Pins ─── */
+export function PoktanDBPins({ data, showPoktan, showKWT, showGapoktan }) {
+  if (!data?.length) return null;
+  const ICONS = {
+    Poktan:   makeIcon('👨‍🌾', '#2d6a4f'),
+    KWT:      makeIcon('👩‍🌾', '#b5003a'),
+    Gapoktan: makeIcon('🤝',   '#1a4fa0'),
+  };
+  return data.filter(r => r.lat && r.lng && r.lat !== 0).map((r, i) => {
+    const jenis = r.jenis || 'Poktan';
+    const vis = jenis === 'KWT' ? showKWT : jenis === 'Gapoktan' ? showGapoktan : showPoktan;
+    if (!vis) return null;
+    const icon = ICONS[jenis] || ICONS.Poktan;
+    const produk = r.produk_unggulan ? `<br/>🌾 ${r.produk_unggulan}` : '';
+    const status = r.status_aktif ? `<br/><span style="color:${r.status_aktif==='Aktif'?'#2d6a4f':'#888'}">${r.status_aktif}</span>` : '';
+    return (
+      <GeoJSON key={`poktan-db-${i}`}
+        data={{ type: 'Feature', geometry: { type: 'Point', coordinates: [r.lng, r.lat] }, properties: {} }}
+        pointToLayer={(_, ll) => L.marker(ll, { icon })}
+        onEachFeature={(_, l) => l.bindPopup(
+          `<b style="color:#2d6a4f">${jenis==='KWT'?'👩‍🌾':jenis==='Gapoktan'?'🤝':'👨‍🌾'} ${r.nama_poktan}</b><br/>${jenis}${r.nama_ketua ? ' · Ketua: '+r.nama_ketua : ''}${r.kelurahan ? '<br/>🏘️ '+r.kelurahan : ''}${produk}${status}`
+        )} />
+    );
+  });
+}
+
+/* ─── DB Hortikultura Pins ─── */
+export function HortiDBPins({ data, show }) {
+  if (!show || !data?.length) return null;
+  const icon = makeIcon('🌶️', '#52b788');
+  return data.filter(r => r.lat && r.lon).map((r, i) => (
+    <GeoJSON key={`horti-db-${i}`}
+      data={{ type: 'Feature', geometry: { type: 'Point', coordinates: [r.lon, r.lat] }, properties: {} }}
+      pointToLayer={(_, ll) => L.marker(ll, { icon })}
+      onEachFeature={(_, l) => l.bindPopup(
+        `<b style="color:#52b788">🌶️ ${r.nama_pemilik || r.komoditas || '—'}</b><br/>${r.komoditas || ''}${r.tanggal_tanam ? '<br/>📅 Tanam: '+r.tanggal_tanam : ''}${r.prediksi_panen ? '<br/>🌾 Est. Panen: '+r.prediksi_panen : ''}`
+      )} />
+  ));
+}

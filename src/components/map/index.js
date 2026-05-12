@@ -12,4 +12,7 @@ export {
   KolamPins,
   NelayanPins,
   KolamDBPins,
+  NelayanDBPins,
+  PoktanDBPins,
+  HortiDBPins,
 } from './MapLayers';

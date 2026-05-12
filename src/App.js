@@ -8,6 +8,7 @@ import {
   KecamatanLayer, KelurahanLayer, SawahLayer,
   HortiPins, PalawijaPins, PoktanPins, WarningPins,
   KolamPins, NelayanPins, KolamDBPins,
+  NelayanDBPins, PoktanDBPins, HortiDBPins,
 } from './components/map';
 import {
   DrawToolbar, PanelHeader,
@@ -85,6 +86,8 @@ function App() {
   const [fsvaData, setFsvaData]             = useState([]);
   const [skpgData, setSkpgData]             = useState([]);
   const [ikpgUploadStatus, setIkpgUploadStatus] = useState({ fsva: '', skpg: '' });
+  const [poktanList, setPoktanList]         = useState([]);
+  const [hortiList, setHortiList]           = useState([]);
 
   /* ── Auto-load on mount ── */
   useEffect(() => { loadFromURL(); }, []); // eslint-disable-line
@@ -104,13 +107,31 @@ function App() {
       supabase.from('nelayan_tangkap').select('*'),
       supabase.from('fsva_kelurahan').select('*'),
       supabase.from('skpg_kelurahan').select('*'),
-    ]).then(([bd, nl, fv, sk]) => {
+      supabase.from('poktan_kwt').select('*'),
+      supabase.from('komoditas_hortikultura').select('*'),
+      supabase.from('sawah_status').select('*'),
+    ]).then(([bd, nl, fv, sk, pk, ht, sw]) => {
       if (!bd.error) setBudidayaList(bd.data || []);
       if (!nl.error) setTangkapList(nl.data || []);
       if (!fv.error) setFsvaData(fv.data || []);
       if (!sk.error) setSkpgData(sk.data || []);
+      if (!pk.error) setPoktanList(pk.data || []);
+      if (!ht.error) setHortiList(ht.data || []);
+      // Hydrate sawahStatus dari cloud agar tidak hilang saat refresh
+      if (!sw.error && sw.data?.length) {
+        const map = {};
+        sw.data.forEach(r => {
+          map[r.feature_id] = {
+            status: r.status,
+            varietas: r.varietas,
+            tanggalTanam: r.tanggal_tanam,
+            hasilUbinan: r.hasil_ubinan,
+          };
+        });
+        setSawahStatus(map);
+      }
     });
-  }, []);
+  }, []); // eslint-disable-line
 
   /* ── Computed ── */
   const activeKecNames  = Object.keys(selectedKec).filter(k => selectedKec[k]);
@@ -147,23 +168,34 @@ function App() {
   const toggleAllKec = () => { const next = {}; ALL_KEC.forEach(n => next[n] = !allKecChecked); setSelectedKec(next); };
   const toggleAllKel = () => { const next = {}; visibleKelList.forEach(n => next[n] = !allKelChecked); setSelectedKel(next); };
 
-  /* ── Pick Location — close panel, click map, reopen ── */
+  /* ── Pick Location — disable ALL pane pointer-events while picking ── */
   const pickCallbackRef = useRef(null);
   const startPickLocation = useCallback((callback) => {
     pickCallbackRef.current = callback;
     setIsPanelOpen(false);
-    if (mapRef.current) {
-      mapRef.current.getContainer().style.cursor = 'crosshair';
-      const handler = (e) => {
-        mapRef.current.getContainer().style.cursor = '';
-        if (pickCallbackRef.current) {
-          pickCallbackRef.current({ lat: e.latlng.lat, lng: e.latlng.lng });
-          pickCallbackRef.current = null;
-        }
-        setIsPanelOpen(true);
-      };
-      mapRef.current.once('click', handler);
-    }
+    if (!mapRef.current) return;
+    const map = mapRef.current;
+    map.getContainer().style.cursor = 'crosshair';
+    // Disable ALL interactive layers so click reaches the map tile
+    ['overlayPane','markerPane','shadowPane','tooltipPane','popupPane'].forEach(pane => {
+      const el = map.getPane(pane);
+      if (el) el.style.pointerEvents = 'none';
+    });
+    const restore = () => {
+      map.getContainer().style.cursor = '';
+      ['overlayPane','markerPane','shadowPane','tooltipPane','popupPane'].forEach(pane => {
+        const el = map.getPane(pane);
+        if (el) el.style.pointerEvents = '';
+      });
+    };
+    map.once('click', (e) => {
+      restore();
+      if (pickCallbackRef.current) {
+        pickCallbackRef.current({ lat: e.latlng.lat, lng: e.latlng.lng });
+        pickCallbackRef.current = null;
+      }
+      setIsPanelOpen(true);
+    });
   }, []);
 
   /* ── Draw mode — programmatically trigger Leaflet Draw ── */
@@ -290,16 +322,20 @@ function App() {
     setTimeout(() => openPanel('sawah_detail'), 1300);
   };
   const refreshSupabase = useCallback(async () => {
-    const [bd, nl, fv, sk] = await Promise.all([
+    const [bd, nl, fv, sk, pk, ht] = await Promise.all([
       supabase.from('budidaya_ikan').select('*'),
       supabase.from('nelayan_tangkap').select('*'),
       supabase.from('fsva_kelurahan').select('*'),
       supabase.from('skpg_kelurahan').select('*'),
+      supabase.from('poktan_kwt').select('*'),
+      supabase.from('komoditas_hortikultura').select('*'),
     ]);
     if (!bd.error) setBudidayaList(bd.data || []);
     if (!nl.error) setTangkapList(nl.data || []);
     if (!fv.error) setFsvaData(fv.data || []);
     if (!sk.error) setSkpgData(sk.data || []);
+    if (!pk.error) setPoktanList(pk.data || []);
+    if (!ht.error) setHortiList(ht.data || []);
   }, []);
 
   /* ── Panel content ── */
@@ -343,7 +379,7 @@ function App() {
         return <RekapProduksi filteredSawah={filteredSawah} sawahStatus={sawahStatus} />;
       case 'hortikultura':
         return <Hortikultura
-          hortiKMZ={hortiKMZ} hortis={[]} showHortiPin={showHortiPin}
+          hortiKMZ={hortiKMZ} hortis={hortiList} showHortiPin={showHortiPin}
           onToggleShow={setShowHortiPin} user={user} mapRef={mapRef}
           supabase={supabase} onRefresh={refreshSupabase}
           onPickLocation={startPickLocation} />;
@@ -355,7 +391,7 @@ function App() {
           onPickLocation={startPickLocation} />;
       case 'poktan_kwt':
         return <PoktanKWT
-          poktanKMZ={poktanKMZ} poktanList={[]}
+          poktanKMZ={poktanKMZ} poktanList={poktanList}
           showPoktan={showPoktanPin} showKWT={showKWTPin} showGapoktan={showGapoktanPin}
           onTogglePoktan={setShowPoktanPin} onToggleKWT={setShowKWTPin} onToggleGapoktan={setShowGapoktanPin}
           user={user} mapRef={mapRef} supabase={supabase} onRefresh={refreshSupabase}
@@ -521,7 +557,12 @@ function App() {
           <WarningPins data={warningKMZ}  show={showWarningPin} />
           <KolamPins  data={kolamBudidaya} show={showKolam} />
           <NelayanPins data={nelayanTangkap} show={showNelayan} />
-          <KolamDBPins data={budidayaList} show={showKolam} />
+
+          {/* DB Pins — dari Supabase */}
+          <KolamDBPins   data={budidayaList} show={showKolam} />
+          <NelayanDBPins data={tangkapList}  show={showNelayan} />
+          <PoktanDBPins  data={poktanList}   showPoktan={showPoktanPin} showKWT={showKWTPin} showGapoktan={showGapoktanPin} />
+          <HortiDBPins   data={hortiList}    show={showHortiPin} />
 
         </MapView>
       </div>
