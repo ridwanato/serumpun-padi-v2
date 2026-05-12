@@ -106,7 +106,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
 .sp-ikpg-btn.active { background: linear-gradient(135deg, #134e4a, #0f766e); }
 
 .sp-ikpg-panel {
-  position: absolute; top: calc(100% + 4px); left: 0; z-index: 1300; min-width: 250px;
+  position: absolute; top: calc(100% + 4px);
+  right: 0; left: auto;          /* anchor ke kanan agar tidak overflow */
+  z-index: 1300;
+  width: 260px;
+  max-width: calc(100vw - 12px); /* tidak pernah melewati lebar layar */
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 /* ===== HAMBURGER ===== */
@@ -331,3 +337,25 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
 /* ===== RESPONSIVE ===== */
 @media (max-width: 480px) { .sp-panel { width: 100%; max-width: 100vw; } .sp-menu2-grid { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 768px) { .sp-panel { width: 88vw; } .sp-menu2-grid { grid-template-columns: 1fr 1fr 1fr 1fr; } }
+
+/* ===== MOBILE: Zoom + Locate flush-left with hairline ===== */
+@media (max-width: 768px) {
+  .leaflet-bottom.leaflet-left {
+    left: 0 !important;
+    bottom: 16px !important;
+    padding-left: 0 !important;
+    border-left: 2px solid rgba(0,0,0,0.10);
+    border-radius: 0 8px 8px 0;
+  }
+  .leaflet-control-zoom {
+    border-radius: 0 8px 8px 0 !important;
+    overflow: visible !important;
+  }
+  .leaflet-control-zoom-in  { border-radius: 0 8px 0 0 !important; }
+  .leaflet-control-zoom-out { border-radius: 0 0 8px 0 !important; }
+  .sp-locate-btn { border-radius: 0 8px 8px 0 !important; }
+
+  /* FSVA/SKPG & Pilih Pin dropdown — jangan overflow layar */
+  .sp-ikpg-panel { width: min(260px, calc(100vw - 12px)); }
+  .sp-layer-panel { max-width: calc(100vw - 16px); }
+}
