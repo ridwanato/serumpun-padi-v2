@@ -273,20 +273,16 @@ function App() {
   const updateStatus = (id, field, value) => {
     setSawahStatus(prev => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
   };
-  const saveSawahStatus = useCallback(async (id, status, featureMeta) => {
+  const saveSawahStatus = useCallback(async (id, status) => {
     if (!id || !status) return;
     const { error } = await supabase.from('sawah_status').upsert(
       {
-        sawah_id:     id,
-        nama:         featureMeta?.nama         || null,
-        kelurahan:    featureMeta?.kelurahan    || null,
-        kecamatan:    featureMeta?.kecamatan    || null,
-        luas:         featureMeta?.luas         || null,
-        status:       status.status             || null,
-        varietas:     status.varietas           || null,
-        tanggal_tanam: status.tanggalTanam      || null,
-        hasil_ubinan:  status.hasilUbinan       || null,
-        updated_at:   new Date().toISOString(),
+        sawah_id:      id,
+        status:        status.status      || null,
+        varietas:      status.varietas    || null,
+        tanggal_tanam: status.tanggalTanam|| null,
+        hasil_ubinan:  status.hasilUbinan || null,
+        updated_at:    new Date().toISOString(),
       },
       { onConflict: 'sawah_id' }
     );
