@@ -99,7 +99,7 @@ const makeIcon = (emoji, bgColor, size = 26) =>
     className: '',
     iconSize: [size, size],
     iconAnchor: [size / 2, size],
-    html: `<div style="width:${size}px;height:${size}px;display:flex;align-items:center;justify-content:center;background:${bgColor};border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,0.4)"><span style="transform:rotate(45deg);font-size:${Math.round(size * 0.5)}px">${emoji}</span></div>`,
+    html: `<div style="width:${size}px;height:${size}px;display:flex;align-items:center;justify-content:center;background:${bgColor};border:2px solid #fff;border-radius:50% 50% 50% 0;transform: scale(var(--pin-scale, 1)) rotate(-45deg);transform-origin:bottom left;box-shadow:0 2px 6px rgba(0,0,0,0.4);transition:transform 0.25s ease-out;"><span style="transform:rotate(45deg);font-size:${Math.round(size * 0.5)}px">${emoji}</span></div>`,
   });
 
 /* ─────────── Pin layers — all use `show` prop ─────────── */

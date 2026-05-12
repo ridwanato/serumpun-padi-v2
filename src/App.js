@@ -556,7 +556,12 @@ function App() {
       )}
 
       {/* ── Peta ── */}
-      <div style={{ height: '100vh', width: '100vw' }} className={!showKelNama ? 'sp-hide-kel-names' : ''}>
+      <div 
+        style={{ 
+          height: '100vh', width: '100vw', 
+          '--pin-scale': Math.max(0.4, Math.min(1.5, (mapZoom - 11) * 0.16 + 0.6))
+        }} 
+        className={!showKelNama ? 'sp-hide-kel-names' : ''}>
         <MapView
           mapRef={mapRef} featureGroupRef={featureGroupRef}
           mapZoom={mapZoom} setMapZoom={setMapZoom}

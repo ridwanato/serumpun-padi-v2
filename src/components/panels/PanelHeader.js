@@ -17,12 +17,18 @@ const PANEL_TITLES = {
   ikpg_admin:         { icon: '⚙️', text: 'Update Data IKP & SKPG' },
 };
 
+/* Ikon exit (→ dengan kotak) */
+const ExitIcon = () => (
+  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+    <polyline points="16 17 21 12 16 7"/>
+    <line x1="21" y1="12" x2="9" y2="12"/>
+  </svg>
+);
+
 function PanelHeader({ panelView, onClose, onBack, user, onLogin, onLogout }) {
-  const today = new Date().toLocaleDateString('id-ID', { 
-    weekday: 'short', 
-    day: 'numeric', 
-    month: 'short', 
-    year: 'numeric' 
+  const today = new Date().toLocaleDateString('id-ID', {
+    weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
   });
   const t = PANEL_TITLES[panelView] || PANEL_TITLES.dashboard;
 
@@ -37,7 +43,8 @@ function PanelHeader({ panelView, onClose, onBack, user, onLogin, onLogout }) {
   // Header Dashboard
   if (panelView === 'dashboard') {
     return (
-      <div className="sp-panel__header sp-panel__header--dashboard">
+      <div className="sp-panel__header sp-panel__header--dashboard"
+           style={{ paddingRight: 60 /* beri ruang untuk hamburger fixed */ }}>
         <div className="sp-panel__header-titleblock">
           <span className="sp-panel__title">{t.icon} {t.text}</span>
           <span className="sp-panel__date">{today}</span>
@@ -45,8 +52,11 @@ function PanelHeader({ panelView, onClose, onBack, user, onLogin, onLogout }) {
         <div className="sp-panel__header-right">
           {user ? (
             <button className="sp-panel__user-btn" onClick={onLogout} title="Keluar">
-              <span className="sp-panel__user-name">{user.email?.split('@')[0]}</span>
-              <span className="sp-panel__user-logout">Keluar</span>
+              <span className="sp-panel__user-name"
+                style={{ maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 10 }}>
+                {user.email?.split('@')[0]}
+              </span>
+              <ExitIcon />
             </button>
           ) : (
             <button className="sp-panel__user-btn sp-panel__user-btn--login" onClick={onLogin}>
