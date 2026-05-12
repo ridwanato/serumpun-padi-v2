@@ -49,6 +49,7 @@ function App() {
   const [drawMode, setDrawMode]             = useState(null);
   const [drawnPolygons, setDrawnPolygons]   = useState([]);
   const [fillOpacity, setFillOpacity]       = useState(0.5);
+  const [isPicking, setIsPicking]           = useState(false); // overlay picking mode
 
   /* ── Layer toggles ── */
   const [showSawah, setShowSawah]           = useState(true);
@@ -168,34 +169,30 @@ function App() {
   const toggleAllKec = () => { const next = {}; ALL_KEC.forEach(n => next[n] = !allKecChecked); setSelectedKec(next); };
   const toggleAllKel = () => { const next = {}; visibleKelList.forEach(n => next[n] = !allKelChecked); setSelectedKel(next); };
 
-  /* ── Pick Location — disable ALL pane pointer-events while picking ── */
+  /* ── Pick Location — overlay div approach (most reliable) ── */
   const pickCallbackRef = useRef(null);
   const startPickLocation = useCallback((callback) => {
     pickCallbackRef.current = callback;
     setIsPanelOpen(false);
+    setIsPicking(true);   // show transparent overlay div
+  }, []);
+  const cancelPick = useCallback(() => {
+    pickCallbackRef.current = null;
+    setIsPicking(false);
+    setIsPanelOpen(true);
+  }, []);
+  const handleOverlayClick = useCallback((e) => {
     if (!mapRef.current) return;
-    const map = mapRef.current;
-    map.getContainer().style.cursor = 'crosshair';
-    // Disable ALL interactive layers so click reaches the map tile
-    ['overlayPane','markerPane','shadowPane','tooltipPane','popupPane'].forEach(pane => {
-      const el = map.getPane(pane);
-      if (el) el.style.pointerEvents = 'none';
-    });
-    const restore = () => {
-      map.getContainer().style.cursor = '';
-      ['overlayPane','markerPane','shadowPane','tooltipPane','popupPane'].forEach(pane => {
-        const el = map.getPane(pane);
-        if (el) el.style.pointerEvents = '';
-      });
-    };
-    map.once('click', (e) => {
-      restore();
-      if (pickCallbackRef.current) {
-        pickCallbackRef.current({ lat: e.latlng.lat, lng: e.latlng.lng });
-        pickCallbackRef.current = null;
-      }
-      setIsPanelOpen(true);
-    });
+    const container = mapRef.current.getContainer();
+    const rect = container.getBoundingClientRect();
+    const point = L.point(e.clientX - rect.left, e.clientY - rect.top);
+    const latlng = mapRef.current.containerPointToLatLng(point);
+    if (pickCallbackRef.current) {
+      pickCallbackRef.current({ lat: latlng.lat, lng: latlng.lng });
+      pickCallbackRef.current = null;
+    }
+    setIsPicking(false);
+    setIsPanelOpen(true);
   }, []);
 
   /* ── Draw mode — programmatically trigger Leaflet Draw ── */
@@ -283,6 +280,10 @@ function App() {
   }, []);
 
   /* ── Map event handlers ── */
+  // Ref agar onEachSawah tahu kapan sedang draw mode — tidak butuh closure baru
+  const drawModeRef = useRef(null);
+  useEffect(() => { drawModeRef.current = drawMode; }, [drawMode]);
+
   const getSawahStyle = (feature) => {
     const sd = sawahStatus[feature?._id] || {};
     const varCfg = VARIETAS_CONFIG[sd.varietas] || VARIETAS_CONFIG.lainnya;
@@ -295,6 +296,7 @@ function App() {
   };
   const onEachSawah    = (feature, layer) => {
     layer.on('click', (e) => {
+      if (drawModeRef.current) return; // biarkan L.Draw menangani klik saat draw aktif
       L.DomEvent.stopPropagation(e);
       setActiveSawahId(feature._id); openPanel('sawah_detail');
     });
@@ -456,6 +458,19 @@ function App() {
   return (
     <div className="sp-app" data-drawmode={drawMode || ''}>
       {showAuth && <Auth onLogin={() => setShowAuth(false)} />}
+
+      {/* ── Pick Location Overlay — di atas semua layer termasuk poligon ── */}
+      {isPicking && (
+        <>
+          {/* Banner instruksi */}
+          <div className="sp-pick-banner">
+            <span>📍 Klik di peta untuk memilih lokasi pin</span>
+            <button onClick={cancelPick}>✕ Batal</button>
+          </div>
+          {/* Overlay transparan menutupi seluruh layar termasuk poligon */}
+          <div className="sp-pick-overlay" onClick={handleOverlayClick} />
+        </>
+      )}
 
       {/* ── Header group: SERUMPUN PADI + Pilih Pin + FSVA/SKPG ── */}
       <div className={`sp-header-group${isPanelOpen ? ' sp-header-group--hidden' : ''}`}>
