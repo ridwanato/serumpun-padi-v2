@@ -80,9 +80,12 @@ function IKPGAdmin({ user, supabase, fsvaData, skpgData, onRefresh }) {
         nama_kelurahan: r.nama_kelurahan, gizi_kurang: r.gizi_kurang, gizi_sangat_kurang: r.gizi_sangat_kurang,
         gizi_berlebih: r.gizi_berlebih, gizi_normal: r.gizi_normal, total_balita: r.total_balita,
         prevalensi_gizi_buruk: r.prevalensi_gizi_buruk, rank_skpg: r.rank_skpg, kategori_skpg: r.kategori_skpg,
-        rank_fsva_ref: r.rank_fsva_ref, borda_sum: r.borda_sum, prioritas_borda: r.prioritas_borda,
-        kategori_borda: r.kategori_borda, periode: r.periode || '', updated_at: new Date().toISOString(),
+        rank_fsva_ref: r.rank_fsva_ref || null, borda_sum: r.borda_sum || null,
+        prioritas_borda: r.prioritas_borda || null,
+        kategori_borda: r.kategori_borda || null,  // null jika FSVA belum ada
+        periode: r.periode || '', updated_at: new Date().toISOString(),
       }));
+
 
       const { error } = await supabase.from('skpg_kelurahan').upsert(upsertRows, { onConflict: 'nama_kelurahan' });
       if (error) throw error;
