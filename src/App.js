@@ -8,7 +8,7 @@ import {
   KecamatanLayer, KelurahanLayer, SawahLayer,
   HortiPins, PalawijaPins, PoktanPins, WarningPins,
   KolamPins, NelayanPins, KolamDBPins,
-  NelayanDBPins, PoktanDBPins, HortiDBPins, WarningDBPins,
+  NelayanDBPins, PoktanDBPins, HortiDBPins, PalawijaDBPins, WarningDBPins,
 } from './components/map';
 import {
   DrawToolbar, PanelHeader,
@@ -89,6 +89,7 @@ function App() {
   const [ikpgUploadStatus, setIkpgUploadStatus] = useState({ fsva: '', skpg: '' });
   const [poktanList, setPoktanList]         = useState([]);
   const [hortiList, setHortiList]           = useState([]);
+  const [palawijaList, setPalawijaList]     = useState([]);
   const [warningList, setWarningList]       = useState([]);
 
   /* ── Auto-load on mount ── */
@@ -113,7 +114,8 @@ function App() {
       supabase.from('komoditas_hortikultura').select('*'),
       supabase.from('sawah_status').select('*'),
       supabase.from('warning_opt').select('*'),
-    ]).then(([bd, nl, fv, sk, pk, ht, sw, wo]) => {
+      supabase.from('komoditas_palawija').select('*'),
+    ]).then(([bd, nl, fv, sk, pk, ht, sw, wo, pl]) => {
       if (!bd.error) setBudidayaList(bd.data || []);
       if (!nl.error) setTangkapList(nl.data || []);
       if (!fv.error) setFsvaData(fv.data || []);
@@ -121,6 +123,7 @@ function App() {
       if (!pk.error) setPoktanList(pk.data || []);
       if (!ht.error) setHortiList(ht.data || []);
       if (!wo.error) setWarningList(wo.data || []);
+      if (!pl.error) setPalawijaList(pl.data || []);
       // Hydrate sawahStatus dari cloud agar tidak hilang saat refresh
       if (!sw.error && sw.data?.length) {
         const map = {};
@@ -327,7 +330,7 @@ function App() {
     setTimeout(() => openPanel('sawah_detail'), 1300);
   };
   const refreshSupabase = useCallback(async () => {
-    const [bd, nl, fv, sk, pk, ht, wo] = await Promise.all([
+    const [bd, nl, fv, sk, pk, ht, wo, pl] = await Promise.all([
       supabase.from('kolam_budidaya').select('*'),
       supabase.from('nelayan_tangkap').select('*'),
       supabase.from('fsva_kelurahan').select('*'),
@@ -335,6 +338,7 @@ function App() {
       supabase.from('poktan_kwt').select('*'),
       supabase.from('komoditas_hortikultura').select('*'),
       supabase.from('warning_opt').select('*'),
+      supabase.from('komoditas_palawija').select('*'),
     ]);
     if (!bd.error) setBudidayaList(bd.data || []);
     if (!nl.error) setTangkapList(nl.data || []);
@@ -343,6 +347,7 @@ function App() {
     if (!pk.error) setPoktanList(pk.data || []);
     if (!ht.error) setHortiList(ht.data || []);
     if (!wo.error) setWarningList(wo.data || []);
+    if (!pl.error) setPalawijaList(pl.data || []);
   }, []);
 
   /* ── Panel content ── */
@@ -579,11 +584,12 @@ function App() {
           <NelayanPins data={nelayanTangkap} show={showNelayan} />
 
           {/* DB Pins — dari Supabase */}
-          <KolamDBPins   data={budidayaList} show={showKolam} />
-          <NelayanDBPins data={tangkapList}  show={showNelayan} />
-          <PoktanDBPins  data={poktanList}   showPoktan={showPoktanPin} showKWT={showKWTPin} showGapoktan={showGapoktanPin} />
-          <HortiDBPins   data={hortiList}    show={showHortiPin} />
-          <WarningDBPins data={warningList}  show={showWarningPin} />
+          <KolamDBPins    data={budidayaList}  show={showKolam} />
+          <NelayanDBPins  data={tangkapList}   show={showNelayan} />
+          <PoktanDBPins   data={poktanList}    showPoktan={showPoktanPin} showKWT={showKWTPin} showGapoktan={showGapoktanPin} />
+          <HortiDBPins    data={hortiList}     show={showHortiPin} />
+          <PalawijaDBPins data={palawijaList}  show={showPalawijaPin} />
+          <WarningDBPins  data={warningList}   show={showWarningPin} />
 
         </MapView>
       </div>

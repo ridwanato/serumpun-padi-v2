@@ -247,6 +247,21 @@ export function HortiDBPins({ data, show }) {
   ));
 }
 
+/* ─── DB Palawija Pins ─── */
+export function PalawijaDBPins({ data, show }) {
+  if (!show || !data?.length) return null;
+  const icon = makeIcon('🌿', '#74c69d');
+  return data.filter(r => r.lat && r.lon && r.lat !== 0).map((r, i) => (
+    <GeoJSON key={`palawija-db-${i}`}
+      data={{ type: 'Feature', geometry: { type: 'Point', coordinates: [r.lon, r.lat] }, properties: {} }}
+      pointToLayer={(_, ll) => L.marker(ll, { icon })}
+      onEachFeature={(_, l) => l.bindPopup(
+        `<b style="color:#74c69d">🌿 ${r.nama_pemilik || r.komoditas || '—'}</b><br/>${r.komoditas || ''}${r.tanggal_tanam ? '<br/>📅 Tanam: '+r.tanggal_tanam : ''}${r.prediksi_panen ? '<br/>🌾 Est. Panen: '+r.prediksi_panen : ''}`
+      )} />
+  ));
+}
+
+
 /* ─── DB Warning OPT Pins ─── */
 export function WarningDBPins({ data, show }) {
   if (!show || !data?.length) return null;
