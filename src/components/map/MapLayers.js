@@ -127,18 +127,27 @@ export function PalawijaPins({ data, show }) {
 
 export function PoktanPins({ data, showPoktan, showKWT, showGapoktan }) {
   if (!data?.length) return null;
-  const icon = L.divIcon({ className: '', iconSize: [34, 34], iconAnchor: [17, 34], html: POKTAN_ICON_HTML });
+
+  const ICONS = {
+    Poktan:   makeIcon('👨‍🌾', '#2d6a4f'),
+    KWT:      makeIcon('👩‍🌾', '#b5003a'),
+    Gapoktan: makeIcon('🤝',   '#1a4fa0'),
+  };
+
   return data.map((p, i) => {
-    const vis = p._jenis === 'KWT' ? showKWT : p._jenis === 'Gapoktan' ? showGapoktan : showPoktan;
+    const jenis = p._jenis || 'Poktan';
+    const vis = jenis === 'KWT' ? showKWT : jenis === 'Gapoktan' ? showGapoktan : showPoktan;
     if (!vis) return null;
+    const icon = ICONS[jenis] || ICONS.Poktan;
     return (
       <GeoJSON key={`poktan-${i}`}
-        data={{ type: 'Feature', geometry: { type: 'Point', coordinates: [p._lng, p._lat] }, properties: {} }}
+        data={{ type:'Feature', geometry:{ type:'Point', coordinates:[p._lng, p._lat] }, properties:{} }}
         pointToLayer={(_, ll) => L.marker(ll, { icon })}
-        onEachFeature={(_, l) => l.bindPopup(`<b style="color:#2d6a4f">👨‍🌾 ${p._name}</b><br/>${p._jenis || ''} ${p._ketua ? '· Ketua: ' + p._ketua : ''} ${p._kelurahan ? '<br/>🏘️ ' + p._kelurahan : ''}`)} />
+        onEachFeature={(_, l) => l.bindPopup(`<b style="color:#2d6a4f">${jenis==='KWT'?'👩‍🌾':jenis==='Gapoktan'?'🤝':'👨‍🌾'} ${p._name}</b><br/>${jenis} ${p._ketua?'· Ketua: '+p._ketua:''} ${p._kelurahan?'<br/>🏘️ '+p._kelurahan:''}`)} />
     );
   });
 }
+
 
 export function WarningPins({ data, show }) {
   if (!show || !data?.length) return null;

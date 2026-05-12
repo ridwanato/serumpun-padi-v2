@@ -4,25 +4,15 @@ import { HORTIKULTURA_CONFIG } from '../../config/komoditas';
 import { fmtTgl, hitungHariTanam } from '../../utils/agronomi';
 
 function Hortikultura({
-  hortiKMZ,
-  hortis,
-  showHortiPin,
-  onToggleShow,
-  user,
-  mapRef,
-  supabase,
-  onRefresh,
+  hortiKMZ, hortis, showHortiPin, onToggleShow,
+  user, mapRef, supabase, onRefresh, onPickLocation,
 }) {
   const [form, setForm] = useState({
-    komoditas: 'cabai_merah',
-    nama_pemilik: '',
-    kapasitas_value: '',
-    kapasitas_satuan: 'luas_m2',
-    tanggal_tanam: '',
-    catatan: '',
+    komoditas: 'cabai_merah', nama_pemilik: '',
+    kapasitas_value: '', kapasitas_satuan: 'luas_m2',
+    tanggal_tanam: '', catatan: '',
   });
   const [pendingPin, setPendingPin] = useState(null);
-  const [picking, setPicking] = useState(false);
 
   const handleSave = async () => {
     if (!user) return alert('Silakan login terlebih dahulu.');
@@ -49,7 +39,6 @@ function Hortikultura({
     if (error) { alert('Gagal simpan: ' + error.message); return; }
 
     setPendingPin(null);
-    setPicking(false);
     setForm({ komoditas: 'cabai_merah', nama_pemilik: '', kapasitas_value: '', kapasitas_satuan: 'luas_m2', tanggal_tanam: '', catatan: '' });
     if (onRefresh) onRefresh();
   };
@@ -120,7 +109,7 @@ function Hortikultura({
 
           <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
             <button className="sp-btn sp-btn-secondary" style={{ flex: 2 }}
-              onClick={() => setPicking(true)}>
+              onClick={() => onPickLocation && onPickLocation((latlng) => setPendingPin(latlng))}>
               📍 {pendingPin ? `✅ ${pendingPin.lat.toFixed(5)}, ${pendingPin.lng.toFixed(5)}` : 'Pilih Lokasi di Peta'}
             </button>
             <button className="sp-btn sp-btn-primary" style={{ flex: 1 }} onClick={handleSave}>💾 Simpan</button>

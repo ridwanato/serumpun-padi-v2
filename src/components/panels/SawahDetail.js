@@ -16,6 +16,7 @@ function SawahDetail({
   fillOpacity,
   onFillOpacityChange,
   onUpdateStatus,
+  onSave,
 }) {
   if (!activeSawah) {
     return (
@@ -147,6 +148,17 @@ function SawahDetail({
           </div>
         )}
       </div>
+
+      {/* Tombol Simpan */}
+      {onSave && (
+        <button
+          className="sp-btn sp-btn-primary"
+          style={{ width: '100%', marginTop: 4, marginBottom: 8, fontSize: 13, padding: '10px' }}
+          onClick={() => onSave(activeSawah._id, sd)}
+        >
+          💾 Simpan Status Sawah ke Cloud
+        </button>
+      )}
     </div>
   );
 }

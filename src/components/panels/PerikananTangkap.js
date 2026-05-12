@@ -4,7 +4,7 @@ import { ALAT_TANGKAP, ARMADA_TYPES } from '../../config/komoditas';
 const JENIS_IKAN = ['Kuwe','Beronang','Kerapu','Cumi','Kembung','Tenggiri','Tongkol','Lainnya'];
 const S = (s) => ({ fontSize:11, ...s });
 
-function PerikananTangkap({ nelayanTangkap, tangkapList, showNelayan, onToggleShow, user, mapRef, supabase, onRefresh }) {
+function PerikananTangkap({ nelayanTangkap, tangkapList, showNelayan, onToggleShow, user, mapRef, supabase, onRefresh, onPickLocation }) {
   const [mode, setMode]                   = useState(null); // 'add_nelayan'|'edit_nelayan'|'add_prod'
   const [editTarget, setEditTarget]       = useState(null); // row yg di-edit
   const [prodTarget, setProdTarget]       = useState(null); // nelayan yg ditambah produksinya
@@ -176,7 +176,7 @@ function PerikananTangkap({ nelayanTangkap, tangkapList, showNelayan, onToggleSh
           </div>
 
           <button className="sp-btn sp-btn-secondary" style={{width:'100%',marginTop:8}}
-            onClick={()=>setPicking(true)}>
+            onClick={()=> onPickLocation && onPickLocation((latlng) => setPendingPin(latlng))}>
             📍 {pendingPin?`✅ ${pendingPin.lat.toFixed(5)}, ${pendingPin.lng.toFixed(5)}`:'Pilih Lokasi di Peta'}
           </button>
           <button className="sp-btn sp-btn-primary" style={{width:'100%',marginTop:8}} disabled={saving} onClick={saveNelayan}>

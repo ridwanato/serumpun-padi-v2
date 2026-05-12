@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import './App.css';
 import { useKMZLoader } from './hooks/useKMZLoader';
+import { STATUS_CONFIG, VARIETAS_CONFIG } from './config/komoditas';
+import { hitungHariTanam, hitungStatusOtomatis } from './utils/agronomi';
 import {
   MapView,
   KecamatanLayer, KelurahanLayer, SawahLayer,
@@ -145,12 +147,70 @@ function App() {
   const toggleAllKec = () => { const next = {}; ALL_KEC.forEach(n => next[n] = !allKecChecked); setSelectedKec(next); };
   const toggleAllKel = () => { const next = {}; visibleKelList.forEach(n => next[n] = !allKelChecked); setSelectedKel(next); };
 
-  /* ── Draw mode ── */
-  const triggerDraw   = () => setDrawMode(p => p === 'draw'   ? null : 'draw');
-  const triggerEdit   = () => setDrawMode(p => p === 'edit'   ? null : 'edit');
-  const triggerDelete = () => setDrawMode(p => p === 'delete' ? null : 'delete');
-  const finishDrawMode  = () => setDrawMode(null);
-  const cancelDrawMode  = () => setDrawMode(null);
+  /* ── Pick Location — close panel, click map, reopen ── */
+  const pickCallbackRef = useRef(null);
+  const startPickLocation = useCallback((callback) => {
+    pickCallbackRef.current = callback;
+    setIsPanelOpen(false);
+    if (mapRef.current) {
+      mapRef.current.getContainer().style.cursor = 'crosshair';
+      const handler = (e) => {
+        mapRef.current.getContainer().style.cursor = '';
+        if (pickCallbackRef.current) {
+          pickCallbackRef.current({ lat: e.latlng.lat, lng: e.latlng.lng });
+          pickCallbackRef.current = null;
+        }
+        setIsPanelOpen(true);
+      };
+      mapRef.current.once('click', handler);
+    }
+  }, []);
+
+  /* ── Draw mode — programmatically trigger Leaflet Draw ── */
+  const drawHandlerRef = useRef(null);
+  const triggerDraw = () => {
+    if (drawMode === 'draw') {
+      drawHandlerRef.current?.disable(); drawHandlerRef.current = null; setDrawMode(null);
+    } else {
+      setDrawMode('draw');
+      if (mapRef.current) {
+        drawHandlerRef.current = new L.Draw.Polygon(mapRef.current, {
+          shapeOptions: { color:'#4ade80', weight:2, fillColor:'#86efac', fillOpacity:0.4 }
+        });
+        drawHandlerRef.current.enable();
+      }
+    }
+  };
+  const triggerEdit = () => {
+    if (drawMode === 'edit') {
+      drawHandlerRef.current?.disable(); drawHandlerRef.current = null; setDrawMode(null);
+    } else {
+      setDrawMode('edit');
+      if (featureGroupRef.current) {
+        drawHandlerRef.current = new L.EditToolbar.Edit(mapRef.current, { featureGroup: featureGroupRef.current });
+        drawHandlerRef.current.enable();
+      }
+    }
+  };
+  const triggerDelete = () => {
+    if (drawMode === 'delete') {
+      drawHandlerRef.current?.disable(); drawHandlerRef.current = null; setDrawMode(null);
+    } else {
+      setDrawMode('delete');
+      if (featureGroupRef.current) {
+        drawHandlerRef.current = new L.EditToolbar.Delete(mapRef.current, { featureGroup: featureGroupRef.current });
+        drawHandlerRef.current.enable();
+      }
+    }
+  };
+  const finishDrawMode = () => {
+    drawHandlerRef.current?.save?.(); drawHandlerRef.current?.disable();
+    drawHandlerRef.current = null; setDrawMode(null);
+  };
+  const cancelDrawMode = () => {
+    drawHandlerRef.current?.revertLayers?.(); drawHandlerRef.current?.disable();
+    drawHandlerRef.current = null; setDrawMode(null);
+  };
 
   const handleFileImport = async (e) => {
     const file = e.target.files[0]; if (!file) return;
@@ -178,9 +238,29 @@ function App() {
   const updateStatus = (id, field, value) => {
     setSawahStatus(prev => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
   };
+  const saveSawahStatus = useCallback(async (id, status) => {
+    if (!id || !status) return;
+    const { error } = await supabase.from('sawah_status').upsert(
+      { feature_id: id, status: status.status||null, varietas: status.varietas||null,
+        tanggal_tanam: status.tanggalTanam||null, hasil_ubinan: status.hasilUbinan||null,
+        updated_at: new Date().toISOString() },
+      { onConflict: 'feature_id' }
+    );
+    if (error) alert('Gagal simpan: ' + error.message);
+    else alert('✅ Status sawah tersimpan!');
+  }, []);
 
   /* ── Map event handlers ── */
-  const getSawahStyle  = () => ({ color: '#4ade80', weight: 2, fillOpacity, fillColor: '#cccccc' });
+  const getSawahStyle = (feature) => {
+    const sd = sawahStatus[feature?._id] || {};
+    const varCfg = VARIETAS_CONFIG[sd.varietas] || VARIETAS_CONFIG.lainnya;
+    const hari = hitungHariTanam(sd.tanggalTanam);
+    const status = sd.status === 'otomatis' && sd.tanggalTanam
+      ? hitungStatusOtomatis(sd.tanggalTanam, varCfg.umur)
+      : sd.status || 'belum';
+    const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.belum;
+    return { color: cfg.color || '#4ade80', weight: 2, fillOpacity, fillColor: cfg.fillColor || '#cccccc' };
+  };
   const onEachSawah    = (feature, layer) => {
     layer.on('click', (e) => {
       L.DomEvent.stopPropagation(e);
@@ -249,7 +329,8 @@ function App() {
       case 'sawah_detail':
         return <SawahDetail
           activeSawah={activeSawah} sawahStatus={sawahStatus} fillOpacity={fillOpacity}
-          onFillOpacityChange={setFillOpacity} onUpdateStatus={updateStatus} />;
+          onFillOpacityChange={setFillOpacity} onUpdateStatus={updateStatus}
+          onSave={(id, st) => saveSawahStatus(id, st)} />;
       case 'status_sawah':
         return <StatusSawah
           filteredSawah={filteredSawah} sawahStatus={sawahStatus}
@@ -264,33 +345,39 @@ function App() {
         return <Hortikultura
           hortiKMZ={hortiKMZ} hortis={[]} showHortiPin={showHortiPin}
           onToggleShow={setShowHortiPin} user={user} mapRef={mapRef}
-          supabase={supabase} onRefresh={refreshSupabase} />;
+          supabase={supabase} onRefresh={refreshSupabase}
+          onPickLocation={startPickLocation} />;
       case 'palawija':
         return <Palawija
           palawijaKMZ={palawijaKMZ} palawijaList={[]} showPin={showPalawijaPin}
           onToggleShow={setShowPalawijaPin} user={user} mapRef={mapRef}
-          supabase={supabase} onRefresh={refreshSupabase} />;
+          supabase={supabase} onRefresh={refreshSupabase}
+          onPickLocation={startPickLocation} />;
       case 'poktan_kwt':
         return <PoktanKWT
           poktanKMZ={poktanKMZ} poktanList={[]}
           showPoktan={showPoktanPin} showKWT={showKWTPin} showGapoktan={showGapoktanPin}
           onTogglePoktan={setShowPoktanPin} onToggleKWT={setShowKWTPin} onToggleGapoktan={setShowGapoktanPin}
-          user={user} mapRef={mapRef} supabase={supabase} onRefresh={refreshSupabase} />;
+          user={user} mapRef={mapRef} supabase={supabase} onRefresh={refreshSupabase}
+          onPickLocation={startPickLocation} />;
       case 'warning':
         return <WarningOPT
           warningKMZ={warningKMZ} warnings={[]} showPin={showWarningPin}
           onToggleShow={setShowWarningPin} user={user}
-          supabase={supabase} onRefresh={refreshSupabase} />;
+          supabase={supabase} onRefresh={refreshSupabase}
+          onPickLocation={startPickLocation} />;
       case 'perikanan_budidaya':
         return <PerikananBudidaya
           kolamBudidaya={kolamBudidaya} budidayaList={budidayaList}
           showKolam={showKolam} onToggleShow={setShowKolam}
-          user={user} mapRef={mapRef} supabase={supabase} onRefresh={refreshSupabase} />;
+          user={user} mapRef={mapRef} supabase={supabase} onRefresh={refreshSupabase}
+          onPickLocation={startPickLocation} />;
       case 'perikanan_tangkap':
         return <PerikananTangkap
           nelayanTangkap={nelayanTangkap} tangkapList={tangkapList}
           showNelayan={showNelayan} onToggleShow={setShowNelayan}
-          user={user} mapRef={mapRef} supabase={supabase} onRefresh={refreshSupabase} />;
+          user={user} mapRef={mapRef} supabase={supabase} onRefresh={refreshSupabase}
+          onPickLocation={startPickLocation} />;
       case 'ikpg_admin':
         return <IKPGAdmin
           user={user} supabase={supabase}

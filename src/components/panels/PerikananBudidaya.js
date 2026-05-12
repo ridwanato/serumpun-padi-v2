@@ -4,7 +4,7 @@ import { JENIS_IKAN_BUDIDAYA } from '../../config/komoditas';
 const JENIS_KOLAM = ['Kolam tanah','Kolam beton','Kolam terpal','Karamba','Lainnya'];
 const S = (s) => ({ fontSize:11, ...s });
 
-function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleShow, user, mapRef, supabase, onRefresh }) {
+function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleShow, user, mapRef, supabase, onRefresh, onPickLocation }) {
   const [mode, setMode]             = useState(null); // 'add'|'edit'|'add_prod'
   const [editTarget, setEditTarget] = useState(null);
   const [prodTarget, setProdTarget] = useState(null);
@@ -180,7 +180,8 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
             ))}
           </div>
 
-          <button className="sp-btn sp-btn-secondary" style={{width:'100%',marginTop:8}} onClick={()=>setPicking(true)}>
+          <button className="sp-btn sp-btn-secondary" style={{width:'100%',marginTop:8}}
+            onClick={()=> onPickLocation && onPickLocation((latlng) => setPendingPin(latlng))}>
             📍 {pendingPin?`✅ ${pendingPin.lat.toFixed(5)}, ${pendingPin.lng.toFixed(5)}`:'Pilih Lokasi di Peta'}
           </button>
           <button className="sp-btn sp-btn-primary" style={{width:'100%',marginTop:8,background:'#0096c7'}} disabled={saving} onClick={saveBudidaya}>

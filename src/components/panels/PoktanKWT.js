@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { ALL_KEL } from '../../config/wilayah';
 
-function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, onTogglePoktan, onToggleKWT, onToggleGapoktan, user, mapRef, supabase, onRefresh }) {
+function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, onTogglePoktan, onToggleKWT, onToggleGapoktan, user, mapRef, supabase, onRefresh, onPickLocation }) {
   const initForm = {
     nama_poktan: '', jenis: 'Poktan', nama_ketua: '',
     jumlah_anggota: '', kelurahan: '',
@@ -137,8 +137,9 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
 
           {/* Lokasi */}
           <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-            <button className="sp-btn sp-btn-secondary" style={{ flex: 1 }} onClick={() => setPicking(true)}>
-              📍 {pendingPin ? `✅ ${pendingPin.lat.toFixed(4)}, ${pendingPin.lng.toFixed(4)}` : 'Pilih Lokasi'}
+            <button className="sp-btn sp-btn-secondary" style={{ width:'100%', marginTop:8 }}
+              onClick={() => onPickLocation && onPickLocation((latlng) => setPendingPin(latlng))}>
+              📍 {pendingPin?`✅ ${pendingPin.lat.toFixed(4)}, ${pendingPin.lng.toFixed(4)}`:'Pilih Lokasi di Peta'}
             </button>
           </div>
 
