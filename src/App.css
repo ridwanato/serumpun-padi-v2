@@ -708,10 +708,11 @@
 
 .sp-header-btn-row {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   padding: 6px 12px;
   background: rgba(22, 101, 52, 0.85);
   backdrop-filter: blur(10px);
+  justify-content: flex-end;
 }
 
 .sp-ikpg-wrap {

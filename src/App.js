@@ -119,7 +119,7 @@ function App() {
 
       {/* FSVA/SKPG Dropdown */}
       {showIKPGPanel && (
-        <div style={{ position: 'fixed', top: 96, right: 12, zIndex: 1001 }}>
+        <div style={{ position: 'fixed', top: 56, right: 12, zIndex: 1001 }}>
           <FSVASelector activeLayer={activeIKPGLayer} onLayerChange={setActiveIKPGLayer} ikpgOpacity={ikpgOpacity} onOpacityChange={setIkpgOpacity} />
         </div>
       )}

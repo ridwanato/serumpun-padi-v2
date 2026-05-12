@@ -73,6 +73,7 @@ function Dashboard({
 
   // Menu cards
   const menuCards = [
+    { icon: '⚙️', label: 'Update Data IKP', view: 'ikpg_admin' },
     { icon: '📋', label: 'Rekap Luas Tanam', view: 'rekap_luas' },
     { icon: '🏢', label: 'Rekap Produksi', view: 'rekap_produksi' },
     { icon: '🗺️', label: 'Peta Poligon', view: 'gambar_poligon' },
