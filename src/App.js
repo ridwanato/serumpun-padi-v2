@@ -175,30 +175,35 @@ function App() {
   const toggleAllKec = () => { const next = {}; ALL_KEC.forEach(n => next[n] = !allKecChecked); setSelectedKec(next); };
   const toggleAllKel = () => { const next = {}; visibleKelList.forEach(n => next[n] = !allKelChecked); setSelectedKel(next); };
 
-  /* ── Pick Location — overlay div approach (most reliable) ── */
+  /* ── Pick Location — Leaflet Map Click approach ── */
   const pickCallbackRef = useRef(null);
   const startPickLocation = useCallback((callback) => {
-    pickCallbackRef.current = callback;
     setIsPanelOpen(false);
-    setIsPicking(true);   // show transparent overlay div
+    setIsPicking(true);
+    if (mapRef.current) {
+      mapRef.current.getContainer().classList.add('is-picking-mode');
+      const onMapClick = (e) => {
+        if (pickCallbackRef.current && pickCallbackRef.current.cb) {
+          pickCallbackRef.current.cb({ lat: e.latlng.lat, lng: e.latlng.lng });
+        }
+        setIsPicking(false);
+        setIsPanelOpen(true);
+        mapRef.current.getContainer().classList.remove('is-picking-mode');
+        mapRef.current.off('click', pickCallbackRef.current.onMapClick);
+        pickCallbackRef.current = null;
+      };
+      pickCallbackRef.current = { cb: callback, onMapClick };
+      mapRef.current.on('click', onMapClick);
+    }
   }, []);
   const cancelPick = useCallback(() => {
-    pickCallbackRef.current = null;
     setIsPicking(false);
     setIsPanelOpen(true);
-  }, []);
-  const handleOverlayClick = useCallback((e) => {
-    if (!mapRef.current) return;
-    const container = mapRef.current.getContainer();
-    const rect = container.getBoundingClientRect();
-    const point = L.point(e.clientX - rect.left, e.clientY - rect.top);
-    const latlng = mapRef.current.containerPointToLatLng(point);
-    if (pickCallbackRef.current) {
-      pickCallbackRef.current({ lat: latlng.lat, lng: latlng.lng });
-      pickCallbackRef.current = null;
+    if (mapRef.current && pickCallbackRef.current) {
+      mapRef.current.getContainer().classList.remove('is-picking-mode');
+      mapRef.current.off('click', pickCallbackRef.current.onMapClick);
     }
-    setIsPicking(false);
-    setIsPanelOpen(true);
+    pickCallbackRef.current = null;
   }, []);
 
   /* ── Draw mode — programmatically trigger Leaflet Draw ── */
@@ -282,11 +287,11 @@ function App() {
         nama:          props.pemilik || props.nama || props.name || props.Name || `Sawah ${activeSawah._id}`,
         kecamatan:     props.kecamatan || props.WADMKC || null,
         kelurahan:     props.kelurahan || props.WADMKD || null,
-        luas_m2:       props.Shape_Area || (props.luas_ha ? props.luas_ha * 10000 : 0),
+        luas_m2:       (!isNaN(parseFloat(props.Shape_Area)) ? parseFloat(props.Shape_Area) : (!isNaN(parseFloat(props.luas_ha)) ? parseFloat(props.luas_ha) * 10000 : 0)),
         status:        status.status      || null,
         varietas:      status.varietas    || null,
         tanggal_tanam: status.tanggalTanam|| null,
-        hasil_ubinan:  status.hasilUbinan || null,
+        hasil_ubinan:  (!status.hasilUbinan || isNaN(parseFloat(status.hasilUbinan))) ? null : parseFloat(status.hasilUbinan),
         updated_at:    new Date().toISOString(),
       },
       { onConflict: 'sawah_id' }
@@ -483,11 +488,9 @@ function App() {
         <>
           {/* Banner instruksi */}
           <div className="sp-pick-banner">
-            <span>📍 Klik di peta untuk memilih lokasi pin</span>
+            <span>📍 Geser/Zoom peta, lalu klik untuk pin lokasi</span>
             <button onClick={cancelPick}>✕ Batal</button>
           </div>
-          {/* Overlay transparan menutupi seluruh layar termasuk poligon */}
-          <div className="sp-pick-overlay" onClick={handleOverlayClick} />
         </>
       )}
 

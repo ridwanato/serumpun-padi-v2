@@ -59,7 +59,7 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
     if(!formB.nama_pemilik) return alert('Nama pemilik wajib diisi.');
     setSaving(true);
     const kolamStr    = JSON.stringify(formB.kolam_units);
-    const totalLuasM2 = Object.values(formB.kolam_units).reduce((s,v)=>s+parseFloat(v||0),0);
+    const totalLuasM2 = Object.values(formB.kolam_units).reduce((s,v)=>{ const num = parseFloat(v); return s + (isNaN(num) ? 0 : num); }, 0);
     const jenisIkan   = Object.keys(formB.ikan_units).filter(k=>formB.ikan_units[k]).join(',');
     const payload     = {
       nama_pemilik: formB.nama_pemilik, jenis_ikan: jenisIkan,

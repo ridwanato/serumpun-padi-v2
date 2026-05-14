@@ -4,15 +4,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
 .sp-app { height: 100vh; width: 100vw; overflow: hidden; position: relative; }
 
 /* ===== PICK LOCATION OVERLAY ===== */
-/* Menutupi seluruh layar — TERMASUK semua poligon Leaflet */
-.sp-pick-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 8500;          /* di atas semua Leaflet pane (max ~700) */
-  cursor: crosshair !important;
-  background: transparent;
-  touch-action: none;
-}
+/* Saat map dalam mode pick location */
+.is-picking-mode, .is-picking-mode * { cursor: crosshair !important; }
+.is-picking-mode .leaflet-interactive { pointer-events: none !important; }
 /* Banner instruksi di atas overlay */
 .sp-pick-banner {
   position: fixed;

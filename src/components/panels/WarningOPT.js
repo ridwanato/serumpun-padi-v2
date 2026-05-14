@@ -24,7 +24,7 @@ function WarningOPT({ warningKMZ, warnings, showPin, onToggleShow, user, supabas
       komoditas: form.komoditas,
       kelurahan: form.kelurahan,
       kecamatan: form.kecamatan,
-      luas_terdampak: form.luas_terdampak ? parseFloat(form.luas_terdampak) : null,
+      luas_terdampak: (!form.luas_terdampak || isNaN(parseFloat(form.luas_terdampak))) ? null : parseFloat(form.luas_terdampak),
       satuan_luas: form.satuan_luas,
       tanggal_kejadian: form.tanggal_kejadian || null,
       keterangan: form.keterangan,

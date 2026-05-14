@@ -29,7 +29,7 @@ function Hortikultura({
       nama_pemilik: form.nama_pemilik,
       lat: pendingPin.lat,
       lon: pendingPin.lng,
-      kapasitas_value: form.kapasitas_value || null,
+      kapasitas_value: (!form.kapasitas_value || isNaN(parseFloat(form.kapasitas_value))) ? null : parseFloat(form.kapasitas_value),
       kapasitas_satuan: form.kapasitas_satuan,
       tanggal_tanam: tgl,
       prediksi_panen: prediksi,

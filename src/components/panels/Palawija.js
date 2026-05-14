@@ -36,7 +36,7 @@ function Palawija({ palawijaKMZ, palawijaList, showPin, onToggleShow, user, mapR
       nama_pemilik: form.nama_pemilik,
       lat: pendingPin?.lat || 0,
       lon: pendingPin?.lng || 0,
-      kapasitas_value: form.kapasitas_value || null,
+      kapasitas_value: (!form.kapasitas_value || isNaN(parseFloat(form.kapasitas_value))) ? null : parseFloat(form.kapasitas_value),
       kapasitas_satuan: form.kapasitas_satuan,
       tanggal_tanam: tgl,
       prediksi_panen: prediksi,
