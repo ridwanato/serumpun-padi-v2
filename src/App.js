@@ -539,35 +539,19 @@ function App() {
         </div>
       </div>
 
-      {/* ── Top Right Controls: Hamburger + User ── */}
+      {/* ── Top Right Controls: Hamburger ── */}
       <div className="sp-top-right" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
         <button className={`sp-btn-menu${isPanelOpen ? ' is-open' : ''}`} onClick={handleHamburger}>
           <span className="sp-btn-menu__bar" /><span className="sp-btn-menu__bar" /><span className="sp-btn-menu__bar" />
         </button>
-        {user ? (
-          <button className="sp-panel__user-btn" onClick={async () => { await supabase.auth.signOut(); setUser(null); }} title="Keluar"
-            style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(27, 67, 50, 0.95)', backdropFilter: 'blur(8px)', border: 'none', borderRadius: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.3)', padding: '6px 10px', cursor: 'pointer', color: '#fff' }}>
-            <span className="sp-panel__user-name"
-              style={{ maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 10 }}>
-              {user.email?.split('@')[0]}
-            </span>
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
-          </button>
-        ) : (
-          <button className="sp-panel__user-btn sp-panel__user-btn--login" onClick={() => setShowAuth(true)}
-            style={{ background: 'rgba(27, 67, 50, 0.95)', backdropFilter: 'blur(8px)', border: 'none', borderRadius: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.3)', color: '#fff', padding: '6px 10px', cursor: 'pointer', fontSize: 11, fontWeight: 600 }}>
-            🔐 Login
-          </button>
-        )}
       </div>
 
       {/* ── Overlay + Panel ── */}
       {isPanelOpen && <div className="sp-overlay" onClick={closePanel} />}
       <div className={`sp-panel${isPanelOpen ? ' is-open' : ''}`}>
         <PanelHeader
-          panelView={panelView} onClose={closePanel} onBack={goBack} />
+          panelView={panelView} onClose={closePanel} onBack={goBack} 
+          user={user} setUser={setUser} supabase={supabase} setShowAuth={setShowAuth} />
         <div className="sp-panel__body">{renderPanelContent()}</div>
       </div>
 

@@ -26,7 +26,7 @@ const ExitIcon = () => (
   </svg>
 );
 
-function PanelHeader({ panelView, onClose, onBack }) {
+function PanelHeader({ panelView, onClose, onBack, user, setUser, supabase, setShowAuth }) {
   const today = new Date().toLocaleDateString('id-ID', {
     weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
   });
@@ -43,12 +43,30 @@ function PanelHeader({ panelView, onClose, onBack }) {
   // Header Dashboard
   if (panelView === 'dashboard') {
     return (
-      <div className="sp-panel__header sp-panel__header--dashboard">
+      <div className="sp-panel__header sp-panel__header--dashboard" style={{ position: 'relative' }}>
         <div className="sp-panel__header-titleblock">
           <span className="sp-panel__title">{t.icon} {t.text}</span>
-          <span className="sp-panel__date">{today}</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 2 }}>
+            <span className="sp-panel__date" style={{ marginTop: 0 }}>{today}</span>
+            {/* User Button */}
+            {user ? (
+              <button className="sp-panel__user-btn" onClick={async () => { await supabase.auth.signOut(); setUser(null); }} title="Keluar"
+                style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer', color: '#fff', marginLeft: 'auto', marginBottom: '-2px' }}>
+                <span className="sp-panel__user-name"
+                  style={{ maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 10 }}>
+                  {user.email?.split('@')[0]}
+                </span>
+                <ExitIcon />
+              </button>
+            ) : (
+              <button className="sp-panel__user-btn sp-panel__user-btn--login" onClick={() => setShowAuth(true)}
+                style={{ background: 'rgba(255, 255, 255, 0.15)', border: 'none', borderRadius: '6px', color: '#fff', padding: '4px 8px', cursor: 'pointer', fontSize: 10, fontWeight: 600, marginLeft: 'auto', marginBottom: '-2px' }}>
+                🔐 Login
+              </button>
+            )}
+          </div>
         </div>
-        <div className="sp-panel__header-right">
+        <div className="sp-panel__header-right" style={{ alignSelf: 'flex-start' }}>
           {closeBtn}
         </div>
       </div>
