@@ -4,7 +4,7 @@ const PANEL_TITLES = {
   dashboard:          { icon: '🌾', text: 'Dashboard Pertanian Cilegon' },
   gambar_poligon:     { icon: '🗺️',  text: 'Gambar Poligon' },
   sawah_detail:       { icon: '📍', text: 'Detail Sawah' },
-  status_sawah:       { icon: '🌾', text: 'Status Sawah' },
+  status_sawah:       { icon: '🌾', text: 'Rekap Luas Sawah' },
   rekap_luas:         { icon: '📋', text: 'Rekap Luas Tanam' },
   rekap_produksi:     { icon: '🏢', text: 'Rekap Produksi Padi' },
   hortikultura:       { icon: '🌶️', text: 'Hortikultura' },

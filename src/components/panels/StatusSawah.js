@@ -56,8 +56,11 @@ function StatusSawah({
       />
       
       <div ref={contentRef} style={{ background: '#fff' }}>
-      <div className="sp-info-box__title" style={{ marginBottom: 12 }}>
-        🌾 Status sawah per kecamatan & kelurahan
+      <div className="sp-info-box__title" style={{ marginBottom: 4 }}>
+        🌾 Luas sawah per kecamatan & kelurahan
+      </div>
+      <div style={{ fontSize: 10, color: '#6b7280', marginBottom: 16, paddingLeft: 22 }}>
+        Sumber data poligon sawah: LBS 2025 yang dikoreksi (metode Intersection Geoprocessing Tools-QGIS)
       </div>
 
       {kecList.map(kec => {

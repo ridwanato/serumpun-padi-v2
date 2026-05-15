@@ -76,7 +76,7 @@ function Dashboard({
     { icon: '📋', label: 'Rekap Luas Tanam', view: 'rekap_luas' },
     { icon: '🏢', label: 'Rekap Produksi', view: 'rekap_produksi' },
     { icon: '🗺️', label: 'Peta Poligon', view: 'gambar_poligon' },
-    { icon: '🌾', label: 'Status Sawah', view: 'status_sawah' },
+    { icon: '🌾', label: 'Rekap Luas Sawah', view: 'status_sawah' },
     { icon: '🌶️', label: 'Hortikultura', view: 'hortikultura' },
     { icon: '🌿', label: 'Palawija', view: 'palawija' },
     { icon: '👨‍🌾', label: 'Poktan & KWT', view: 'poktan_kwt' },
