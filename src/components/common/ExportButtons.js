@@ -1,7 +1,4 @@
 import React, { useState } from 'react';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
-import * as XLSX from 'xlsx';
 
 function ExportButtons({ user, fileName, contentRef, excelData, onCustomPdf, onCustomExcel }) {
   const [loading, setLoading] = useState(false);
@@ -26,10 +23,12 @@ function ExportButtons({ user, fileName, contentRef, excelData, onCustomPdf, onC
         element.style.padding = '20px';
         element.style.background = '#ffffff';
         
+        const html2canvas = (await import('html2canvas')).default;
         const canvas = await html2canvas(element, { scale: 2, useCORS: true });
         element.style.cssText = originalStyle;
 
         const imgData = canvas.toDataURL('image/png');
+        const jsPDF = (await import('jspdf')).default;
         const pdf = new jsPDF('p', 'mm', 'a4');
         
         const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -61,6 +60,7 @@ function ExportButtons({ user, fileName, contentRef, excelData, onCustomPdf, onC
           setLoading(false);
           return;
         }
+        const XLSX = await import('xlsx');
         const worksheet = XLSX.utils.json_to_sheet(excelData);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, 'Data');

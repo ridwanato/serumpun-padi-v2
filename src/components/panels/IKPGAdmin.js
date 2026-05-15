@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import * as XLSX from 'xlsx';
 import { ALL_KEL } from '../../config/wilayah';
 import { getFSVACategory, getBordaDesil, BORDA_LEGEND } from '../../config/ikpg';
 
 function IKPGAdmin({ user, supabase, fsvaData, skpgData, onRefresh }) {
   const [uploadStatus, setUploadStatus] = useState({ fsva: '', skpg: '' });
 
-  const downloadTemplate = (type) => {
+  const downloadTemplate = async (type) => {
+    const XLSX = await import('xlsx');
     const cols = type === 'fsva'
       ? ['nama_kelurahan', 'kode_kel_bps', 'ikp', 'periode']
       : ['nama_kelurahan', 'gizi_kurang', 'gizi_sangat_kurang', 'gizi_berlebih', 'gizi_normal', 'periode'];
@@ -24,6 +24,7 @@ function IKPGAdmin({ user, supabase, fsvaData, skpgData, onRefresh }) {
     setUploadStatus(s => ({ ...s, fsva: 'Memproses...' }));
     try {
       const buf = await file.arrayBuffer();
+      const XLSX = await import('xlsx');
       const wb = XLSX.read(buf); const ws = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(ws);
       const sorted = [...rows].sort((a, b) => parseFloat(a.ikp || 0) - parseFloat(b.ikp || 0));
@@ -48,6 +49,7 @@ function IKPGAdmin({ user, supabase, fsvaData, skpgData, onRefresh }) {
     setUploadStatus(s => ({ ...s, skpg: 'Memproses...' }));
     try {
       const buf = await file.arrayBuffer();
+      const XLSX = await import('xlsx');
       const wb = XLSX.read(buf); const ws = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(ws);
 

@@ -1,6 +1,5 @@
 import React, { useState, useRef } from 'react';
 import * as turf from '@turf/turf';
-import * as XLSX from 'xlsx';
 import { STATUS_CONFIG } from '../../config/komoditas';
 import { hitungStatusOtomatis } from '../../utils/agronomi';
 import ExportButtons from '../common/ExportButtons';
@@ -61,6 +60,7 @@ function StatusSawah({
       ...rows
     ];
     
+    const XLSX = await import('xlsx');
     const ws = XLSX.utils.aoa_to_sheet(aoa);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Rekap Luas");
