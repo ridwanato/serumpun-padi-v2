@@ -67,55 +67,12 @@ function StatusSawah({
     XLSX.writeFile(wb, "Rekap_Luas_Sawah.xlsx");
   };
 
-  const handleCustomPdf = async () => {
-    const jsPDF = (await import('jspdf')).default;
-    await import('jspdf-autotable');
-    
-    const doc = new jsPDF('l', 'mm', 'a4');
-    
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text("REKAP LUAS SAWAH PER KECAMATAN DAN KELURAHAN", 14, 20);
-    
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text("* Sumber data poligon: LBS 2025 yang dikoreksi dengan metode Geometry Intersection Vector", 14, 26);
-    
-    const rows = generateReportData();
-    
-    doc.autoTable({
-      startY: 32,
-      head: [["No", "Kecamatan", "Kelurahan", "Luas Sawah (Ha)", "Satuan (Ha)"]],
-      body: rows,
-      theme: 'grid',
-      headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center', lineWidth: 0.1, lineColor: [0, 0, 0] },
-      styles: { lineWidth: 0.1, lineColor: [0, 0, 0] },
-      columnStyles: {
-        0: { halign: 'center', cellWidth: 15 },
-        1: { cellWidth: 60 },
-        2: { cellWidth: 60 },
-        3: { halign: 'right', cellWidth: 40 },
-        4: { halign: 'center', cellWidth: 30 }
-      },
-      didParseCell: function (data) {
-        if (data.section === 'body') {
-          if (data.row.raw[0] !== "") {
-            data.cell.styles.fontStyle = 'bold';
-          }
-        }
-      }
-    });
-    
-    doc.save("Rekap_Luas_Sawah.pdf");
-  };
-
   return (
     <div style={{ padding: 12 }}>
       <ExportButtons
         user={user}
         fileName="Status_Detail_Sawah_Serumpun_Padi"
         contentRef={contentRef}
-        onCustomPdf={handleCustomPdf}
         onCustomExcel={handleCustomExcel}
       />
       

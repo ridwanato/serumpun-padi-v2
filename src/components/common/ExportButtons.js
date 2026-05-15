@@ -3,45 +3,8 @@ import React, { useState } from 'react';
 function ExportButtons({ user, fileName, contentRef, excelData, onCustomPdf, onCustomExcel }) {
   const [loading, setLoading] = useState(false);
 
-  const handleExportPDF = async () => {
-    if (!user) {
-      alert('🔒 Fitur unduh dokumen PDF eksklusif hanya untuk pengguna terdaftar. Silakan login terlebih dahulu melalui menu di pojok kanan atas.');
-      return;
-    }
-    
-    setLoading(true);
-    try {
-      if (onCustomPdf) {
-        await onCustomPdf();
-      } else {
-        if (!contentRef || !contentRef.current) {
-          setLoading(false);
-          return;
-        }
-        const element = contentRef.current;
-        const originalStyle = element.style.cssText;
-        element.style.padding = '20px';
-        element.style.background = '#ffffff';
-        
-        const html2canvas = (await import('html2canvas')).default;
-        const canvas = await html2canvas(element, { scale: 2, useCORS: true });
-        element.style.cssText = originalStyle;
-
-        const imgData = canvas.toDataURL('image/png');
-        const jsPDF = (await import('jspdf')).default;
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save(`${fileName}.pdf`);
-      }
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      alert('Gagal menghasilkan PDF.');
-    }
-    setLoading(false);
+  const handleExportPDF = () => {
+    alert('Informasi: Fitur unduh PDF dinonaktifkan sementara untuk meningkatkan kecepatan (loading) aplikasi. Silakan gunakan fitur Unduh Excel.');
   };
 
   const handleExportExcel = async () => {
