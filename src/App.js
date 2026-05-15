@@ -246,10 +246,12 @@ function App() {
   const finishDrawMode = () => {
     drawHandlerRef.current?.save?.(); drawHandlerRef.current?.disable();
     drawHandlerRef.current = null; setDrawMode(null);
+    document.querySelectorAll('.leaflet-draw-tooltip').forEach(el => el.remove());
   };
   const cancelDrawMode = () => {
     drawHandlerRef.current?.revertLayers?.(); drawHandlerRef.current?.disable();
     drawHandlerRef.current = null; setDrawMode(null);
+    document.querySelectorAll('.leaflet-draw-tooltip').forEach(el => el.remove());
   };
 
   const handleFileImport = async (e) => {
@@ -270,6 +272,19 @@ function App() {
   const handleCreated = (e) => {
     const geojson = e.layer.toGeoJSON();
     const area = turf.area(geojson);
+    const perimeter = turf.length(geojson, { units: 'meters' });
+    
+    const areaHa = (area / 10000).toFixed(2);
+    const perimM = perimeter.toFixed(2);
+    
+    e.layer.bindTooltip(
+      `<div style="text-align:center;font-weight:bold;color:#166534;background:rgba(255,255,255,0.9);padding:2px 6px;border-radius:4px;border:1px solid #166534;box-shadow:0 2px 4px rgba(0,0,0,0.2);">
+        <div style="font-size:12px;">${areaHa} Ha</div>
+        <div style="font-size:10px;font-weight:normal;color:#333;">Keliling: ${perimM} m</div>
+      </div>`,
+      { permanent: true, direction: 'center', className: 'sp-custom-draw-tooltip' }
+    );
+    
     const id = Date.now().toString();
     drawnLayersRef.current[id] = e.layer;
     setDrawnPolygons(prev => [...prev, { id, name: `Poligon #${prev.length + 1}`, geojson, area }]);
@@ -570,7 +585,8 @@ function App() {
         <DrawToolbar
           drawMode={drawMode}
           triggerDraw={triggerDraw} triggerEdit={triggerEdit} triggerDelete={triggerDelete}
-          finishDrawMode={finishDrawMode} cancelDrawMode={cancelDrawMode} />
+          finishDrawMode={finishDrawMode} cancelDrawMode={cancelDrawMode}
+          onClose={() => setShowDrawBar(false)} />
       )}
 
       {/* ── Peta ── */}
