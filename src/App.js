@@ -545,7 +545,7 @@ function App() {
           <span className="sp-btn-menu__bar" /><span className="sp-btn-menu__bar" /><span className="sp-btn-menu__bar" />
         </button>
         {user ? (
-          <button className="sp-panel__user-btn" onClick={() => setUser(null)} title="Keluar"
+          <button className="sp-panel__user-btn" onClick={async () => { await supabase.auth.signOut(); setUser(null); }} title="Keluar"
             style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(27, 67, 50, 0.95)', backdropFilter: 'blur(8px)', border: 'none', borderRadius: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.3)', padding: '6px 10px', cursor: 'pointer', color: '#fff' }}>
             <span className="sp-panel__user-name"
               style={{ maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 10 }}>
