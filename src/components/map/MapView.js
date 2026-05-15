@@ -46,6 +46,7 @@ function MapView({
       zoom={13}
       style={{ height: '100%', width: '100%' }}
       className={!showDrawBar ? 'sp-hide-draw' : ''}
+      preferCanvas={true}
     >
       <TileLayer
         url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"

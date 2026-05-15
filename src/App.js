@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { Pane } from 'react-leaflet';
 import './App.css';
 import { useKMZLoader } from './hooks/useKMZLoader';
 import { STATUS_CONFIG, VARIETAS_CONFIG } from './config/komoditas';
@@ -331,10 +332,7 @@ function App() {
     return { color: '#00ff00', weight: 2, fillOpacity, fillColor: cfg.fillColor || '#cccccc' };
   };
   const onEachSawah    = (feature, layer) => {
-    layer.on('add', () => {
-      // Pastikan layer sawah selalu berada di atas layer kecamatan/kelurahan
-      layer.bringToFront();
-    });
+    // Menghapus layer.on('add', bringToFront) yang membuat lag (O(N^2))
     layer.on('click', (e) => {
       if (drawModeRef.current) return; // biarkan L.Draw menangani klik saat draw aktif
       L.DomEvent.stopPropagation(e);
@@ -342,13 +340,9 @@ function App() {
     });
   };
   const onEachKecamatan = (f, l) => {
-    l.on('add', () => l.bringToBack());
     l.bindPopup(`<b style="color:#c0392b">🏛️ ${f.properties?.name || ''}</b>`);
   };
   const onEachKelurahan = (f, l) => {
-    l.on('add', () => {
-      l.bringToBack();
-    });
     const nama = f.properties?.name || '';
     // Selalu bind tooltip — visibility dikontrol oleh CSS class di map container
     const fs = Math.max(7, Math.min(13, (mapZoom - 8) * 1.5)).toFixed(1);
@@ -601,22 +595,26 @@ function App() {
           mapZoom={mapZoom} setMapZoom={setMapZoom}
           showDrawBar={showDrawBar} onCreated={handleCreated}>
 
-          {/* Admin boundaries */}
-          <KecamatanLayer data={filteredKec} onEachFeature={onEachKecamatan} />
-          <KelurahanLayer
-            data={filteredKel}
-            onEachFeature={onEachKelurahan}
-            activeIKPGLayer={activeIKPGLayer}
-            ikpgOpacity={ikpgOpacity}
-            fsvaData={fsvaData}
-            skpgData={skpgData}
-            activeKelNames={activeKelNames} />
+          {/* Admin boundaries (Z-Index 400) */}
+          <Pane name="admin-pane" style={{ zIndex: 400 }}>
+            <KecamatanLayer data={filteredKec} onEachFeature={onEachKecamatan} />
+            <KelurahanLayer
+              data={filteredKel}
+              onEachFeature={onEachKelurahan}
+              activeIKPGLayer={activeIKPGLayer}
+              ikpgOpacity={ikpgOpacity}
+              fsvaData={fsvaData}
+              skpgData={skpgData}
+              activeKelNames={activeKelNames} />
+          </Pane>
 
-          {/* Sawah polygons */}
-          <SawahLayer
-            data={filteredSawah} showSawah={showSawah}
-            getStyle={getSawahStyle} onEachFeature={onEachSawah}
-            sawahStatus={sawahStatus} fillOpacity={fillOpacity} />
+          {/* Sawah polygons (Z-Index 450 - Always on top of admin boundaries) */}
+          <Pane name="sawah-pane" style={{ zIndex: 450 }}>
+            <SawahLayer
+              data={filteredSawah} showSawah={showSawah}
+              getStyle={getSawahStyle} onEachFeature={onEachSawah}
+              sawahStatus={sawahStatus} fillOpacity={fillOpacity} />
+          </Pane>
 
           {/* KMZ Pins */}
           <HortiPins  data={hortiKMZ}    show={showHortiPin} />
