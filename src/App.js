@@ -316,14 +316,24 @@ function App() {
     return { color: '#00ff00', weight: 2, fillOpacity, fillColor: cfg.fillColor || '#cccccc' };
   };
   const onEachSawah    = (feature, layer) => {
+    layer.on('add', () => {
+      // Pastikan layer sawah selalu berada di atas layer kecamatan/kelurahan
+      layer.bringToFront();
+    });
     layer.on('click', (e) => {
       if (drawModeRef.current) return; // biarkan L.Draw menangani klik saat draw aktif
       L.DomEvent.stopPropagation(e);
       setActiveSawahId(feature._id); openPanel('sawah_detail');
     });
   };
-  const onEachKecamatan = (f, l) => l.bindPopup(`<b style="color:#c0392b">🏛️ ${f.properties?.name || ''}</b>`);
+  const onEachKecamatan = (f, l) => {
+    l.on('add', () => l.bringToBack());
+    l.bindPopup(`<b style="color:#c0392b">🏛️ ${f.properties?.name || ''}</b>`);
+  };
   const onEachKelurahan = (f, l) => {
+    l.on('add', () => {
+      l.bringToBack();
+    });
     const nama = f.properties?.name || '';
     // Selalu bind tooltip — visibility dikontrol oleh CSS class di map container
     const fs = Math.max(7, Math.min(13, (mapZoom - 8) * 1.5)).toFixed(1);
