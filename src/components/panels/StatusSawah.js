@@ -1,16 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import * as turf from '@turf/turf';
 import { STATUS_CONFIG } from '../../config/komoditas';
 import { hitungStatusOtomatis } from '../../utils/agronomi';
+import ExportButtons from '../common/ExportButtons';
 
 function StatusSawah({
   filteredSawah,
   sawahStatus,
   selectedKec,
   onZoomToSawah,
+  user,
 }) {
   const [openAccKec, setOpenAccKec] = useState(null);
   const [openAccKel, setOpenAccKel] = useState(null);
+  const contentRef = useRef(null);
 
   // Dapatkan daftar kecamatan yang aktif
   const kecList = Object.keys(selectedKec).filter(k => selectedKec[k]);
@@ -24,8 +27,35 @@ function StatusSawah({
     );
   }
 
+  // Siapkan data Excel
+  const excelData = filteredSawah.map(f => {
+    const sd = sawahStatus[f._id] || {};
+    let sk = 'belum';
+    if (sd.status === 'otomatis' && sd.tanggalTanam) {
+      sk = hitungStatusOtomatis(sd.tanggalTanam);
+    } else if (sd.status && sd.status !== 'otomatis') {
+      sk = sd.status;
+    }
+    const cfg = STATUS_CONFIG[sk] || STATUS_CONFIG.belum;
+    return {
+      'Nama Pemilik/Sawah': f.properties?.name || f.properties?.Name || 'Tanpa Nama',
+      Kecamatan: f.properties?.kecamatan || '-',
+      Kelurahan: f.properties?.kelurahan || '-',
+      'Luas (Ha)': parseFloat((turf.area(f) / 10000).toFixed(4)),
+      Status: cfg.label
+    };
+  });
+
   return (
     <div style={{ padding: 12 }}>
+      <ExportButtons
+        user={user}
+        fileName="Status_Detail_Sawah_Serumpun_Padi"
+        contentRef={contentRef}
+        excelData={excelData}
+      />
+      
+      <div ref={contentRef} style={{ background: '#fff' }}>
       <div className="sp-info-box__title" style={{ marginBottom: 12 }}>
         🌾 Status sawah per kecamatan & kelurahan
       </div>
@@ -164,6 +194,7 @@ function StatusSawah({
           Tidak ada petak sawah di kecamatan terpilih.
         </p>
       )}
+      </div>
     </div>
   );
 }

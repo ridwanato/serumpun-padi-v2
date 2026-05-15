@@ -1,15 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import * as turf from '@turf/turf';
 import { STATUS_CONFIG } from '../../config/komoditas';
 import { hitungStatusOtomatis } from '../../utils/agronomi';
+import ExportButtons from '../common/ExportButtons';
 
 function RekapLuas({
   filteredSawah,
   sawahStatus,
   selectedKec,
   onZoomToSawah,
+  user,
 }) {
   const [drillFilter, setDrillFilter] = useState(null);
+  const contentRef = useRef(null);
 
   // Hitung total luas
   const totalM2 = filteredSawah.reduce((s, f) => s + turf.area(f), 0);
@@ -110,10 +113,37 @@ function RekapLuas({
     );
   }
 
+  // Siapkan data Excel
+  const excelData = Object.entries(STATUS_CONFIG).map(([k, cfg]) => {
+    const m2 = breakdown[k] || 0;
+    const ha = m2 / 10000;
+    const pct = totalM2 > 0 ? (m2 / totalM2 * 100) : 0;
+    const petak = filteredSawah.filter(f => getStatus(f) === k).length;
+    return {
+      Status: cfg.label,
+      'Luas (Ha)': parseFloat(ha.toFixed(2)),
+      'Jumlah Petak': petak,
+      'Persentase (%)': parseFloat(pct.toFixed(2))
+    };
+  });
+  excelData.push({
+    Status: 'TOTAL',
+    'Luas (Ha)': parseFloat(totalHa.toFixed(2)),
+    'Jumlah Petak': filteredSawah.length,
+    'Persentase (%)': 100
+  });
+
   // Tabel utama
   return (
     <div style={{ padding: 12 }}>
-      {/* Tabel per status */}
+      <ExportButtons
+        user={user}
+        fileName="Rekap_Luas_Sawah_Serumpun_Padi"
+        contentRef={contentRef}
+        excelData={excelData}
+      />
+      <div ref={contentRef} style={{ background: '#fff' }}>
+        {/* Tabel per status */}
       <div className="sp-info-box">
         <div className="sp-info-box__title">📊 Rekap luas sawah per status</div>
         <table style={{ width: '100%', fontSize: 11, borderCollapse: 'collapse' }}>
@@ -216,6 +246,7 @@ function RekapLuas({
             })}
           </tbody>
         </table>
+      </div>
       </div>
     </div>
   );

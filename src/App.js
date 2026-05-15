@@ -396,13 +396,13 @@ function App() {
       case 'status_sawah':
         return <StatusSawah
           filteredSawah={filteredSawah} sawahStatus={sawahStatus}
-          selectedKec={selectedKec} onZoomToSawah={zoomToSawah} />;
+          selectedKec={selectedKec} onZoomToSawah={zoomToSawah} user={user} />;
       case 'rekap_luas':
         return <RekapLuas
           filteredSawah={filteredSawah} sawahStatus={sawahStatus}
-          selectedKec={selectedKec} onZoomToSawah={zoomToSawah} />;
+          selectedKec={selectedKec} onZoomToSawah={zoomToSawah} user={user} />;
       case 'rekap_produksi':
-        return <RekapProduksi filteredSawah={filteredSawah} sawahStatus={sawahStatus} />;
+        return <RekapProduksi filteredSawah={filteredSawah} sawahStatus={sawahStatus} user={user} />;
       case 'hortikultura':
         return <Hortikultura
           hortiKMZ={hortiKMZ} hortis={hortiList} showHortiPin={showHortiPin}

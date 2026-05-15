@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import * as turf from '@turf/turf';
 import { VARIETAS_CONFIG } from '../../config/komoditas';
 import { hitungProduksi } from '../../utils/agronomi';
+import ExportButtons from '../common/ExportButtons';
 
-function RekapProduksi({ filteredSawah, sawahStatus }) {
+function RekapProduksi({ filteredSawah, sawahStatus, user }) {
+  const contentRef = useRef(null);
   let totalGKP = 0, totalGKG = 0, totalBeras = 0;
   const kecBulanMap = {};
 
@@ -42,8 +44,35 @@ function RekapProduksi({ filteredSawah, sawahStatus }) {
   });
   const hasData = Object.keys(kecBulanMap).length > 0;
 
+  // Siapkan data Excel
+  const excelData = [];
+  if (hasData) {
+    Object.entries(kecBulanMap).forEach(([kec, bulanData]) => {
+      const row = { Kecamatan: kec };
+      allBulan.forEach(b => {
+        const d = bulanData[b] || { gkg: 0 };
+        row[`${b} GKG (ton)`] = parseFloat(d.gkg.toFixed(2));
+      });
+      excelData.push(row);
+    });
+    // Baris Total
+    const totalRow = { Kecamatan: 'TOTAL' };
+    allBulan.forEach(b => {
+      const tot = Object.values(kecBulanMap).reduce((acc, bd) => acc + (bd[b]?.gkg || 0), 0);
+      totalRow[`${b} GKG (ton)`] = parseFloat(tot.toFixed(2));
+    });
+    excelData.push(totalRow);
+  }
+
   return (
     <div style={{ padding: 12 }}>
+      <ExportButtons
+        user={user}
+        fileName="Rekap_Produksi_Sawah_Serumpun_Padi"
+        contentRef={contentRef}
+        excelData={excelData}
+      />
+      <div ref={contentRef} style={{ background: '#fff' }}>
       {/* Source note */}
       <div style={{ fontSize: 9, color: '#999', textAlign: 'center', marginBottom: 4 }}>
         Estimasi produksi berdasarkan <b>SKGB 2018 (BPS)</b>
@@ -134,6 +163,7 @@ function RekapProduksi({ filteredSawah, sawahStatus }) {
           </table>
         </div>
       )}
+      </div>
     </div>
   );
 }
