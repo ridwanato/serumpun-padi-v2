@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import * as turf from '@turf/turf';
+import * as XLSX from 'xlsx';
 import { STATUS_CONFIG } from '../../config/komoditas';
 import { hitungStatusOtomatis } from '../../utils/agronomi';
 import ExportButtons from '../common/ExportButtons';
@@ -27,24 +28,86 @@ function StatusSawah({
     );
   }
 
-  // Siapkan data Excel
-  const excelData = filteredSawah.map(f => {
-    const sd = sawahStatus[f._id] || {};
-    let sk = 'belum';
-    if (sd.status === 'otomatis' && sd.tanggalTanam) {
-      sk = hitungStatusOtomatis(sd.tanggalTanam);
-    } else if (sd.status && sd.status !== 'otomatis') {
-      sk = sd.status;
-    }
-    const cfg = STATUS_CONFIG[sk] || STATUS_CONFIG.belum;
-    return {
-      'Nama Pemilik/Sawah': f.properties?.name || f.properties?.Name || 'Tanpa Nama',
-      Kecamatan: f.properties?.kecamatan || '-',
-      Kelurahan: f.properties?.kelurahan || '-',
-      'Luas (Ha)': parseFloat((turf.area(f) / 10000).toFixed(4)),
-      Status: cfg.label
-    };
-  });
+  const generateReportData = () => {
+    const rows = [];
+    let no = 1;
+    const sortedKec = [...kecList].sort();
+    
+    sortedKec.forEach(kec => {
+      const sawahKec = filteredSawah.filter(f => f.properties?.kecamatan === kec);
+      if (sawahKec.length === 0) return;
+      
+      const kels = [...new Set(sawahKec.map(f => f.properties?.kelurahan).filter(Boolean))].sort();
+      const luasKec = sawahKec.reduce((s, f) => s + turf.area(f), 0) / 10000;
+      
+      rows.push([ no++, kec, "", parseFloat(luasKec.toFixed(2)), "Ha" ]);
+      
+      kels.forEach(kel => {
+        const sawahKel = sawahKec.filter(f => f.properties?.kelurahan === kel);
+        const luasKel = sawahKel.reduce((s, f) => s + turf.area(f), 0) / 10000;
+        rows.push([ "", "", kel, parseFloat(luasKel.toFixed(2)), "Ha" ]);
+      });
+    });
+    return rows;
+  };
+
+  const handleCustomExcel = async () => {
+    const rows = generateReportData();
+    const aoa = [
+      ["REKAP LUAS SAWAH PER KECAMATAN DAN KELURAHAN"],
+      ["* Sumber data poligon: LBS 2025 yang dikoreksi dengan metode Geometry Intersection Vector"],
+      [],
+      ["No", "Kecamatan", "Kelurahan", "Luas Sawah (Ha)", "Satuan (Ha)"],
+      ...rows
+    ];
+    
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Rekap Luas");
+    XLSX.writeFile(wb, "Rekap_Luas_Sawah.xlsx");
+  };
+
+  const handleCustomPdf = async () => {
+    const jsPDF = (await import('jspdf')).default;
+    await import('jspdf-autotable');
+    
+    const doc = new jsPDF('l', 'mm', 'a4');
+    
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text("REKAP LUAS SAWAH PER KECAMATAN DAN KELURAHAN", 14, 20);
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text("* Sumber data poligon: LBS 2025 yang dikoreksi dengan metode Geometry Intersection Vector", 14, 26);
+    
+    const rows = generateReportData();
+    
+    doc.autoTable({
+      startY: 32,
+      head: [["No", "Kecamatan", "Kelurahan", "Luas Sawah (Ha)", "Satuan (Ha)"]],
+      body: rows,
+      theme: 'grid',
+      headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center', lineWidth: 0.1, lineColor: [0, 0, 0] },
+      styles: { lineWidth: 0.1, lineColor: [0, 0, 0] },
+      columnStyles: {
+        0: { halign: 'center', cellWidth: 15 },
+        1: { cellWidth: 60 },
+        2: { cellWidth: 60 },
+        3: { halign: 'right', cellWidth: 40 },
+        4: { halign: 'center', cellWidth: 30 }
+      },
+      didParseCell: function (data) {
+        if (data.section === 'body') {
+          if (data.row.raw[0] !== "") {
+            data.cell.styles.fontStyle = 'bold';
+          }
+        }
+      }
+    });
+    
+    doc.save("Rekap_Luas_Sawah.pdf");
+  };
 
   return (
     <div style={{ padding: 12 }}>
@@ -52,7 +115,8 @@ function StatusSawah({
         user={user}
         fileName="Status_Detail_Sawah_Serumpun_Padi"
         contentRef={contentRef}
-        excelData={excelData}
+        onCustomPdf={handleCustomPdf}
+        onCustomExcel={handleCustomExcel}
       />
       
       <div ref={contentRef} style={{ background: '#fff' }}>

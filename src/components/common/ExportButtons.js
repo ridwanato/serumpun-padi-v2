@@ -3,7 +3,7 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
 
-function ExportButtons({ user, fileName, contentRef, excelData }) {
+function ExportButtons({ user, fileName, contentRef, excelData, onCustomPdf, onCustomExcel }) {
   const [loading, setLoading] = useState(false);
 
   const handleExportPDF = async () => {
@@ -11,27 +11,33 @@ function ExportButtons({ user, fileName, contentRef, excelData }) {
       alert('🔒 Fitur unduh dokumen PDF eksklusif hanya untuk pengguna terdaftar. Silakan login terlebih dahulu melalui menu di pojok kanan atas.');
       return;
     }
-    if (!contentRef || !contentRef.current) return;
-
+    
     setLoading(true);
     try {
-      const element = contentRef.current;
-      // Tambahkan styling khusus sementara agar hasil cetak rapi
-      const originalStyle = element.style.cssText;
-      element.style.padding = '20px';
-      element.style.background = '#ffffff';
-      
-      const canvas = await html2canvas(element, { scale: 2, useCORS: true });
-      element.style.cssText = originalStyle;
+      if (onCustomPdf) {
+        await onCustomPdf();
+      } else {
+        if (!contentRef || !contentRef.current) {
+          setLoading(false);
+          return;
+        }
+        const element = contentRef.current;
+        const originalStyle = element.style.cssText;
+        element.style.padding = '20px';
+        element.style.background = '#ffffff';
+        
+        const canvas = await html2canvas(element, { scale: 2, useCORS: true });
+        element.style.cssText = originalStyle;
 
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`${fileName}.pdf`);
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save(`${fileName}.pdf`);
+      }
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Gagal menghasilkan PDF.');
@@ -39,25 +45,32 @@ function ExportButtons({ user, fileName, contentRef, excelData }) {
     setLoading(false);
   };
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     if (!user) {
       alert('🔒 Fitur unduh dokumen Excel (XLSX) eksklusif hanya untuk pengguna terdaftar. Silakan login terlebih dahulu melalui menu di pojok kanan atas.');
       return;
     }
-    if (!excelData || excelData.length === 0) {
-      alert('Tidak ada data untuk diekspor ke Excel.');
-      return;
-    }
-
+    
+    setLoading(true);
     try {
-      const worksheet = XLSX.utils.json_to_sheet(excelData);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Data');
-      XLSX.writeFile(workbook, `${fileName}.xlsx`);
+      if (onCustomExcel) {
+        await onCustomExcel();
+      } else {
+        if (!excelData || excelData.length === 0) {
+          alert('Tidak ada data untuk diekspor ke Excel.');
+          setLoading(false);
+          return;
+        }
+        const worksheet = XLSX.utils.json_to_sheet(excelData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Data');
+        XLSX.writeFile(workbook, `${fileName}.xlsx`);
+      }
     } catch (error) {
       console.error('Error generating Excel:', error);
       alert('Gagal menghasilkan Excel.');
     }
+    setLoading(false);
   };
 
   return (
