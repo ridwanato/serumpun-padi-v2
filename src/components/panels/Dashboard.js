@@ -149,16 +149,16 @@ function Dashboard({
           <div style={{ fontSize: 10, opacity: 0.85, textTransform: 'uppercase', letterSpacing: 1, display: 'flex', alignItems: 'center', gap: 4 }}>
             🌾 Padi Sawah
           </div>
-          <div style={{ fontSize: 28, fontWeight: 800, marginTop: 2 }}>{totalSawahHa} Ha</div>
+          <div style={{ fontSize: 'clamp(20px, 6vw, 28px)', fontWeight: 800, marginTop: 2, whiteSpace: 'nowrap' }}>{totalSawahHa} Ha</div>
           <div style={{ fontSize: 11, opacity: 0.85, marginTop: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
             <span style={{ whiteSpace: 'nowrap' }}>📍 {filteredSawah.length} petak poligon</span>
             <span style={{ whiteSpace: 'nowrap' }}>🌾 Siap panen: {siapPanenHa} Ha</span>
           </div>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end', flexShrink: 0 }}>
           <div style={{ 
             background: 'linear-gradient(to bottom, #65a30d, #4d7c0f)', color: '#fff', 
-            borderRadius: 6, padding: '5px 14px', fontSize: 12, fontWeight: 700, 
+            borderRadius: 6, padding: '4px 8px', fontSize: 'clamp(9px, 2.5vw, 12px)', fontWeight: 700, 
             border: '1px solid #84cc16', boxShadow: '0 3px 4px rgba(0,0,0,0.2)', 
             whiteSpace: 'nowrap', textShadow: '0 1px 2px rgba(0,0,0,0.4)' 
           }}>
@@ -166,7 +166,7 @@ function Dashboard({
           </div>
           <div style={{ 
             background: 'linear-gradient(to bottom, #65a30d, #4d7c0f)', color: '#fff', 
-            borderRadius: 6, padding: '5px 14px', fontSize: 12, fontWeight: 700, 
+            borderRadius: 6, padding: '4px 8px', fontSize: 'clamp(9px, 2.5vw, 12px)', fontWeight: 700, 
             border: '1px solid #84cc16', boxShadow: '0 3px 4px rgba(0,0,0,0.2)', 
             whiteSpace: 'nowrap', textShadow: '0 1px 2px rgba(0,0,0,0.4)' 
           }}>

@@ -46,21 +46,27 @@ function PanelHeader({ panelView, onClose, onBack, user, setUser, supabase, setS
       <div className="sp-panel__header sp-panel__header--dashboard" style={{ position: 'relative' }}>
         <div className="sp-panel__header-titleblock">
           <span className="sp-panel__title">{t.icon} {t.text}</span>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 2 }}>
-            <span className="sp-panel__date" style={{ marginTop: 0 }}>{today}</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+            <div className="sp-panel__date" style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span>{today}</span>
+              {user && (
+                <>
+                  <span style={{ opacity: 0.6 }}>|</span>
+                  <span style={{ color: '#fff', fontWeight: 600, maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {user.email?.split('@')[0]}
+                  </span>
+                </>
+              )}
+            </div>
             {/* User Button */}
             {user ? (
               <button className="sp-panel__user-btn" onClick={async () => { await supabase.auth.signOut(); setUser(null); }} title="Keluar"
-                style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer', color: '#fff', marginLeft: 'auto', marginBottom: '-2px' }}>
-                <span className="sp-panel__user-name"
-                  style={{ maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 10 }}>
-                  {user.email?.split('@')[0]}
-                </span>
+                style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer', color: '#fff', marginLeft: 'auto' }}>
                 <ExitIcon />
               </button>
             ) : (
               <button className="sp-panel__user-btn sp-panel__user-btn--login" onClick={() => setShowAuth(true)}
-                style={{ background: 'rgba(255, 255, 255, 0.15)', border: 'none', borderRadius: '6px', color: '#fff', padding: '4px 8px', cursor: 'pointer', fontSize: 10, fontWeight: 600, marginLeft: 'auto', marginBottom: '-2px' }}>
+                style={{ background: 'rgba(255, 255, 255, 0.15)', border: 'none', borderRadius: '6px', color: '#fff', padding: '4px 8px', cursor: 'pointer', fontSize: 10, fontWeight: 600, marginLeft: 'auto' }}>
                 🔐 Login
               </button>
             )}

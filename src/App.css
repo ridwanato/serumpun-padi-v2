@@ -147,7 +147,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
 }
 .sp-panel__header--dashboard { background: linear-gradient(135deg, #0f3d1f, #14532d); }
 .sp-panel__header-titleblock { flex: 1; }
-.sp-panel__title { display: block; color: #fff; font-weight: 700; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sp-panel__title { display: block; color: #fff; font-weight: 700; font-size: clamp(11px, 3vw, 13px); white-space: normal; line-height: 1.3; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
 .sp-panel__date { display: block; color: rgba(255,255,255,0.75); font-size: 10px; margin-top: 2px; }
 .sp-panel__header-right { display: flex; align-items: center; gap: 8px; }
 .sp-panel__close-btn, .sp-panel__back-btn {
