@@ -1,8 +1,9 @@
 // eslint-disable-next-line no-unused-vars
 import React, { useState } from 'react';
 import { ALL_KEL } from '../../config/wilayah';
+import { parseCoordinates } from '../../utils/parsers';
 
-function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, onTogglePoktan, onToggleKWT, onToggleGapoktan, user, mapRef, supabase, onRefresh, onPickLocation }) {
+function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, onTogglePoktan, onToggleKWT, onToggleGapoktan, user, mapRef, supabase, onRefresh, onPickLocation, onFlyToLocation }) {
   const initForm = {
     nama_poktan: '', jenis: 'Poktan', nama_ketua: '',
     jumlah_anggota: '', kelurahan: '',
@@ -11,12 +12,13 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
   const [form, setForm]           = useState(initForm);
   const [editTarget, setEditTarget] = useState(null);
   const [pendingPin, setPendingPin] = useState(null);
+  const [gpsInput, setGpsInput]     = useState('');
   const [picking, setPicking]     = useState(false);
   const [showForm, setShowForm]   = useState(false);
   const [saving, setSaving]       = useState(false);
 
   const openAdd = () => {
-    setForm(initForm); setEditTarget(null); setPendingPin(null); setShowForm(true);
+    setForm(initForm); setEditTarget(null); setPendingPin(null); setGpsInput(''); setShowForm(true);
   };
   const openEdit = (p) => {
     setForm({
@@ -55,7 +57,7 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
     }
     setSaving(false);
     if (error) { alert('Gagal: ' + error.message); return; }
-    setPendingPin(null); setPicking(false); setShowForm(false); setEditTarget(null); setForm(initForm);
+    setPendingPin(null); setPicking(false); setShowForm(false); setEditTarget(null); setForm(initForm); setGpsInput('');
     if (onRefresh) onRefresh();
   };
 
@@ -136,17 +138,28 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
             onChange={e => setForm(p => ({ ...p, catatan: e.target.value }))} style={{ marginTop: 8 }} />
 
           {/* Lokasi */}
-          <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-            <button className="sp-btn sp-btn-secondary" style={{ width:'100%', marginTop:8 }}
-              onClick={() => onPickLocation && onPickLocation((latlng) => setPendingPin(latlng))}>
-              📍 {pendingPin?`✅ ${pendingPin.lat.toFixed(4)}, ${pendingPin.lng.toFixed(4)}`:'Pilih Lokasi di Peta'}
-            </button>
+          <button className="sp-btn sp-btn-secondary" style={{ width:'100%', marginTop:10 }}
+            onClick={() => onPickLocation && onPickLocation((latlng) => setPendingPin(latlng))}>
+            📍 {pendingPin?`✅ ${pendingPin.lat.toFixed(4)}, ${pendingPin.lng.toFixed(4)}`:'Pilih Lokasi di Peta'}
+          </button>
+          
+          <div style={{display:'flex', gap:6, marginTop:8}}>
+            <input className="sp-input" placeholder="Atau masukkan koordinat GPS" value={gpsInput} onChange={e=>setGpsInput(e.target.value)} />
+            <button className="sp-btn" style={{background:'#e5e7eb', color:'#374151', padding:'0 12px'}} onClick={() => {
+              const coords = parseCoordinates(gpsInput);
+              if(coords) {
+                setPendingPin(coords);
+                onFlyToLocation && onFlyToLocation(coords.lat, coords.lng);
+              } else {
+                alert('Format koordinat tidak valid.');
+              }
+            }}>Cari</button>
           </div>
 
           {/* Simpan / Batal */}
           <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
             <button className="sp-btn" style={{ flex: 1, background: '#f3f4f6', color: '#374151', border: '1px solid #e5e7eb' }}
-              onClick={() => { setShowForm(false); setEditTarget(null); setForm(initForm); }}>Batal</button>
+              onClick={() => { setShowForm(false); setEditTarget(null); setForm(initForm); setGpsInput(''); }}>Batal</button>
             <button className="sp-btn sp-btn-primary" style={{ flex: 2 }} disabled={saving} onClick={handleSave}>
               💾 {saving ? 'Menyimpan...' : editTarget ? 'Update' : 'Simpan'}
             </button>

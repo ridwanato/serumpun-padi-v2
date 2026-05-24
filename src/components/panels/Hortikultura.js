@@ -2,10 +2,11 @@
 import React, { useState } from 'react';
 import { HORTIKULTURA_CONFIG } from '../../config/komoditas';
 import { fmtTgl, hitungHariTanam } from '../../utils/agronomi';
+import { parseCoordinates } from '../../utils/parsers';
 
 function Hortikultura({
   hortiKMZ, hortis, showHortiPin, onToggleShow,
-  user, mapRef, supabase, onRefresh, onPickLocation,
+  user, mapRef, supabase, onRefresh, onPickLocation, onFlyToLocation
 }) {
   const [form, setForm] = useState({
     komoditas: 'cabai_merah', nama_pemilik: '',
@@ -13,6 +14,7 @@ function Hortikultura({
     tanggal_tanam: '', catatan: '',
   });
   const [pendingPin, setPendingPin] = useState(null);
+  const [gpsInput, setGpsInput]     = useState('');
 
   const handleSave = async () => {
     if (!user) return alert('Silakan login terlebih dahulu.');
@@ -39,6 +41,7 @@ function Hortikultura({
     if (error) { alert('Gagal simpan: ' + error.message); return; }
 
     setPendingPin(null);
+    setGpsInput('');
     setForm({ komoditas: 'cabai_merah', nama_pemilik: '', kapasitas_value: '', kapasitas_satuan: 'luas_m2', tanggal_tanam: '', catatan: '' });
     if (onRefresh) onRefresh();
   };
@@ -108,11 +111,25 @@ function Hortikultura({
             onChange={e => setForm(p => ({ ...p, catatan: e.target.value }))} />
 
           <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-            <button className="sp-btn sp-btn-secondary" style={{ flex: 2 }}
-              onClick={() => onPickLocation && onPickLocation((latlng) => setPendingPin(latlng))}>
-              📍 {pendingPin ? `✅ ${pendingPin.lat.toFixed(5)}, ${pendingPin.lng.toFixed(5)}` : 'Pilih Lokasi di Peta'}
-            </button>
-            <button className="sp-btn sp-btn-primary" style={{ flex: 1 }} onClick={handleSave}>💾 Simpan</button>
+            <div style={{ flex: 2, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <button className="sp-btn sp-btn-secondary" style={{ width: '100%' }}
+                onClick={() => onPickLocation && onPickLocation((latlng) => setPendingPin(latlng))}>
+                📍 {pendingPin ? `✅ ${pendingPin.lat.toFixed(5)}, ${pendingPin.lng.toFixed(5)}` : 'Pilih Lokasi di Peta'}
+              </button>
+              <div style={{display:'flex', gap:6}}>
+                <input className="sp-input" placeholder="Atau masukkan koordinat GPS" value={gpsInput} onChange={e=>setGpsInput(e.target.value)} />
+                <button className="sp-btn" style={{background:'#e5e7eb', color:'#374151', padding:'0 12px'}} onClick={() => {
+                  const coords = parseCoordinates(gpsInput);
+                  if(coords) {
+                    setPendingPin(coords);
+                    onFlyToLocation && onFlyToLocation(coords.lat, coords.lng);
+                  } else {
+                    alert('Format koordinat tidak valid.');
+                  }
+                }}>Cari</button>
+              </div>
+            </div>
+            <button className="sp-btn sp-btn-primary" style={{ flex: 1, height: '100%' }} onClick={handleSave}>💾 Simpan</button>
           </div>
         </div>
       )}

@@ -2,15 +2,17 @@
 import React, { useState } from 'react';
 import { PALAWIJA_CONFIG } from '../../config/komoditas';
 import { fmtTgl, hitungHariTanam } from '../../utils/agronomi';
+import { parseCoordinates } from '../../utils/parsers';
 
-function Palawija({ palawijaKMZ, palawijaList, showPin, onToggleShow, user, mapRef, supabase, onRefresh, onPickLocation }) {
+function Palawija({ palawijaKMZ, palawijaList, showPin, onToggleShow, user, mapRef, supabase, onRefresh, onPickLocation, onFlyToLocation }) {
   const initForm = { komoditas: 'jagung', nama_pemilik: '', kapasitas_value: '', kapasitas_satuan: 'luas_m2', tanggal_tanam: '', catatan: '' };
   const [form, setForm]           = useState(initForm);
   const [pendingPin, setPendingPin] = useState(null);
+  const [gpsInput, setGpsInput]     = useState('');
   const [editTarget, setEditTarget] = useState(null);
   const [saving, setSaving]       = useState(false);
 
-  const openAdd = () => { setForm(initForm); setEditTarget(null); setPendingPin(null); };
+  const openAdd = () => { setForm(initForm); setEditTarget(null); setPendingPin(null); setGpsInput(''); };
   const openEdit = (p) => {
     setForm({
       komoditas: p.komoditas || 'jagung',
@@ -51,7 +53,7 @@ function Palawija({ palawijaKMZ, palawijaList, showPin, onToggleShow, user, mapR
     }
     setSaving(false);
     if (error) { alert('Gagal simpan: ' + error.message); return; }
-    setForm(initForm); setEditTarget(null); setPendingPin(null);
+    setForm(initForm); setEditTarget(null); setPendingPin(null); setGpsInput('');
     if (onRefresh) onRefresh();
   };
 
@@ -106,6 +108,19 @@ function Palawija({ palawijaKMZ, palawijaList, showPin, onToggleShow, user, mapR
             onClick={() => onPickLocation && onPickLocation((latlng) => setPendingPin(latlng))}>
             📍 {pendingPin ? `✅ ${pendingPin.lat.toFixed(5)}, ${pendingPin.lng.toFixed(5)}` : 'Pilih Lokasi di Peta (opsional)'}
           </button>
+          
+          <div style={{display:'flex', gap:6, marginTop:8}}>
+            <input className="sp-input" placeholder="Atau masukkan koordinat GPS" value={gpsInput} onChange={e=>setGpsInput(e.target.value)} />
+            <button className="sp-btn" style={{background:'#e5e7eb', color:'#374151', padding:'0 12px'}} onClick={() => {
+              const coords = parseCoordinates(gpsInput);
+              if(coords) {
+                setPendingPin(coords);
+                onFlyToLocation && onFlyToLocation(coords.lat, coords.lng);
+              } else {
+                alert('Format koordinat tidak valid.');
+              }
+            }}>Cari</button>
+          </div>
 
           <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
             {isEditing && (

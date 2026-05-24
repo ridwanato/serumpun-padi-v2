@@ -1,7 +1,7 @@
 import React from 'react';
 
 const PANEL_TITLES = {
-  dashboard:          { icon: '🌾', text: 'Dashboard Pertanian Cilegon' },
+  dashboard:          { icon: '🌾', text: 'Dashboard Ketahanan Pangan dan Pertanian Cilegon' },
   gambar_poligon:     { icon: '🗺️',  text: 'Gambar Poligon' },
   sawah_detail:       { icon: '📍', text: 'Detail Sawah' },
   status_sawah:       { icon: '🌾', text: 'Rekap Luas Sawah' },

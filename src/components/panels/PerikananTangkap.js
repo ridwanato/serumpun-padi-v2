@@ -1,15 +1,17 @@
 import React, { useState, useMemo } from 'react';
 import { ALAT_TANGKAP, ARMADA_TYPES } from '../../config/komoditas';
+import { parseCoordinates } from '../../utils/parsers';
 
 const JENIS_IKAN = ['Kuwe','Beronang','Kerapu','Cumi','Kembung','Tenggiri','Tongkol','Lainnya'];
 const S = (s) => ({ fontSize:11, ...s });
 
-function PerikananTangkap({ nelayanTangkap, tangkapList, showNelayan, onToggleShow, user, mapRef, supabase, onRefresh, onPickLocation }) {
+function PerikananTangkap({ nelayanTangkap, tangkapList, showNelayan, onToggleShow, user, mapRef, supabase, onRefresh, onPickLocation, onFlyToLocation }) {
   const [mode, setMode]                   = useState(null); // 'add_nelayan'|'edit_nelayan'|'add_prod'
   const [editTarget, setEditTarget]       = useState(null); // row yg di-edit
   const [prodTarget, setProdTarget]       = useState(null); // nelayan yg ditambah produksinya
   const [bulanIdx, setBulanIdx]           = useState(0);
   const [pendingPin, setPendingPin]       = useState(null);
+  const [gpsInput, setGpsInput]           = useState('');
   const [picking, setPicking]             = useState(false);
   const [saving, setSaving]               = useState(false);
 
@@ -40,6 +42,9 @@ function PerikananTangkap({ nelayanTangkap, tangkapList, showNelayan, onToggleSh
   const cur        = produksiBulanan[bulanIdx] || null;
   const totalTahun = produksiBulanan.reduce((s,b)=>s+b.total, 0);
   const totalOrg   = (tangkapList||[]).reduce((s,r)=>s+parseInt(r.no_hp||r.jumlah_anggota||0,10), 0);
+  const totalKapalMotor = (tangkapList||[]).reduce((s,r)=>{ try{ return s + parseInt(JSON.parse(r.perahu||'{}')['Kapal motor']||0,10); }catch(e){return s;} }, 0);
+  const totalPerahuMotor = (tangkapList||[]).reduce((s,r)=>{ try{ return s + parseInt(JSON.parse(r.perahu||'{}')['Perahu motor tempel']||0,10); }catch(e){return s;} }, 0);
+  const totalTanpaMotor = (tangkapList||[]).reduce((s,r)=>{ try{ return s + parseInt(JSON.parse(r.perahu||'{}')['Perahu tanpa motor']||0,10); }catch(e){return s;} }, 0);
 
   /* ── Open edit nelayan ── */
   const openEdit = (r) => {
@@ -114,7 +119,12 @@ function PerikananTangkap({ nelayanTangkap, tangkapList, showNelayan, onToggleSh
           <div>
             <div style={S({opacity:.8,textTransform:'uppercase',letterSpacing:1})}>Perikanan Tangkap · Kota Cilegon</div>
             <div style={{fontSize:22,fontWeight:800,marginTop:2}}>{(tangkapList||[]).length} Pangkalan</div>
-            <div style={S({opacity:.85,marginTop:4})}>{totalOrg} Nelayan</div>
+            <div style={S({opacity:.85,marginTop:4,display:'flex',flexDirection:'column',gap:2})}>
+              <span style={{ whiteSpace: 'nowrap' }}>{totalOrg} Nelayan</span>
+              <span style={{ whiteSpace: 'nowrap' }}>{totalKapalMotor} unit Kapal Motor</span>
+              <span style={{ whiteSpace: 'nowrap' }}>{totalPerahuMotor} unit Perahu Motor Tempel</span>
+              <span style={{ whiteSpace: 'nowrap' }}>{totalTanpaMotor} unit Perahu Tanpa Motor</span>
+            </div>
           </div>
           <div style={{textAlign:'right'}}>
             <div style={S({opacity:.8})}>TANGKAPAN IKAN {new Date().getFullYear()}</div>
@@ -131,7 +141,7 @@ function PerikananTangkap({ nelayanTangkap, tangkapList, showNelayan, onToggleSh
       {/* ── TOMBOL AKSI ── */}
       <div style={{display:'flex',gap:8,marginBottom:12}}>
         <button className="sp-btn sp-btn-primary" style={{flex:1}}
-          onClick={()=>{ setMode(mode==='add_nelayan'?null:'add_nelayan'); setEditTarget(null); setFormN(initForm); setPendingPin(null); }}>
+          onClick={()=>{ setMode(mode==='add_nelayan'?null:'add_nelayan'); setEditTarget(null); setFormN(initForm); setPendingPin(null); setGpsInput(''); }}>
           ➕ {mode==='add_nelayan'?'Tutup':'Tambah Pangkalan'}
         </button>
         <button className="sp-btn" style={{flex:1,background:'#e76f51',color:'#fff'}}
@@ -179,6 +189,18 @@ function PerikananTangkap({ nelayanTangkap, tangkapList, showNelayan, onToggleSh
             onClick={()=> onPickLocation && onPickLocation((latlng) => setPendingPin(latlng))}>
             📍 {pendingPin?`✅ ${pendingPin.lat.toFixed(5)}, ${pendingPin.lng.toFixed(5)}`:'Pilih Lokasi di Peta'}
           </button>
+          <div style={{display:'flex', gap:6, marginTop:8}}>
+            <input className="sp-input" placeholder="Atau masukkan koordinat GPS" value={gpsInput} onChange={e=>setGpsInput(e.target.value)} />
+            <button className="sp-btn" style={{background:'#e5e7eb', color:'#374151', padding:'0 12px'}} onClick={() => {
+              const coords = parseCoordinates(gpsInput);
+              if(coords) {
+                setPendingPin(coords);
+                onFlyToLocation && onFlyToLocation(coords.lat, coords.lng);
+              } else {
+                alert('Format koordinat tidak valid.');
+              }
+            }}>Cari</button>
+          </div>
           <button className="sp-btn sp-btn-primary" style={{width:'100%',marginTop:8}} disabled={saving} onClick={saveNelayan}>
             💾 {saving?'Menyimpan...':'SIMPAN'}
           </button>

@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { WARNING_CONFIG } from '../../config/komoditas';
 import { ALL_KEL, KEL_TO_KEC } from '../../config/wilayah';
 import { fmtTgl } from '../../utils/agronomi';
+import { parseCoordinates } from '../../utils/parsers';
 
-function WarningOPT({ warningKMZ, warnings, showPin, onToggleShow, user, supabase, onRefresh, onPickLocation }) {
+function WarningOPT({ warningKMZ, warnings, showPin, onToggleShow, user, supabase, onRefresh, onPickLocation, onFlyToLocation }) {
   const initForm = {
     jenis_warning: 'opt', nama_opt: '', komoditas: 'Padi',
     kelurahan: '', kecamatan: '', luas_terdampak: '',
@@ -11,6 +12,7 @@ function WarningOPT({ warningKMZ, warnings, showPin, onToggleShow, user, supabas
   };
   const [form, setForm]           = useState(initForm);
   const [pendingPin, setPendingPin] = useState(null);
+  const [gpsInput, setGpsInput]     = useState('');
   const [saving, setSaving]       = useState(false);
 
   const handleSave = async () => {
@@ -34,6 +36,7 @@ function WarningOPT({ warningKMZ, warnings, showPin, onToggleShow, user, supabas
     setSaving(false);
     if (error) { alert('Gagal simpan: ' + error.message); return; }
     setPendingPin(null);
+    setGpsInput('');
     setForm(initForm);
     if (onRefresh) onRefresh();
   };
@@ -121,6 +124,19 @@ function WarningOPT({ warningKMZ, warnings, showPin, onToggleShow, user, supabas
               ? `✅ ${pendingPin.lat.toFixed(5)}, ${pendingPin.lng.toFixed(5)}`
               : 'Pilih Lokasi di Peta (opsional)'}
           </button>
+          
+          <div style={{display:'flex', gap:6, marginTop:8}}>
+            <input className="sp-input" placeholder="Atau masukkan koordinat GPS" value={gpsInput} onChange={e=>setGpsInput(e.target.value)} />
+            <button className="sp-btn" style={{background:'#e5e7eb', color:'#374151', padding:'0 12px'}} onClick={() => {
+              const coords = parseCoordinates(gpsInput);
+              if(coords) {
+                setPendingPin(coords);
+                onFlyToLocation && onFlyToLocation(coords.lat, coords.lng);
+              } else {
+                alert('Format koordinat tidak valid.');
+              }
+            }}>Cari</button>
+          </div>
 
           <button className="sp-btn sp-btn-primary" style={{ marginTop: 8, width: '100%' }}
             disabled={saving} onClick={handleSave}>
