@@ -119,18 +119,26 @@ export function useKMZLoader(mapRef) {
         let feature = null;
 
         if (top === 'Sawah') {
-          const polyEl = pm.querySelector('Polygon');
-          if (polyEl) {
-            const coordsEl = polyEl.querySelector('outerBoundaryIs coordinates') || polyEl.querySelector('coordinates');
-            if (coordsEl) {
-              const coords = coordsEl.textContent.trim().split(/\s+/).reduce((acc, pair) => {
-                const parts = pair.split(',').map(parseFloat);
-                if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) acc.push([parts[0], parts[1]]);
-                return acc;
-              }, []);
-              if (coords.length >= 3) {
-                feature = { type: 'Feature', geometry: { type: 'Polygon', coordinates: [coords] }, properties: { name: pmName } };
+          const polyEls = pm.querySelectorAll('Polygon');
+          if (polyEls.length > 0) {
+            const polygonsCoords = [];
+            polyEls.forEach(polyEl => {
+              const coordsEl = polyEl.querySelector('outerBoundaryIs coordinates') || polyEl.querySelector('coordinates');
+              if (coordsEl) {
+                const coords = coordsEl.textContent.trim().split(/\s+/).reduce((acc, pair) => {
+                  const parts = pair.split(',').map(parseFloat);
+                  if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) acc.push([parts[0], parts[1]]);
+                  return acc;
+                }, []);
+                if (coords.length >= 3) {
+                  polygonsCoords.push([coords]);
+                }
               }
+            });
+            if (polygonsCoords.length === 1) {
+              feature = { type: 'Feature', geometry: { type: 'Polygon', coordinates: polygonsCoords[0] }, properties: { name: pmName } };
+            } else if (polygonsCoords.length > 1) {
+              feature = { type: 'Feature', geometry: { type: 'MultiPolygon', coordinates: polygonsCoords }, properties: { name: pmName } };
             }
           }
         } else if (['Kecamatan', 'Kelurahan', 'Kolam_Budidaya'].includes(top)) {
