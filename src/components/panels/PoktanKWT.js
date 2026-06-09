@@ -21,7 +21,7 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
   const initForm = {
     nama_poktan: '', jenis: 'Poktan', nama_ketua: '',
     jumlah_anggota: '', kelurahan: '',
-    produk_unggulan: '', status_aktif: 'Aktif', catatan: '',
+    produk_unggulan: '', status_aktif: 'Aktif',
   };
   const [form, setForm]           = useState(initForm);
   const [editTarget, setEditTarget] = useState(null);
@@ -58,7 +58,6 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
       nama_ketua: p.nama_ketua || '', jumlah_anggota: String(p.jumlah_anggota || ''),
       kelurahan: p.kelurahan || '',
       produk_unggulan: p.produk_unggulan || '', status_aktif: p.status_aktif || 'Aktif',
-      catatan: p.catatan || '',
     });
     setPendingPin(p.lat && p.lng ? { lat: p.lat, lng: p.lng } : null);
     if (p.jenis === 'KWT') {
@@ -81,11 +80,6 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
       produk_unggulan: form.produk_unggulan || null,
       status_aktif: form.status_aktif || 'Aktif',
     };
-    // Only include catatan in basic info update if it's NOT KWT,
-    // to prevent overwriting production logs.
-    if (form.jenis !== 'KWT') {
-      payload.catatan = form.catatan || null;
-    }
     if (pendingPin) { payload.lat = pendingPin.lat; payload.lng = pendingPin.lng; }
 
     let error;
@@ -244,9 +238,7 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
             </select>
           </div>
 
-          {/* Catatan */}
-          <input className="sp-input" placeholder="Catatan (opsional)" value={form.catatan}
-            onChange={e => setForm(p => ({ ...p, catatan: e.target.value }))} style={{ marginTop: 8 }} />
+
 
           {/* Lokasi */}
           <button className="sp-btn sp-btn-secondary" style={{ width:'100%', marginTop:10 }}
