@@ -75,7 +75,14 @@ function Dashboard({
   (poktanList || []).forEach(p => {
     if (p.jenis === 'KWT') {
       try {
-        const logs = JSON.parse(p.catatan || '[]');
+        let logs = [];
+        if (p.catatan) {
+          if (Array.isArray(p.catatan)) {
+            logs = p.catatan;
+          } else if (typeof p.catatan === 'string') {
+            logs = JSON.parse(p.catatan);
+          }
+        }
         if (logs.length > 0) {
           const latest = logs[logs.length - 1];
           totalKWTLuasLahan += parseFloat(latest.luas_lahan || 0);
@@ -130,7 +137,15 @@ function Dashboard({
     (poktanList || []).forEach(p => {
       if (p.jenis === 'KWT') {
         try {
-          JSON.parse(p.catatan || '[]').forEach(entry => {
+          let logs = [];
+          if (p.catatan) {
+            if (Array.isArray(p.catatan)) {
+              logs = p.catatan;
+            } else if (typeof p.catatan === 'string') {
+              logs = JSON.parse(p.catatan);
+            }
+          }
+          logs.forEach(entry => {
             const d = new Date(entry.tgl);
             if (isNaN(d.getTime())) return;
             const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;

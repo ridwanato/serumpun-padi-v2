@@ -3,6 +3,20 @@ import React, { useState } from 'react';
 import { ALL_KEL } from '../../config/wilayah';
 import { parseCoordinates } from '../../utils/parsers';
 
+function safeParseCatatan(catatan) {
+  if (!catatan) return [];
+  if (Array.isArray(catatan)) return catatan;
+  if (typeof catatan === 'string') {
+    try {
+      const parsed = JSON.parse(catatan);
+      if (Array.isArray(parsed)) return parsed;
+    } catch (e) {
+      console.error("Error parsing catatan:", e);
+    }
+  }
+  return [];
+}
+
 function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, onTogglePoktan, onToggleKWT, onToggleGapoktan, user, mapRef, supabase, onRefresh, onPickLocation, onFlyToLocation }) {
   const initForm = {
     nama_poktan: '', jenis: 'Poktan', nama_ketua: '',
@@ -66,8 +80,12 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
       kelurahan: form.kelurahan || null,
       produk_unggulan: form.produk_unggulan || null,
       status_aktif: form.status_aktif || 'Aktif',
-      catatan: form.catatan || null,
     };
+    // Only include catatan in basic info update if it's NOT KWT,
+    // to prevent overwriting production logs.
+    if (form.jenis !== 'KWT') {
+      payload.catatan = form.catatan || null;
+    }
     if (pendingPin) { payload.lat = pendingPin.lat; payload.lng = pendingPin.lng; }
 
     let error;
@@ -103,8 +121,19 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
 
     setSaving(true);
     const { data: row } = await supabase.from('poktan_kwt').select('catatan').eq('id', prodKWT.id).single();
-    const arr = [];
-    try { arr.push(...JSON.parse(row?.catatan || '[]')); } catch(e){}
+    let arr = [];
+    if (row && row.catatan) {
+      if (Array.isArray(row.catatan)) {
+        arr = [...row.catatan];
+      } else if (typeof row.catatan === 'string') {
+        try {
+          arr = JSON.parse(row.catatan);
+          if (!Array.isArray(arr)) arr = [];
+        } catch (e) {
+          console.error("Error parsing existing catatan:", e);
+        }
+      }
+    }
     
     const newEntry = {
       tgl: formP.tanggal,
@@ -122,7 +151,7 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
     
     arr.push(newEntry);
     
-    const { error } = await supabase.from('poktan_kwt').update({ catatan: JSON.stringify(arr) }).eq('id', prodKWT.id);
+    const { error } = await supabase.from('poktan_kwt').update({ catatan: arr }).eq('id', prodKWT.id);
     setSaving(false);
     if (error) {
       alert('Gagal simpan produksi: ' + error.message);
@@ -379,6 +408,30 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
                   <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>{p.jenis} {p.nama_ketua && '· Ketua: ' + p.nama_ketua}</div>
                   {p.jumlah_anggota && <div style={{ fontSize: 10, color: '#888' }}>👤 {p.jumlah_anggota} anggota</div>}
                   {p.kelurahan && <div style={{ fontSize: 10, color: '#2d6a4f' }}>🏘️ {p.kelurahan}</div>}
+                  {p.jenis === 'KWT' && (() => {
+                    const logs = safeParseCatatan(p.catatan);
+                    if (logs.length === 0) return null;
+                    
+                    let totalKg = 0;
+                    let totalOmset = 0;
+                    logs.forEach(entry => {
+                      const prodData = entry.produk || {};
+                      Object.entries(prodData).forEach(([prodKey, val]) => {
+                        const qty = parseFloat(val?.qty || 0);
+                        const harga = parseFloat(val?.harga || 0);
+                        totalOmset += qty * harga;
+                        if (prodKey !== 'minuman_herbal') {
+                          totalKg += qty;
+                        }
+                      });
+                    });
+                    
+                    return (
+                      <div style={{ fontSize: 10, color: '#7c3aed', fontWeight: 600, marginTop: 4 }}>
+                        🍇 Produksi: {(totalKg / 1000).toFixed(2)} ton · 💰 Omset: Rp. {totalOmset.toLocaleString('id-ID')}
+                      </div>
+                    );
+                  })()}
                   {p.produk_unggulan && (
                     <div style={{ fontSize: 10, marginTop: 3, background: '#fef3c7', color: '#92400e', borderRadius: 4, padding: '2px 6px', display: 'inline-block' }}>
                       🌾 {p.produk_unggulan}
