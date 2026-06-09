@@ -1,7 +1,22 @@
 // eslint-disable-next-line no-unused-vars
 import React, { useState } from 'react';
+import * as turf from '@turf/turf';
 import { ALL_KEL } from '../../config/wilayah';
 import { parseCoordinates } from '../../utils/parsers';
+
+const findKelurahanForCoords = (lat, lng, boundaries) => {
+  if (!boundaries || boundaries.length === 0) return '';
+  const pt = turf.point([lng, lat]);
+  for (const feat of boundaries) {
+    if (feat.geometry) {
+      const isInside = turf.booleanPointInPolygon(pt, feat);
+      if (isInside) {
+        return feat.properties?.name || '';
+      }
+    }
+  }
+  return '';
+};
 
 function safeParseCatatan(catatan) {
   if (!catatan) return [];
@@ -17,7 +32,7 @@ function safeParseCatatan(catatan) {
   return [];
 }
 
-function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, onTogglePoktan, onToggleKWT, onToggleGapoktan, user, mapRef, supabase, onRefresh, onPickLocation, onFlyToLocation }) {
+function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, onTogglePoktan, onToggleKWT, onToggleGapoktan, user, mapRef, supabase, onRefresh, onPickLocation, onFlyToLocation, kelurahanBoundaries }) {
   const initForm = {
     nama_poktan: '', jenis: 'Poktan', nama_ketua: '',
     jumlah_anggota: '', kelurahan: '',
@@ -30,8 +45,6 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
   const [picking, setPicking]     = useState(false);
   const [showForm, setShowForm]   = useState(false);
   const [saving, setSaving]       = useState(false);
-
-  const [prodKWT, setProdKWT] = useState(null);
   const [formP, setFormP] = useState({
     tanggal: new Date().toISOString().split('T')[0],
     luas_lahan: '',
@@ -50,7 +63,7 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
   });
 
   const openAdd = () => {
-    setForm(initForm); setEditTarget(null); setPendingPin(null); setGpsInput(''); setProdKWT(null); setShowForm(true);
+    setForm(initForm); setEditTarget(null); setPendingPin(null); setGpsInput(''); setShowForm(true);
   };
   const openEdit = (p) => {
     setForm({
@@ -60,24 +73,28 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
       produk_unggulan: p.produk_unggulan || '', status_aktif: p.status_aktif || 'Aktif',
     });
     setPendingPin(p.lat && p.lng ? { lat: p.lat, lng: p.lng } : null);
-    if (p.jenis === 'KWT') {
-      setProdKWT(p);
-    } else {
-      setProdKWT(null);
-    }
     setEditTarget(p); setShowForm(true);
   };
 
   const handleSave = async () => {
     if (!user) return alert('Login dulu.');
     if (!form.nama_poktan) return alert('Nama kelompok wajib diisi.');
+
+    let kelurahanVal = form.kelurahan;
+    if (form.jenis === 'KWT' && pendingPin && kelurahanBoundaries) {
+      const autoKel = findKelurahanForCoords(pendingPin.lat, pendingPin.lng, kelurahanBoundaries);
+      if (autoKel) {
+        kelurahanVal = autoKel;
+      }
+    }
+
     setSaving(true);
     const payload = {
       nama_poktan: form.nama_poktan, jenis: form.jenis,
       nama_ketua: form.nama_ketua || null,
       jumlah_anggota: form.jumlah_anggota ? parseInt(form.jumlah_anggota) : null,
-      kelurahan: form.kelurahan || null,
-      produk_unggulan: form.produk_unggulan || null,
+      kelurahan: kelurahanVal || null,
+      produk_unggulan: form.jenis === 'KWT' ? null : (form.produk_unggulan || null),
       status_aktif: form.status_aktif || 'Aktif',
     };
     if (pendingPin) { payload.lat = pendingPin.lat; payload.lng = pendingPin.lng; }
@@ -104,7 +121,7 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
 
   const saveProduksi = async () => {
     if (!user) return alert('Login dulu.');
-    if (!prodKWT) return alert('Pilih KWT terlebih dahulu.');
+    if (!editTarget) return alert('Pilih KWT terlebih dahulu.');
     
     // Check if at least one product has a quantity
     let hasQty = false;
@@ -114,7 +131,7 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
     if (!hasQty) return alert('Isi minimal satu kuantitas produk.');
 
     setSaving(true);
-    const { data: row } = await supabase.from('poktan_kwt').select('catatan').eq('id', prodKWT.id).single();
+    const { data: row } = await supabase.from('poktan_kwt').select('catatan').eq('id', editTarget.id).single();
     let arr = [];
     if (row && row.catatan) {
       if (Array.isArray(row.catatan)) {
@@ -145,7 +162,7 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
     
     arr.push(newEntry);
     
-    const { error } = await supabase.from('poktan_kwt').update({ catatan: arr }).eq('id', prodKWT.id);
+    const { error } = await supabase.from('poktan_kwt').update({ catatan: arr }).eq('id', editTarget.id);
     setSaving(false);
     if (error) {
       alert('Gagal simpan produksi: ' + error.message);
@@ -167,7 +184,6 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
           lainnya: { qty: '', harga: '' },
         }
       });
-      setProdKWT(null);
       if (onRefresh) onRefresh();
     }
   };
@@ -216,17 +232,21 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
             onChange={e => setForm(p => ({ ...p, jumlah_anggota: e.target.value }))} style={{ marginTop: 8 }} />
 
           {/* Kelurahan */}
-          <select className="sp-select" value={form.kelurahan} onChange={e => setForm(p => ({ ...p, kelurahan: e.target.value }))} style={{ marginTop: 8 }}>
-            <option value="">-- Pilih Kelurahan --</option>
-            {ALL_KEL.map(k => <option key={k} value={k}>{k}</option>)}
-          </select>
+          {form.jenis !== 'KWT' && (
+            <select className="sp-select" value={form.kelurahan} onChange={e => setForm(p => ({ ...p, kelurahan: e.target.value }))} style={{ marginTop: 8 }}>
+              <option value="">-- Pilih Kelurahan --</option>
+              {ALL_KEL.map(k => <option key={k} value={k}>{k}</option>)}
+            </select>
+          )}
 
           {/* Produk Unggulan — free text */}
-          <div style={{ marginTop: 8 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#6b7280', marginBottom: 4, textTransform: 'uppercase' }}>Produk Unggulan</div>
-            <input className="sp-input" placeholder="Contoh: Padi Ciherang, Jagung Manis, Cabai..." value={form.produk_unggulan}
-              onChange={e => setForm(p => ({ ...p, produk_unggulan: e.target.value }))} style={{ marginTop: 0 }} />
-          </div>
+          {form.jenis !== 'KWT' && (
+            <div style={{ marginTop: 8 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#6b7280', marginBottom: 4, textTransform: 'uppercase' }}>Produk Unggulan</div>
+              <input className="sp-input" placeholder="Contoh: Padi Ciherang, Jagung Manis, Cabai..." value={form.produk_unggulan}
+                onChange={e => setForm(p => ({ ...p, produk_unggulan: e.target.value }))} style={{ marginTop: 0 }} />
+            </div>
+          )}
 
           {/* Status Aktif */}
           <div style={{ marginTop: 8 }}>
@@ -259,21 +279,11 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
             }}>Cari</button>
           </div>
 
-          {form.jenis === 'KWT' && (
+          {form.jenis === 'KWT' && editTarget && (
             <div style={{ marginTop: 15, borderTop: '2px dashed #e5e7eb', paddingTop: 15 }}>
               <div style={{ fontSize: 12, fontWeight: 800, color: '#e76f51', marginBottom: 10, textTransform: 'uppercase' }}>
                 INPUT PRODUKSI KWT
               </div>
-              
-              <select className="sp-select" value={prodKWT?.id || ''} onChange={e => {
-                const selected = (poktanList || []).find(x => String(x.id) === e.target.value);
-                setProdKWT(selected || null);
-              }}>
-                <option value="">-- Pilih KWT --</option>
-                {(poktanList || []).filter(p => p.jenis === 'KWT').map(p => (
-                  <option key={p.id} value={p.id}>{p.nama_poktan}</option>
-                ))}
-              </select>
               
               <input type="date" className="sp-input" style={{ marginTop: 8 }} value={formP.tanggal}
                 onChange={e => setFormP(p => ({ ...p, tanggal: e.target.value }))} />

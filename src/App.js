@@ -444,6 +444,7 @@ function App() {
       case 'poktan_kwt':
         return <PoktanKWT
           poktanKMZ={poktanKMZ} poktanList={poktanList}
+          kelurahanBoundaries={layers.kelurahan}
           showPoktan={showPoktanPin} showKWT={showKWTPin} showGapoktan={showGapoktanPin}
           onTogglePoktan={setShowPoktanPin} onToggleKWT={setShowKWTPin} onToggleGapoktan={setShowGapoktanPin}
           user={user} mapRef={mapRef} supabase={supabase} onRefresh={refreshSupabase}
