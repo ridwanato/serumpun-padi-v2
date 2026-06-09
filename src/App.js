@@ -397,6 +397,7 @@ function App() {
           filteredSawah={filteredSawah} sawahStatus={sawahStatus}
           kolamBudidaya={kolamBudidaya} budidayaList={budidayaList}
           nelayanTangkap={nelayanTangkap} tangkapList={tangkapList}
+          poktanKMZ={poktanKMZ} poktanList={poktanList}
           onOpenPanel={openPanel} onClosePanel={closePanel} />;
       case 'gambar_poligon':
         return <GambarPoligon

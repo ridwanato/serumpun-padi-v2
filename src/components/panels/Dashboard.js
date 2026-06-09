@@ -9,11 +9,14 @@ function Dashboard({
   budidayaList,
   nelayanTangkap,
   tangkapList,
+  poktanKMZ,
+  poktanList,
   onOpenPanel,
   onClosePanel,
 }) {
   const [bulanIdxB, setBulanIdxB] = useState(0);
   const [bulanIdxT, setBulanIdxT] = useState(0);
+  const [bulanIdxK, setBulanIdxK] = useState(0);
   // Hitung total luas
   const totalM2 = filteredSawah.reduce((s, f) => s + turf.area(f), 0);
   const totalSawahHa = (totalM2 / 10000).toFixed(2);
@@ -59,6 +62,28 @@ function Dashboard({
   const totalPerahuMotor = semuaNelayan.reduce((s,r)=>{ try{ return s + parseInt(JSON.parse(r.perahu||'{}')['Perahu motor tempel']||0,10); }catch(e){return s;} }, 0);
   const totalTanpaMotor = semuaNelayan.reduce((s,r)=>{ try{ return s + parseInt(JSON.parse(r.perahu||'{}')['Perahu tanpa motor']||0,10); }catch(e){return s;} }, 0);
 
+  // Kelompok Wanita Tani (KWT)
+  const kwtKMZCount = (poktanKMZ || []).filter(p => p._jenis === 'KWT').length;
+  const kwtDBCount = (poktanList || []).filter(p => p.jenis === 'KWT').length;
+  const totalKWT = kwtKMZCount + kwtDBCount;
+
+  const kwtKMZMembers = (poktanKMZ || []).filter(p => p._jenis === 'KWT').reduce((sum, p) => sum + parseInt(p._anggota || 0, 10), 0);
+  const kwtDBMembers = (poktanList || []).filter(p => p.jenis === 'KWT').reduce((sum, p) => sum + parseInt(p.jumlah_anggota || 0, 10), 0);
+  const totalKWTMembers = kwtKMZMembers + kwtDBMembers;
+
+  let totalKWTLuasLahan = 0;
+  (poktanList || []).forEach(p => {
+    if (p.jenis === 'KWT') {
+      try {
+        const logs = JSON.parse(p.catatan || '[]');
+        if (logs.length > 0) {
+          const latest = logs[logs.length - 1];
+          totalKWTLuasLahan += parseFloat(latest.luas_lahan || 0);
+        }
+      } catch (e) {}
+    }
+  });
+
   // Produksi Budidaya
   const prodB = useMemo(() => {
     const map = {};
@@ -98,6 +123,50 @@ function Dashboard({
   },[tangkapList]);
   const curT = prodT[bulanIdxT]||null;
   const totTahunT = prodT.reduce((s,b)=>s+b.total,0);
+
+  // Produksi KWT
+  const prodK = useMemo(() => {
+    const map = {};
+    (poktanList || []).forEach(p => {
+      if (p.jenis === 'KWT') {
+        try {
+          JSON.parse(p.catatan || '[]').forEach(entry => {
+            const d = new Date(entry.tgl);
+            if (isNaN(d.getTime())) return;
+            const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            const lb = d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+            if (!map[k]) map[k] = { totalKg: 0, totalOmset: 0, label: lb };
+            
+            let entryKg = 0;
+            let entryOmset = 0;
+            const prodData = entry.produk || {};
+            
+            const productsList = [
+              'cabai', 'tomat', 'sawi', 'pakcoy', 'buah_buahan', 
+              'sayuran', 'minuman_herbal', 'kue', 'keripik', 'lainnya'
+            ];
+            
+            productsList.forEach(prodKey => {
+              const qty = parseFloat(prodData[prodKey]?.qty || 0);
+              const harga = parseFloat(prodData[prodKey]?.harga || 0);
+              entryOmset += qty * harga;
+              if (prodKey !== 'minuman_herbal') {
+                entryKg += qty;
+              }
+            });
+            
+            map[k].totalKg += entryKg;
+            map[k].totalOmset += entryOmset;
+          });
+        } catch (e) {}
+      }
+    });
+    return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0])).map(([k, v]) => ({ key: k, ...v }));
+  }, [poktanList]);
+
+  const curK = prodK[bulanIdxK] || null;
+  const totTahunK_Kg = prodK.reduce((s, b) => s + b.totalKg, 0);
+  const totTahunK_Omset = prodK.reduce((s, b) => s + b.totalOmset, 0);
 
   // Menu cards
   const menuCards = [
@@ -230,6 +299,35 @@ function Dashboard({
           <div style={{ display: 'flex', gap: 6, marginTop: 6, justifyContent: 'flex-end' }}>
             <button onClick={(e)=>{ e.stopPropagation(); setBulanIdxT(p=>Math.min(p+1,prodT.length-1)); }} style={{background:'rgba(255,255,255,0.2)',border:'none',borderRadius:4,color:'#fff',padding:'2px 8px',fontSize:10,cursor:'pointer'}}>◀ Prev</button>
             <button onClick={(e)=>{ e.stopPropagation(); setBulanIdxT(p=>Math.max(p-1,0)); }} style={{background:'rgba(255,255,255,0.2)',border:'none',borderRadius:4,color:'#fff',padding:'2px 8px',fontSize:10,cursor:'pointer'}}>Next ▶</button>
+          </div>
+        </div>
+      </div>
+
+      {/* Hero Card Kelompok Wanita Tani (KWT) */}
+      <div onClick={() => onOpenPanel('poktan_kwt')} style={{
+        background: 'linear-gradient(135deg, #7c3aed, #c084fc)', cursor: 'pointer',
+        color: '#fff', borderRadius: 14, padding: '16px 18px', marginBottom: 16,
+        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'
+      }}>
+        <div>
+          <div style={{ fontSize: 10, opacity: 0.8, textTransform: 'uppercase', letterSpacing: 1 }}>KELOMPOK WANITA TANI (KWT) - KOTA CILEGON</div>
+          <div style={{ fontSize: 22, fontWeight: 800, marginTop: 2 }}>{totalKWT} KWT</div>
+          <div style={{ fontSize: 11, opacity: 0.85, marginTop: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <span style={{ whiteSpace: 'nowrap' }}>{totalKWTMembers} anggota | {totalKWTLuasLahan.toLocaleString('id-ID')} m² luas lahan</span>
+          </div>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontSize: 10, opacity: 0.8 }}>PRODUKSI & OMSET</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#ffd166', whiteSpace: 'nowrap' }}>
+            {curK ? `${curK.label.toUpperCase()} : ${(curK.totalKg/1000).toFixed(1)} Ton | Rp. ${curK.totalOmset.toLocaleString('id-ID')}` : 'BELUM ADA DATA'}
+          </div>
+          <div style={{ fontSize: 10, fontWeight: 700, marginTop: 2, whiteSpace: 'nowrap' }}>
+            TOTAL : ${(totTahunK_Kg/1000).toFixed(1)} Ton | Rp. {totTahunK_Omset.toLocaleString('id-ID')}
+          </div>
+          <div style={{ display: 'flex', gap: 6, marginTop: 6, justifyContent: 'flex-end' }}>
+            <button onClick={(e)=>{ e.stopPropagation(); setBulanIdxK(p=>Math.min(p+1,prodK.length-1)); }} style={{background:'rgba(255,255,255,0.2)',border:'none',borderRadius:4,color:'#fff',padding:'2px 8px',fontSize:10,cursor:'pointer'}}>◀ Prev</button>
+            <button onClick={(e)=>{ e.stopPropagation(); setBulanIdxK(p=>Math.max(p-1,0)); }} style={{background:'rgba(255,255,255,0.2)',border:'none',borderRadius:4,color:'#fff',padding:'2px 8px',fontSize:10,cursor:'pointer'}}>Next ▶</button>
           </div>
         </div>
       </div>

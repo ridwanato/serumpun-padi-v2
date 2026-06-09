@@ -17,8 +17,26 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
   const [showForm, setShowForm]   = useState(false);
   const [saving, setSaving]       = useState(false);
 
+  const [prodKWT, setProdKWT] = useState(null);
+  const [formP, setFormP] = useState({
+    tanggal: new Date().toISOString().split('T')[0],
+    luas_lahan: '',
+    produk: {
+      cabai: { qty: '', harga: '' },
+      tomat: { qty: '', harga: '' },
+      sawi: { qty: '', harga: '' },
+      pakcoy: { qty: '', harga: '' },
+      buah_buahan: { qty: '', harga: '' },
+      sayuran: { qty: '', harga: '' },
+      minuman_herbal: { qty: '', harga: '' },
+      kue: { qty: '', harga: '' },
+      keripik: { qty: '', harga: '' },
+      lainnya: { qty: '', harga: '' },
+    }
+  });
+
   const openAdd = () => {
-    setForm(initForm); setEditTarget(null); setPendingPin(null); setGpsInput(''); setShowForm(true);
+    setForm(initForm); setEditTarget(null); setPendingPin(null); setGpsInput(''); setProdKWT(null); setShowForm(true);
   };
   const openEdit = (p) => {
     setForm({
@@ -29,6 +47,11 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
       catatan: p.catatan || '',
     });
     setPendingPin(p.lat && p.lng ? { lat: p.lat, lng: p.lng } : null);
+    if (p.jenis === 'KWT') {
+      setProdKWT(p);
+    } else {
+      setProdKWT(null);
+    }
     setEditTarget(p); setShowForm(true);
   };
 
@@ -65,6 +88,65 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
     if (!window.confirm('Hapus data ini?')) return;
     await supabase.from('poktan_kwt').delete().eq('id', id);
     if (onRefresh) onRefresh();
+  };
+
+  const saveProduksi = async () => {
+    if (!user) return alert('Login dulu.');
+    if (!prodKWT) return alert('Pilih KWT terlebih dahulu.');
+    
+    // Check if at least one product has a quantity
+    let hasQty = false;
+    Object.values(formP.produk).forEach(val => {
+      if (parseFloat(val.qty || 0) > 0) hasQty = true;
+    });
+    if (!hasQty) return alert('Isi minimal satu kuantitas produk.');
+
+    setSaving(true);
+    const { data: row } = await supabase.from('poktan_kwt').select('catatan').eq('id', prodKWT.id).single();
+    const arr = [];
+    try { arr.push(...JSON.parse(row?.catatan || '[]')); } catch(e){}
+    
+    const newEntry = {
+      tgl: formP.tanggal,
+      luas_lahan: parseFloat(formP.luas_lahan || 0),
+      produk: {}
+    };
+    
+    Object.entries(formP.produk).forEach(([k, v]) => {
+      const qty = parseFloat(v.qty || 0);
+      const harga = parseFloat(v.harga || 0);
+      if (qty > 0) {
+        newEntry.produk[k] = { qty, harga };
+      }
+    });
+    
+    arr.push(newEntry);
+    
+    const { error } = await supabase.from('poktan_kwt').update({ catatan: JSON.stringify(arr) }).eq('id', prodKWT.id);
+    setSaving(false);
+    if (error) {
+      alert('Gagal simpan produksi: ' + error.message);
+    } else {
+      alert('✅ Produksi KWT berhasil disimpan!');
+      setFormP({
+        tanggal: new Date().toISOString().split('T')[0],
+        luas_lahan: '',
+        produk: {
+          cabai: { qty: '', harga: '' },
+          tomat: { qty: '', harga: '' },
+          sawi: { qty: '', harga: '' },
+          pakcoy: { qty: '', harga: '' },
+          buah_buahan: { qty: '', harga: '' },
+          sayuran: { qty: '', harga: '' },
+          minuman_herbal: { qty: '', harga: '' },
+          kue: { qty: '', harga: '' },
+          keripik: { qty: '', harga: '' },
+          lainnya: { qty: '', harga: '' },
+        }
+      });
+      setProdKWT(null);
+      if (onRefresh) onRefresh();
+    }
   };
 
   const statusColor = (s) => s === 'Aktif' ? '#2d6a4f' : '#9ca3af';
@@ -155,6 +237,94 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
               }
             }}>Cari</button>
           </div>
+
+          {form.jenis === 'KWT' && (
+            <div style={{ marginTop: 15, borderTop: '2px dashed #e5e7eb', paddingTop: 15 }}>
+              <div style={{ fontSize: 12, fontWeight: 800, color: '#e76f51', marginBottom: 10, textTransform: 'uppercase' }}>
+                INPUT PRODUKSI KWT
+              </div>
+              
+              <select className="sp-select" value={prodKWT?.id || ''} onChange={e => {
+                const selected = (poktanList || []).find(x => String(x.id) === e.target.value);
+                setProdKWT(selected || null);
+              }}>
+                <option value="">-- Pilih KWT --</option>
+                {(poktanList || []).filter(p => p.jenis === 'KWT').map(p => (
+                  <option key={p.id} value={p.id}>{p.nama_poktan}</option>
+                ))}
+              </select>
+              
+              <input type="date" className="sp-input" style={{ marginTop: 8 }} value={formP.tanggal}
+                onChange={e => setFormP(p => ({ ...p, tanggal: e.target.value }))} />
+                
+              <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: '10px', marginTop: 10, background: '#fafafa' }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', marginBottom: 8 }}>PRODUKSI DAN OMSET</div>
+                
+                {[
+                  { key: 'cabai', label: 'Cabai', unit: 'kg', priceUnit: 'Rp/kg' },
+                  { key: 'tomat', label: 'Tomat', unit: 'kg', priceUnit: 'Rp/kg' },
+                  { key: 'sawi', label: 'Sawi', unit: 'kg', priceUnit: 'Rp/kg' },
+                  { key: 'pakcoy', label: 'Pakcoy', unit: 'kg', priceUnit: 'Rp/kg' },
+                  { key: 'buah_buahan', label: 'Buah-buahan', unit: 'kg', priceUnit: 'Rp/kg' },
+                  { key: 'sayuran', label: 'Sayuran', unit: 'kg', priceUnit: 'Rp/kg' },
+                  { key: 'minuman_herbal', label: 'Minuman herbal', unit: 'botol', priceUnit: 'Rp/botol' },
+                  { key: 'kue', label: 'Kue', unit: 'kg', priceUnit: 'Rp/kg' },
+                  { key: 'keripik', label: 'Keripik', unit: 'kg', priceUnit: 'Rp/kg' },
+                  { key: 'lainnya', label: 'Lainnya', unit: 'kg', priceUnit: 'Rp/kg' }
+                ].map(item => (
+                  <div key={item.key} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                    <span style={{ fontSize: 11, flex: 1.5 }}>{item.label}</span>
+                    <input type="number" min="0" placeholder="0" style={{ width: 55, fontSize: 11, padding: '2px 4px', border: '1px solid #d1d5db', borderRadius: 4 }}
+                      value={formP.produk[item.key]?.qty || ''} onChange={e => {
+                        const qtyVal = e.target.value;
+                        setFormP(prev => ({
+                          ...prev,
+                          produk: {
+                            ...prev.produk,
+                            [item.key]: {
+                              ...prev.produk[item.key],
+                              qty: qtyVal
+                            }
+                          }
+                        }));
+                      }} />
+                    <span style={{ fontSize: 10, color: '#999', width: 30 }}>{item.unit}</span>
+                    
+                    <span style={{ fontSize: 10, color: '#666' }}>{item.priceUnit}</span>
+                    <input type="number" min="0" placeholder="0" style={{ width: 70, fontSize: 11, padding: '2px 4px', border: '1px solid #d1d5db', borderRadius: 4 }}
+                      value={formP.produk[item.key]?.harga || ''} onChange={e => {
+                        const hargaVal = e.target.value;
+                        setFormP(prev => ({
+                          ...prev,
+                          produk: {
+                            ...prev.produk,
+                            [item.key]: {
+                              ...prev.produk[item.key],
+                              harga: hargaVal
+                            }
+                          }
+                        }));
+                      }} />
+                  </div>
+                ))}
+              </div>
+              
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10, marginBottom: 10 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#374151' }}>LUAS LAHAN PRODUKSI:</span>
+                <input type="number" min="0" placeholder="0" style={{ width: 60, fontSize: 11, padding: '4px 6px', border: '1px solid #d1d5db', borderRadius: 4 }}
+                  value={formP.luas_lahan} onChange={e => {
+                    const luasVal = e.target.value;
+                    setFormP(prev => ({ ...prev, luas_lahan: luasVal }));
+                  }} />
+                <span style={{ fontSize: 11, color: '#666' }}>m2</span>
+              </div>
+              
+              <button className="sp-btn" style={{ width: '100%', background: '#e76f51', color: '#fff', fontSize: 11, fontWeight: 700, padding: '8px 10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 12 }}
+                disabled={saving} onClick={saveProduksi}>
+                💾 SIMPAN PRODUKSI
+              </button>
+            </div>
+          )}
 
           {/* Simpan / Batal */}
           <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
