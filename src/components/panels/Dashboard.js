@@ -338,7 +338,7 @@ function Dashboard({
             {curK ? `${curK.label.toUpperCase()} : ${(curK.totalKg/1000).toFixed(1)} Ton | Rp. ${curK.totalOmset.toLocaleString('id-ID')}` : 'BELUM ADA DATA'}
           </div>
           <div style={{ fontSize: 10, fontWeight: 700, marginTop: 2, whiteSpace: 'nowrap' }}>
-            TOTAL : ${(totTahunK_Kg/1000).toFixed(1)} Ton | Rp. {totTahunK_Omset.toLocaleString('id-ID')}
+            TOTAL : {(totTahunK_Kg/1000).toFixed(1)} Ton | Rp. {totTahunK_Omset.toLocaleString('id-ID')}
           </div>
           <div style={{ display: 'flex', gap: 6, marginTop: 6, justifyContent: 'flex-end' }}>
             <button onClick={(e)=>{ e.stopPropagation(); setBulanIdxK(p=>Math.min(p+1,prodK.length-1)); }} style={{background:'rgba(255,255,255,0.2)',border:'none',borderRadius:4,color:'#fff',padding:'2px 8px',fontSize:10,cursor:'pointer'}}>◀ Prev</button>
