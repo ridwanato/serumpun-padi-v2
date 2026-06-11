@@ -38,13 +38,15 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
     jumlah_anggota: '', kelurahan: '',
     produk_unggulan: '', status_aktif: 'Aktif',
   };
-  const [form, setForm]           = useState(initForm);
-  const [editTarget, setEditTarget] = useState(null);
-  const [pendingPin, setPendingPin] = useState(null);
-  const [gpsInput, setGpsInput]     = useState('');
-  const [picking, setPicking]     = useState(false);
-  const [showForm, setShowForm]   = useState(false);
-  const [saving, setSaving]       = useState(false);
+  const [form, setForm]               = useState(initForm);
+  const [editTarget, setEditTarget]   = useState(null);
+  const [prodTarget, setProdTarget]   = useState(null);
+  const [pendingPin, setPendingPin]   = useState(null);
+  const [gpsInput, setGpsInput]       = useState('');
+  const [picking, setPicking]         = useState(false);
+  const [mode, setMode]               = useState(null); // null | 'add_kelompok' | 'edit_kelompok' | 'add_prod'
+  const [prodJenisFilter, setProdJenisFilter] = useState('KWT');
+  const [saving, setSaving]           = useState(false);
   const [formP, setFormP] = useState({
     tanggal: new Date().toISOString().split('T')[0],
     luas_lahan: '',
@@ -62,10 +64,16 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
     }
   });
 
+  const filteredGroups = (poktanList || []).filter(p => p.jenis === prodJenisFilter && (user ? p.user_id === user.id : true));
+
   const openAdd = () => {
-    setForm(initForm); setEditTarget(null); setPendingPin(null); setGpsInput(''); setShowForm(true);
+    setForm(initForm); setEditTarget(null); setPendingPin(null); setGpsInput(''); setMode('add_kelompok');
   };
   const openEdit = (p) => {
+    if (user && p.user_id !== user.id) {
+      alert('Anda tidak memiliki izin untuk mengedit kelompok ini.');
+      return;
+    }
     setForm({
       nama_poktan: p.nama_poktan || '', jenis: p.jenis || 'Poktan',
       nama_ketua: p.nama_ketua || '', jumlah_anggota: String(p.jumlah_anggota || ''),
@@ -73,11 +81,13 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
       produk_unggulan: p.produk_unggulan || '', status_aktif: p.status_aktif || 'Aktif',
     });
     setPendingPin(p.lat && p.lng ? { lat: p.lat, lng: p.lng } : null);
-    setEditTarget(p); setShowForm(true);
+    setEditTarget(p); setMode('edit_kelompok');
+    window.scrollTo(0,0);
   };
 
   const handleSave = async () => {
     if (!user) return alert('Login dulu.');
+    if (editTarget && editTarget.user_id !== user.id) return alert('Anda tidak memiliki izin untuk mengubah data ini.');
     if (!form.nama_poktan) return alert('Nama kelompok wajib diisi.');
 
     let kelurahanVal = form.kelurahan;
@@ -109,19 +119,22 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
     }
     setSaving(false);
     if (error) { alert('Gagal: ' + error.message); return; }
-    setPendingPin(null); setPicking(false); setShowForm(false); setEditTarget(null); setForm(initForm); setGpsInput('');
+    setPendingPin(null); setPicking(false); setMode(null); setEditTarget(null); setForm(initForm); setGpsInput('');
     if (onRefresh) onRefresh();
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Hapus data ini?')) return;
+    if (editTarget && editTarget.user_id !== user.id) return alert('Anda tidak memiliki izin untuk menghapus data ini.');
+    if (!window.confirm('Tindakan ini tidak dapat dibatalkan (undo). Apakah Anda yakin ingin menghapus kelompok ini beserta seluruh catatan riwayat produksinya?')) return;
     await supabase.from('poktan_kwt').delete().eq('id', id);
+    setMode(null); setEditTarget(null); setForm(initForm); setPendingPin(null); setGpsInput('');
     if (onRefresh) onRefresh();
   };
 
   const saveProduksi = async () => {
     if (!user) return alert('Login dulu.');
-    if (!editTarget) return alert('Pilih KWT terlebih dahulu.');
+    if (!prodTarget) return alert('Pilih kelompok terlebih dahulu.');
+    if (prodTarget.user_id !== user.id) return alert('Anda tidak memiliki izin untuk menyimpan produksi kelompok ini.');
     
     // Check if at least one product has a quantity
     let hasQty = false;
@@ -131,7 +144,7 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
     if (!hasQty) return alert('Isi minimal satu kuantitas produk.');
 
     setSaving(true);
-    const { data: row } = await supabase.from('poktan_kwt').select('catatan').eq('id', editTarget.id).single();
+    const { data: row } = await supabase.from('poktan_kwt').select('catatan').eq('id', prodTarget.id).single();
     let arr = [];
     if (row && row.catatan) {
       if (Array.isArray(row.catatan)) {
@@ -162,12 +175,14 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
     
     arr.push(newEntry);
     
-    const { error } = await supabase.from('poktan_kwt').update({ catatan: arr }).eq('id', editTarget.id);
+    const { error } = await supabase.from('poktan_kwt').update({ catatan: arr }).eq('id', prodTarget.id);
     setSaving(false);
     if (error) {
       alert('Gagal simpan produksi: ' + error.message);
     } else {
-      alert('✅ Produksi KWT berhasil disimpan!');
+      alert('✅ Produksi kelompok berhasil disimpan!');
+      setMode(null);
+      setProdTarget(null);
       setFormP({
         tanggal: new Date().toISOString().split('T')[0],
         luas_lahan: '',
@@ -189,6 +204,8 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
   };
 
   const statusColor = (s) => s === 'Aktif' ? '#2d6a4f' : '#9ca3af';
+  const box = { background:'#fff', border:'1px solid #e5e7eb', borderRadius:10, padding:'12px 14px', marginBottom:10 };
+  const tag = (txt,c='#6b7280') => <div style={{fontSize:10,fontWeight:700,color:c,textTransform:'uppercase',letterSpacing:.5,marginBottom:6}}>{txt}</div>;
 
   return (
     <div style={{ padding: 12 }}>
@@ -200,18 +217,56 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
         </div>
       )}
 
-      {/* ── Tombol Tambah ── */}
-      {user && !showForm && (
-        <button className="sp-btn sp-btn-primary" style={{ width: '100%', marginBottom: 12 }} onClick={openAdd}>
-          ➕ Tambah Poktan / KWT / Gapoktan
-        </button>
+      {/* ── TOMBOL AKSI ── */}
+      {user && (
+        <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+          <button className="sp-btn sp-btn-primary" style={{ flex: 1 }}
+            onClick={() => {
+              if (mode === 'add_kelompok') {
+                setMode(null);
+                setEditTarget(null);
+              } else {
+                openAdd();
+              }
+            }}>
+            ➕ {mode === 'add_kelompok' ? 'Tutup' : 'Tambah Kelompok'}
+          </button>
+          <button className="sp-btn" style={{ flex: 1, background: '#e76f51', color: '#fff' }}
+            onClick={() => {
+              if (mode === 'add_prod') {
+                setMode(null);
+                setProdTarget(null);
+              } else {
+                setMode('add_prod');
+                setProdTarget(null);
+                setFormP({
+                  tanggal: new Date().toISOString().split('T')[0],
+                  luas_lahan: '',
+                  produk: {
+                    cabai: { qty: '', harga: '' },
+                    tomat: { qty: '', harga: '' },
+                    sawi: { qty: '', harga: '' },
+                    pakcoy: { qty: '', harga: '' },
+                    buah_buahan: { qty: '', harga: '' },
+                    sayuran: { qty: '', harga: '' },
+                    minuman_herbal: { qty: '', harga: '' },
+                    kue: { qty: '', harga: '' },
+                    keripik: { qty: '', harga: '' },
+                    lainnya: { qty: '', harga: '' },
+                  }
+                });
+              }
+            }}>
+            🥬 {mode === 'add_prod' ? 'Tutup' : 'Input Produksi'}
+          </button>
+        </div>
       )}
 
       {/* ── Form Tambah / Edit ── */}
-      {showForm && (
+      {(mode === 'add_kelompok' || mode === 'edit_kelompok') && (
         <div className="sp-info-box">
           <div className="sp-info-box__title" style={{ color: editTarget ? '#1d4ed8' : '#166534' }}>
-            {editTarget ? `✏️ Edit: ${editTarget.nama_poktan}` : '➕ Tambah Poktan / KWT'}
+            {editTarget ? `✏️ Edit: ${editTarget.nama_poktan}` : '➕ Tambah Poktan / KWT / Gapoktan'}
           </div>
 
           {/* Jenis */}
@@ -258,8 +313,6 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
             </select>
           </div>
 
-
-
           {/* Lokasi */}
           <button className="sp-btn sp-btn-secondary" style={{ width:'100%', marginTop:10 }}
             onClick={() => onPickLocation && onPickLocation((latlng) => setPendingPin(latlng))}>
@@ -279,12 +332,47 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
             }}>Cari</button>
           </div>
 
-          {form.jenis === 'KWT' && editTarget && (
-            <div style={{ marginTop: 15, borderTop: '2px dashed #e5e7eb', paddingTop: 15 }}>
-              <div style={{ fontSize: 12, fontWeight: 800, color: '#e76f51', marginBottom: 10, textTransform: 'uppercase' }}>
-                INPUT PRODUKSI KWT
-              </div>
-              
+          {/* Simpan / Batal */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 12 }}>
+            <button className="sp-btn" style={{ background: '#f3f4f6', color: '#374151', border: '1px solid #e5e7eb' }}
+              onClick={() => { setMode(null); setEditTarget(null); setForm(initForm); setGpsInput(''); }}>Batal</button>
+            <button className="sp-btn sp-btn-primary" disabled={saving} onClick={handleSave}>
+              💾 {saving ? 'Menyimpan...' : editTarget ? 'Update' : 'Simpan'}
+            </button>
+          </div>
+          {editTarget && (
+            <button className="sp-btn sp-btn-danger" style={{ width: '100%', marginTop: 8 }} onClick={() => handleDelete(editTarget.id)}>
+              🗑️ Hapus Kelompok Ini
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* ── Form Input Produksi ── */}
+      {mode === 'add_prod' && (
+        <div style={box}>
+          {tag('Input Produksi Poktan/KWT/Gapoktan', '#e76f51')}
+          
+          {/* Filter jenis kelompok */}
+          <select className="sp-select" value={prodJenisFilter} onChange={e => { setProdJenisFilter(e.target.value); setProdTarget(null); }}>
+            <option value="Poktan">Poktan</option>
+            <option value="KWT">KWT</option>
+            <option value="Gapoktan">Gapoktan</option>
+          </select>
+
+          {/* Select kelompok (filtered by jenis and user ownership) */}
+          <select className="sp-select" style={{ marginTop: 8 }} value={prodTarget?.id || ''} onChange={e => {
+            const found = filteredGroups.find(g => String(g.id) === e.target.value);
+            setProdTarget(found || null);
+          }}>
+            <option value="">-- Pilih Kelompok ({prodJenisFilter}) --</option>
+            {filteredGroups.map(g => (
+              <option key={g.id} value={g.id}>{g.nama_poktan}</option>
+            ))}
+          </select>
+
+          {prodTarget && (
+            <>
               <input type="date" className="sp-input" style={{ marginTop: 8 }} value={formP.tanggal}
                 onChange={e => setFormP(p => ({ ...p, tanggal: e.target.value }))} />
                 
@@ -349,26 +437,15 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
                   }} />
                 <span style={{ fontSize: 11, color: '#666' }}>m2</span>
               </div>
-              
-              <button className="sp-btn" style={{ width: '100%', background: '#e76f51', color: '#fff', fontSize: 11, fontWeight: 700, padding: '8px 10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 12 }}
-                disabled={saving} onClick={saveProduksi}>
-                💾 SIMPAN PRODUKSI
-              </button>
-            </div>
-          )}
 
-          {/* Simpan / Batal */}
-          <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-            <button className="sp-btn" style={{ flex: 1, background: '#f3f4f6', color: '#374151', border: '1px solid #e5e7eb' }}
-              onClick={() => { setShowForm(false); setEditTarget(null); setForm(initForm); setGpsInput(''); }}>Batal</button>
-            <button className="sp-btn sp-btn-primary" style={{ flex: 2 }} disabled={saving} onClick={handleSave}>
-              💾 {saving ? 'Menyimpan...' : editTarget ? 'Update' : 'Simpan'}
-            </button>
-          </div>
-          {editTarget && (
-            <button className="sp-btn sp-btn-danger" style={{ width: '100%', marginTop: 8 }} onClick={() => handleDelete(editTarget.id)}>
-              🗑️ Hapus Data Ini
-            </button>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 10 }}>
+                <button className="sp-btn" style={{ background: '#f3f4f6', color: '#374151', border: '1px solid #e5e7eb' }}
+                  onClick={() => { setMode(null); setProdTarget(null); }}>Batal</button>
+                <button className="sp-btn sp-btn-primary" disabled={saving} onClick={saveProduksi}>
+                  💾 {saving ? 'Menyimpan...' : 'Simpan Produksi'}
+                </button>
+              </div>
+            </>
           )}
         </div>
       )}
@@ -440,7 +517,7 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
                     </div>
                   )}
                 </div>
-                {user && (
+                {user && p.user_id === user.id && (
                   <button onClick={() => openEdit(p)}
                     style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 6, padding: '3px 8px', fontSize: 10, cursor: 'pointer', color: '#1d4ed8', fontWeight: 600, flexShrink: 0, marginLeft: 8 }}>
                     ✏️ Edit

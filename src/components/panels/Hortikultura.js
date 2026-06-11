@@ -15,18 +15,49 @@ function Hortikultura({
   });
   const [pendingPin, setPendingPin] = useState(null);
   const [gpsInput, setGpsInput]     = useState('');
+  const [mode, setMode]             = useState(null); // null | 'add' | 'edit'
+  const [editTarget, setEditTarget] = useState(null);
+
+  const openAdd = () => {
+    setForm({
+      komoditas: 'cabai_merah', nama_pemilik: '',
+      kapasitas_value: '', kapasitas_satuan: 'luas_m2',
+      tanggal_tanam: '', catatan: '',
+    });
+    setPendingPin(null); setGpsInput(''); setEditTarget(null); setMode('add');
+  };
+
+  const openEdit = (h) => {
+    if (user && h.user_id !== user.id) {
+      alert('Anda tidak memiliki izin untuk mengedit data ini.');
+      return;
+    }
+    setForm({
+      komoditas: h.komoditas || 'cabai_merah',
+      nama_pemilik: h.nama_pemilik || '',
+      kapasitas_value: h.kapasitas_value !== null ? String(h.kapasitas_value) : '',
+      kapasitas_satuan: h.kapasitas_satuan || 'luas_m2',
+      tanggal_tanam: h.tanggal_tanam || '',
+      catatan: h.catatan || '',
+    });
+    setPendingPin({ lat: h.lat, lng: h.lon });
+    setGpsInput('');
+    setEditTarget(h);
+    setMode('edit');
+    window.scrollTo(0,0);
+  };
 
   const handleSave = async () => {
     if (!user) return alert('Silakan login terlebih dahulu.');
     if (!pendingPin) return alert('Klik peta untuk menentukan lokasi pin.');
+    if (editTarget && editTarget.user_id !== user.id) return alert('Anda tidak memiliki izin untuk mengubah data ini.');
     const cfg = HORTIKULTURA_CONFIG[form.komoditas];
     const tgl = form.tanggal_tanam || null;
     const prediksi = tgl && cfg
       ? new Date(new Date(tgl).getTime() + cfg.umur * 864e5).toISOString().split('T')[0]
       : null;
 
-    const { error } = await supabase.from('komoditas_hortikultura').insert({
-      user_id: user.id,
+    const payload = {
       komoditas: form.komoditas,
       nama_pemilik: form.nama_pemilik,
       lat: pendingPin.lat,
@@ -36,19 +67,35 @@ function Hortikultura({
       tanggal_tanam: tgl,
       prediksi_panen: prediksi,
       catatan: form.catatan,
-    });
+    };
+
+    let error;
+    if (editTarget) {
+      ({ error } = await supabase.from('komoditas_hortikultura').update(payload).eq('id', editTarget.id));
+    } else {
+      payload.user_id = user.id;
+      ({ error } = await supabase.from('komoditas_hortikultura').insert(payload));
+    }
 
     if (error) { alert('Gagal simpan: ' + error.message); return; }
 
     setPendingPin(null);
     setGpsInput('');
+    setEditTarget(null);
+    setMode(null);
     setForm({ komoditas: 'cabai_merah', nama_pemilik: '', kapasitas_value: '', kapasitas_satuan: 'luas_m2', tanggal_tanam: '', catatan: '' });
     if (onRefresh) onRefresh();
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Hapus data ini?')) return;
+    if (!user) return alert('Silakan login terlebih dahulu.');
+    if (editTarget && editTarget.user_id !== user.id) return alert('Anda tidak memiliki izin untuk menghapus data ini.');
+    if (!window.confirm('Tindakan ini tidak dapat dibatalkan (undo). Apakah Anda yakin ingin menghapus data lahan hortikultura ini secara permanen?')) return;
     await supabase.from('komoditas_hortikultura').delete().eq('id', id);
+    setPendingPin(null);
+    setGpsInput('');
+    setEditTarget(null);
+    setMode(null);
     if (onRefresh) onRefresh();
   };
 
@@ -85,10 +132,25 @@ function Hortikultura({
         </div>
       )}
 
-      {/* Form Tambah */}
+      {/* Tombol Tambah */}
       {user && (
+        <button className="sp-btn sp-btn-primary" style={{ width: '100%', marginBottom: 12 }}
+          onClick={() => {
+            if (mode === 'add') {
+              setMode(null);
+              setEditTarget(null);
+            } else {
+              openAdd();
+            }
+          }}>
+          ➕ {mode === 'add' ? 'Tutup Form' : 'Tambah Hortikultura'}
+        </button>
+      )}
+
+      {/* Form Tambah/Edit */}
+      {(mode === 'add' || mode === 'edit') && user && (
         <div className="sp-info-box">
-          <div className="sp-info-box__title">➕ Tambah Lokasi Hortikultura</div>
+          <div className="sp-info-box__title">{editTarget ? `✏️ Edit Hortikultura: ${editTarget.nama_pemilik || ''}` : '➕ Tambah Lahan Hortikultura'}</div>
 
           <label style={{ fontSize: 11, color: '#888' }}>Komoditas</label>
           <select className="sp-select" value={form.komoditas}
@@ -110,27 +172,36 @@ function Hortikultura({
           <input className="sp-input" placeholder="Opsional" value={form.catatan}
             onChange={e => setForm(p => ({ ...p, catatan: e.target.value }))} />
 
-          <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-            <div style={{ flex: 2, display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <button className="sp-btn sp-btn-secondary" style={{ width: '100%' }}
-                onClick={() => onPickLocation && onPickLocation((latlng) => setPendingPin(latlng))}>
-                📍 {pendingPin ? `✅ ${pendingPin.lat.toFixed(5)}, ${pendingPin.lng.toFixed(5)}` : 'Pilih Lokasi di Peta'}
-              </button>
-              <div style={{display:'flex', gap:6}}>
-                <input className="sp-input" placeholder="Atau masukkan koordinat GPS" value={gpsInput} onChange={e=>setGpsInput(e.target.value)} />
-                <button className="sp-btn" style={{background:'#e5e7eb', color:'#374151', padding:'0 12px'}} onClick={() => {
-                  const coords = parseCoordinates(gpsInput);
-                  if(coords) {
-                    setPendingPin(coords);
-                    onFlyToLocation && onFlyToLocation(coords.lat, coords.lng);
-                  } else {
-                    alert('Format koordinat tidak valid.');
-                  }
-                }}>Cari</button>
-              </div>
-            </div>
-            <button className="sp-btn sp-btn-primary" style={{ flex: 1, height: '100%' }} onClick={handleSave}>💾 Simpan</button>
+          <button className="sp-btn sp-btn-secondary" style={{ width: '100%', marginTop: 10 }}
+            onClick={() => onPickLocation && onPickLocation((latlng) => setPendingPin(latlng))}>
+            📍 {pendingPin ? `✅ ${pendingPin.lat.toFixed(5)}, ${pendingPin.lng.toFixed(5)}` : 'Pilih Lokasi di Peta'}
+          </button>
+          
+          <div style={{display:'flex', gap:6, marginTop:8}}>
+            <input className="sp-input" placeholder="Atau masukkan koordinat GPS" value={gpsInput} onChange={e=>setGpsInput(e.target.value)} />
+            <button className="sp-btn" style={{background:'#e5e7eb', color:'#374151', padding:'0 12px'}} onClick={() => {
+              const coords = parseCoordinates(gpsInput);
+              if(coords) {
+                setPendingPin(coords);
+                onFlyToLocation && onFlyToLocation(coords.lat, coords.lng);
+              } else {
+                alert('Format koordinat tidak valid.');
+              }
+            }}>Cari</button>
           </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 12 }}>
+            <button className="sp-btn" style={{ background: '#f3f4f6', color: '#374151', border: '1px solid #e5e7eb' }}
+              onClick={() => { setMode(null); setEditTarget(null); setPendingPin(null); setGpsInput(''); }}>Batal</button>
+            <button className="sp-btn sp-btn-primary" onClick={handleSave}>
+              💾 {editTarget ? 'Update' : 'Simpan'}
+            </button>
+          </div>
+          {editTarget && (
+            <button className="sp-btn sp-btn-danger" style={{ width: '100%', marginTop: 8 }} onClick={() => handleDelete(editTarget.id)}>
+              🗑️ Hapus Lahan Ini
+            </button>
+          )}
         </div>
       )}
 
@@ -152,7 +223,8 @@ function Hortikultura({
               padding: '8px 10px', marginBottom: 6,
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div>
+                <div style={{ flex: 1, cursor: h.lat && h.lon ? 'pointer' : 'default' }}
+                  onClick={() => h.lat && h.lon && flyTo(h.lat, h.lon)}>
                   <b>{cfg.icon} {cfg.label || h.komoditas}</b>
                   {h.nama_pemilik && <span style={{ color: '#888', fontSize: 11 }}> · {h.nama_pemilik}</span>}
                   <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>
@@ -161,9 +233,9 @@ function Hortikultura({
                   {h.prediksi_panen && <div style={{ fontSize: 11, color: '#52b788' }}>🌾 Est. Panen: {fmtTgl(h.prediksi_panen)}</div>}
                   <div style={{ fontSize: 10, color: '#aaa' }}>📍 {h.lat?.toFixed(5)}, {h.lon?.toFixed(5)}</div>
                 </div>
-                {user && (
-                  <button className="sp-btn sp-btn-danger" style={{ fontSize: 10, padding: '3px 8px' }}
-                    onClick={() => handleDelete(h.id)}>🗑️</button>
+                {user && h.user_id === user.id && (
+                  <button className="sp-btn sp-btn-secondary" style={{ fontSize: 10, padding: '3px 8px', border: '1px solid #bfdbfe', background: '#eff6ff', color: '#1d4ed8' }}
+                    onClick={() => openEdit(h)}>✏️ Edit</button>
                 )}
               </div>
             </div>

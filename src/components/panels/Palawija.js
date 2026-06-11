@@ -11,9 +11,21 @@ function Palawija({ palawijaKMZ, palawijaList, showPin, onToggleShow, user, mapR
   const [gpsInput, setGpsInput]     = useState('');
   const [editTarget, setEditTarget] = useState(null);
   const [saving, setSaving]       = useState(false);
+  const [mode, setMode]           = useState(null); // null | 'add' | 'edit'
 
-  const openAdd = () => { setForm(initForm); setEditTarget(null); setPendingPin(null); setGpsInput(''); };
+  const openAdd = () => {
+    setForm(initForm);
+    setEditTarget(null);
+    setPendingPin(null);
+    setGpsInput('');
+    setMode('add');
+  };
+
   const openEdit = (p) => {
+    if (user && p.user_id !== user.id) {
+      alert('Anda tidak memiliki izin untuk mengedit data ini.');
+      return;
+    }
     setForm({
       komoditas: p.komoditas || 'jagung',
       nama_pemilik: p.nama_pemilik || '',
@@ -24,11 +36,14 @@ function Palawija({ palawijaKMZ, palawijaList, showPin, onToggleShow, user, mapR
     });
     setPendingPin(p.lat && p.lon ? { lat: p.lat, lng: p.lon } : null);
     setEditTarget(p);
+    setMode('edit');
+    window.scrollTo(0,0);
   };
 
   const handleSave = async () => {
     if (!user) return alert('Silakan login terlebih dahulu.');
     if (!form.nama_pemilik) return alert('Nama pemilik wajib diisi.');
+    if (editTarget && editTarget.user_id !== user.id) return alert('Anda tidak memiliki izin untuk mengubah data ini.');
     setSaving(true);
     const cfg = PALAWIJA_CONFIG[form.komoditas];
     const tgl = form.tanggal_tanam || null;
@@ -53,14 +68,18 @@ function Palawija({ palawijaKMZ, palawijaList, showPin, onToggleShow, user, mapR
     }
     setSaving(false);
     if (error) { alert('Gagal simpan: ' + error.message); return; }
-    setForm(initForm); setEditTarget(null); setPendingPin(null); setGpsInput('');
+    setForm(initForm); setEditTarget(null); setPendingPin(null); setGpsInput(''); setMode(null);
     if (onRefresh) onRefresh();
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Hapus data ini?')) return;
+    if (!user) return alert('Silakan login terlebih dahulu.');
+    const item = (palawijaList || []).find(x => x.id === id);
+    if (item && item.user_id !== user.id) return alert('Anda tidak memiliki izin untuk menghapus data ini.');
+    if (!window.confirm('Tindakan ini tidak dapat dibatalkan (undo). Apakah Anda yakin ingin menghapus data lahan palawija ini secara permanen?')) return;
     const { error } = await supabase.from('komoditas_palawija').delete().eq('id', id);
     if (error) { alert('Gagal hapus: ' + error.message); return; }
+    setMode(null); setEditTarget(null); setPendingPin(null); setForm(initForm); setGpsInput('');
     if (onRefresh) onRefresh();
   };
 
@@ -82,16 +101,26 @@ function Palawija({ palawijaKMZ, palawijaList, showPin, onToggleShow, user, mapR
         </div>
       )}
 
-      {/* Form Tambah/Edit */}
+      {/* Tombol Tambah */}
       {user && (
+        <button className="sp-btn sp-btn-primary" style={{ width: '100%', marginBottom: 12 }}
+          onClick={() => {
+            if (mode === 'add') {
+              setMode(null);
+              setEditTarget(null);
+            } else {
+              openAdd();
+            }
+          }}>
+          ➕ {mode === 'add' ? 'Tutup Form' : 'Tambah Palawija'}
+        </button>
+      )}
+
+      {/* Form Tambah/Edit */}
+      {(mode === 'add' || mode === 'edit') && user && (
         <div className="sp-info-box">
           <div className="sp-info-box__title">
             {isEditing ? '✏️ Edit Palawija' : '➕ Tambah Palawija'}
-            {isEditing && (
-              <button onClick={openAdd} style={{ float: 'right', fontSize: 10, background: '#f0f0f0', border: 'none', borderRadius: 4, padding: '2px 8px', cursor: 'pointer' }}>
-                + Tambah Baru
-              </button>
-            )}
           </div>
 
           <select className="sp-select" value={form.komoditas} onChange={e => setForm(p => ({ ...p, komoditas: e.target.value }))}>
@@ -122,16 +151,18 @@ function Palawija({ palawijaKMZ, palawijaList, showPin, onToggleShow, user, mapR
             }}>Cari</button>
           </div>
 
-          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-            {isEditing && (
-              <button className="sp-btn" style={{ flex: 1, background: '#f0f0f0', color: '#555' }}
-                onClick={openAdd}>✕ Batal</button>
-            )}
-            <button className="sp-btn sp-btn-primary" style={{ flex: 2 }}
-              disabled={saving} onClick={handleSave}>
-              {saving ? '⏳...' : (isEditing ? '💾 Update' : '💾 Simpan')}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 12 }}>
+            <button className="sp-btn" style={{ background: '#f3f4f6', color: '#374151', border: '1px solid #e5e7eb' }}
+              onClick={() => { setMode(null); setEditTarget(null); setPendingPin(null); setGpsInput(''); }}>Batal</button>
+            <button className="sp-btn sp-btn-primary" disabled={saving} onClick={handleSave}>
+              💾 {saving ? '⏳...' : (isEditing ? 'Update' : 'Simpan')}
             </button>
           </div>
+          {isEditing && (
+            <button className="sp-btn sp-btn-danger" style={{ width: '100%', marginTop: 8 }} onClick={() => handleDelete(editTarget.id)}>
+              🗑️ Hapus Lahan Ini
+            </button>
+          )}
         </div>
       )}
 
@@ -146,7 +177,7 @@ function Palawija({ palawijaKMZ, palawijaList, showPin, onToggleShow, user, mapR
               return (
                 <div key={p.id} style={{ background: '#fff', border: '1px solid #e8f5e9', borderLeft: '3px solid #74c69d', borderRadius: 8, padding: '8px 10px', marginBottom: 6 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div style={{ flex: 1 }}>
+                    <div style={{ flex: 1, cursor: p.lat && p.lon ? 'pointer' : 'default' }} onClick={() => p.lat && flyTo(p.lat, p.lon)}>
                       <b style={{ fontSize: 12 }}>{cfg.icon} {cfg.label || p.komoditas}</b>
                       {p.nama_pemilik && <span style={{ color: '#666', fontSize: 11 }}> · {p.nama_pemilik}</span>}
                       <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>
@@ -156,11 +187,7 @@ function Palawija({ palawijaKMZ, palawijaList, showPin, onToggleShow, user, mapR
                       {p.catatan && <div style={{ fontSize: 10, color: '#aaa' }}>{p.catatan}</div>}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginLeft: 6 }}>
-                      {p.lat && p.lat !== 0 && (
-                        <button style={{ background: '#e8f5e9', border: 'none', borderRadius: 4, padding: '3px 7px', fontSize: 11, cursor: 'pointer' }}
-                          onClick={() => flyTo(p.lat, p.lon)}>📍</button>
-                      )}
-                      {user && (
+                      {user && p.user_id === user.id && (
                         <>
                           <button style={{ background: '#fff3e0', border: 'none', borderRadius: 4, padding: '3px 7px', fontSize: 11, cursor: 'pointer' }}
                             onClick={() => openEdit(p)}>✏️</button>

@@ -52,8 +52,11 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
   const totalTahunKg   = produksiBulanan.reduce((s,b)=>s+b.totalKg,0);
   const totalTahunEkor = produksiBulanan.reduce((s,b)=>s+b.totalEkor,0);
 
-  /* ── Open edit ── */
   const openEdit = (r) => {
+    if (user && r.user_id !== user.id) {
+      alert('Anda tidak memiliki izin untuk mengedit pembudidaya ini.');
+      return;
+    }
     let kolam_units={}, ikan_units={}, ikan_pembenihan_units={};
     try{ kolam_units=JSON.parse(r.jenis_kolam||'{}'); }catch(e){}
     (r.jenis_ikan||'').split(',').forEach(x=>{ if(x.trim()) ikan_units[x.trim()]=true; });
@@ -61,6 +64,7 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
     setFormB({ nama_pemilik:r.nama_pemilik||'', status_kolam:r.status_kolam||'Aktif', kolam_units, ikan_units, ikan_pembenihan_units, catatan:r.catatan||'' });
     setPendingPin(r.lat&&r.lng?{lat:r.lat,lng:r.lng}:null);
     setEditTarget(r); setMode('edit');
+    window.scrollTo(0,0);
   };
 
   /* ── Simpan pembudidaya ── */
@@ -80,6 +84,10 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
     };
     let error;
     if(editTarget) {
+      if (editTarget.user_id !== user.id) {
+        setSaving(false);
+        return alert('Anda tidak memiliki izin untuk mengubah data ini.');
+      }
       ({ error } = await supabase.from('kolam_budidaya').update(payload).eq('id', editTarget.id));
     } else {
       payload.user_id = user.id;
@@ -87,7 +95,7 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
     }
     setSaving(false);
     if(error) { alert('Gagal simpan: ' + error.message); return; }
-    setMode(null); setEditTarget(null); setPendingPin(null); setFormB(initForm);
+    setMode(null); setEditTarget(null); setPendingPin(null); setFormB(initForm); setGpsInput('');
     onRefresh && onRefresh();
   };
 
@@ -95,6 +103,7 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
   const saveProduksi = async () => {
     if(!user) return alert('Login dulu.');
     if(!prodTarget) return alert('Pilih pembudidaya terlebih dahulu.');
+    if (prodTarget.user_id !== user.id) return alert('Anda tidak memiliki izin untuk menyimpan produksi pembudidaya ini.');
     const total=Object.values(formP.ikan_val).reduce((s,v)=>s+parseFloat(v||0),0);
     if(total<=0) return alert('Isi minimal satu jenis ikan.');
     setSaving(true);
@@ -117,8 +126,10 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
 
   const deleteBudidaya = async (r) => {
     if(!user) return alert('Login dulu.');
-    if(!window.confirm(`Hapus ${r.nama_pemilik}?`)) return;
+    if(r.user_id !== user.id) return alert('Anda tidak memiliki izin untuk menghapus data ini.');
+    if(!window.confirm('Tindakan ini tidak dapat dibatalkan (undo). Apakah Anda yakin ingin menghapus data pembudidaya ini beserta seluruh catatan riwayat kolamnya secara permanen?')) return;
     await supabase.from('kolam_budidaya').delete().eq('id',r.id);
+    setMode(null); setEditTarget(null); setPendingPin(null); setFormB(initForm);
     onRefresh&&onRefresh();
   };
 
@@ -159,16 +170,18 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
       </div>
 
       {/* ── TOMBOL AKSI ── */}
-      <div style={{display:'flex',gap:8,marginBottom:12}}>
-        <button className="sp-btn sp-btn-primary" style={{flex:1}}
-          onClick={()=>{ setMode(mode==='add'?null:'add'); setEditTarget(null); setFormB(initForm); setPendingPin(null); setGpsInput(''); }}>
-          ➕ {mode==='add'?'Tutup':'Tambah Pembudidaya'}
-        </button>
-        <button className="sp-btn" style={{flex:1,background:'#e76f51',color:'#fff'}}
-          onClick={()=>{ setMode(mode==='add_prod'?null:'add_prod'); setProdTarget(null); setFormP({tanggal:new Date().toISOString().slice(0,10), ikan_val:{}}); }}>
-          🐟 {mode==='add_prod'?'Tutup':'Input Produksi'}
-        </button>
-      </div>
+      {user && (
+        <div style={{display:'flex',gap:8,marginBottom:12}}>
+          <button className="sp-btn sp-btn-primary" style={{flex:1}}
+            onClick={()=>{ setMode(mode==='add'?null:'add'); setEditTarget(null); setFormB(initForm); setPendingPin(null); setGpsInput(''); }}>
+            ➕ {mode==='add'?'Tutup':'Tambah Pembudidaya'}
+          </button>
+          <button className="sp-btn" style={{flex:1,background:'#e76f51',color:'#fff'}}
+            onClick={()=>{ setMode(mode==='add_prod'?null:'add_prod'); setProdTarget(null); setFormP({tanggal:new Date().toISOString().slice(0,10), ikan_val:{}}); }}>
+            🐟 {mode==='add_prod'?'Tutup':'Input Produksi'}
+          </button>
+        </div>
+      )}
 
       {/* ── FORM TAMBAH/EDIT PEMBUDIDAYA ── */}
       {(mode==='add'||mode==='edit') && (
@@ -236,11 +249,16 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
               }
             }}>Cari</button>
           </div>
-          <button className="sp-btn sp-btn-primary" style={{width:'100%',marginTop:8,background:'#0096c7'}} disabled={saving} onClick={saveBudidaya}>
-            💾 {saving?'Menyimpan...':'SIMPAN'}
-          </button>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 12 }}>
+            <button className="sp-btn" style={{ background: '#f3f4f6', color: '#374151', border: '1px solid #e5e7eb' }}
+              onClick={() => { setMode(null); setEditTarget(null); setPendingPin(null); setFormB(initForm); setGpsInput(''); }}>Batal</button>
+            <button className="sp-btn sp-btn-primary" style={{background:'#0096c7'}} disabled={saving} onClick={saveBudidaya}>
+              💾 {saving ? 'Menyimpan...' : editTarget ? 'Update' : 'Simpan'}
+            </button>
+          </div>
           {mode==='edit' && (
-            <button className="sp-btn sp-btn-danger" style={{width:'100%',marginTop:6}} onClick={()=>deleteBudidaya(editTarget)}>
+            <button className="sp-btn sp-btn-danger" style={{width:'100%',marginTop:8}} onClick={()=>deleteBudidaya(editTarget)}>
               🗑️ Hapus Data Ini
             </button>
           )}
@@ -253,7 +271,7 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
           {tag('Input Produksi Ikan Budidaya','#e76f51')}
           <select className="sp-select" value={prodTarget?.id||''} onChange={e=>{ const r=(budidayaList||[]).find(x=>String(x.id)===e.target.value); setProdTarget(r||null); }}>
             <option value="">-- Pilih Pembudidaya --</option>
-            {(budidayaList||[]).map(r=><option key={r.id} value={r.id}>{r.nama_pemilik}</option>)}
+            {(budidayaList||[]).filter(r => user ? r.user_id === user.id : true).map(r=><option key={r.id} value={r.id}>{r.nama_pemilik}</option>)}
           </select>
           <input type="date" className="sp-input" style={{marginTop:8}} value={formP.tanggal}
             onChange={e=>setFormP(p=>({...p,tanggal:e.target.value}))} />
@@ -280,9 +298,14 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
               </div>
             ))}
           </div>
-          <button className="sp-btn sp-btn-primary" style={{width:'100%',marginTop:8,background:'#e76f51'}} disabled={saving} onClick={saveProduksi}>
-            💾 {saving?'Menyimpan...':'SIMPAN PRODUKSI'}
-          </button>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 12 }}>
+            <button className="sp-btn" style={{ background: '#f3f4f6', color: '#374151', border: '1px solid #e5e7eb' }}
+              onClick={() => { setMode(null); setProdTarget(null); setFormP({tanggal:new Date().toISOString().slice(0,10), ikan_val:{}}); }}>Batal</button>
+            <button className="sp-btn sp-btn-primary" style={{background:'#e76f51'}} disabled={saving} onClick={saveProduksi}>
+              💾 {saving?'Menyimpan...':'SIMPAN PRODUKSI'}
+            </button>
+          </div>
         </div>
       )}
 
@@ -309,7 +332,9 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
                   {prodTotal>0 && <div style={S({color:'#0096c7',marginTop:2})}>📦 Produksi: {(prodTotal/1000).toFixed(2)} ton</div>}
                   {r.lat&&r.lng&&<div style={{fontSize:9,color:'#0096c7',marginTop:2}}>📍 Klik untuk lihat di peta</div>}
                 </div>
-                <button onClick={()=>openEdit(r)} style={{background:'#eff6ff',border:'1px solid #bfdbfe',borderRadius:6,padding:'3px 8px',fontSize:10,cursor:'pointer',color:'#1d4ed8',fontWeight:600,flexShrink:0,marginLeft:8}}>✏️ Edit</button>
+                {user && r.user_id === user.id && (
+                  <button onClick={()=>openEdit(r)} style={{background:'#eff6ff',border:'1px solid #bfdbfe',borderRadius:6,padding:'3px 8px',fontSize:10,cursor:'pointer',color:'#1d4ed8',fontWeight:600,flexShrink:0,marginLeft:8}}>✏️ Edit</button>
+                )}
               </div>
             </div>
           );
