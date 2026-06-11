@@ -53,7 +53,7 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
   const totalTahunEkor = produksiBulanan.reduce((s,b)=>s+b.totalEkor,0);
 
   const openEdit = (r) => {
-    if (user && r.user_id !== user.id) {
+    if (user && r.user_id && r.user_id !== user.id) {
       alert('Anda tidak memiliki izin untuk mengedit pembudidaya ini.');
       return;
     }
@@ -84,9 +84,12 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
     };
     let error;
     if(editTarget) {
-      if (editTarget.user_id !== user.id) {
+      if (editTarget.user_id && editTarget.user_id !== user.id) {
         setSaving(false);
         return alert('Anda tidak memiliki izin untuk mengubah data ini.');
+      }
+      if (!editTarget.user_id) {
+        payload.user_id = user.id;
       }
       ({ error } = await supabase.from('kolam_budidaya').update(payload).eq('id', editTarget.id));
     } else {
@@ -103,7 +106,7 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
   const saveProduksi = async () => {
     if(!user) return alert('Login dulu.');
     if(!prodTarget) return alert('Pilih pembudidaya terlebih dahulu.');
-    if (prodTarget.user_id !== user.id) return alert('Anda tidak memiliki izin untuk menyimpan produksi pembudidaya ini.');
+    if (prodTarget.user_id && prodTarget.user_id !== user.id) return alert('Anda tidak memiliki izin untuk menyimpan produksi pembudidaya ini.');
     const total=Object.values(formP.ikan_val).reduce((s,v)=>s+parseFloat(v||0),0);
     if(total<=0) return alert('Isi minimal satu jenis ikan.');
     setSaving(true);
@@ -118,7 +121,11 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
       arr.push({tgl:formP.tanggal, type:'pembesaran', kg:total, ikan:formP.ikan_val});
     }
 
-    await supabase.from('kolam_budidaya').update({catatan:JSON.stringify(arr)}).eq('id',prodTarget.id);
+    const updatePayload = { catatan: JSON.stringify(arr) };
+    if (!prodTarget.user_id) {
+      updatePayload.user_id = user.id;
+    }
+    await supabase.from('kolam_budidaya').update(updatePayload).eq('id',prodTarget.id);
     setSaving(false); setMode(null); setProdTarget(null);
     setFormP({tanggal:new Date().toISOString().slice(0,10), ikan_val:{}});
     onRefresh&&onRefresh();
@@ -126,7 +133,7 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
 
   const deleteBudidaya = async (r) => {
     if(!user) return alert('Login dulu.');
-    if(r.user_id !== user.id) return alert('Anda tidak memiliki izin untuk menghapus data ini.');
+    if(r.user_id && r.user_id !== user.id) return alert('Anda tidak memiliki izin untuk menghapus data ini.');
     if(!window.confirm('Tindakan ini tidak dapat dibatalkan (undo). Apakah Anda yakin ingin menghapus data pembudidaya ini beserta seluruh catatan riwayat kolamnya secara permanen?')) return;
     await supabase.from('kolam_budidaya').delete().eq('id',r.id);
     setMode(null); setEditTarget(null); setPendingPin(null); setFormB(initForm);
@@ -271,7 +278,7 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
           {tag('Input Produksi Ikan Budidaya','#e76f51')}
           <select className="sp-select" value={prodTarget?.id||''} onChange={e=>{ const r=(budidayaList||[]).find(x=>String(x.id)===e.target.value); setProdTarget(r||null); }}>
             <option value="">-- Pilih Pembudidaya --</option>
-            {(budidayaList||[]).filter(r => user ? r.user_id === user.id : true).map(r=><option key={r.id} value={r.id}>{r.nama_pemilik}</option>)}
+            {(budidayaList||[]).filter(r => user ? (!r.user_id || r.user_id === user.id) : true).map(r=><option key={r.id} value={r.id}>{r.nama_pemilik}</option>)}
           </select>
           <input type="date" className="sp-input" style={{marginTop:8}} value={formP.tanggal}
             onChange={e=>setFormP(p=>({...p,tanggal:e.target.value}))} />
@@ -332,7 +339,7 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
                   {prodTotal>0 && <div style={S({color:'#0096c7',marginTop:2})}>📦 Produksi: {(prodTotal/1000).toFixed(2)} ton</div>}
                   {r.lat&&r.lng&&<div style={{fontSize:9,color:'#0096c7',marginTop:2}}>📍 Klik untuk lihat di peta</div>}
                 </div>
-                {user && r.user_id === user.id && (
+                {user && (!r.user_id || r.user_id === user.id) && (
                   <button onClick={()=>openEdit(r)} style={{background:'#eff6ff',border:'1px solid #bfdbfe',borderRadius:6,padding:'3px 8px',fontSize:10,cursor:'pointer',color:'#1d4ed8',fontWeight:600,flexShrink:0,marginLeft:8}}>✏️ Edit</button>
                 )}
               </div>

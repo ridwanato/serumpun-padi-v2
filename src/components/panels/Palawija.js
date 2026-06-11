@@ -22,7 +22,7 @@ function Palawija({ palawijaKMZ, palawijaList, showPin, onToggleShow, user, mapR
   };
 
   const openEdit = (p) => {
-    if (user && p.user_id !== user.id) {
+    if (user && p.user_id && p.user_id !== user.id) {
       alert('Anda tidak memiliki izin untuk mengedit data ini.');
       return;
     }
@@ -43,7 +43,7 @@ function Palawija({ palawijaKMZ, palawijaList, showPin, onToggleShow, user, mapR
   const handleSave = async () => {
     if (!user) return alert('Silakan login terlebih dahulu.');
     if (!form.nama_pemilik) return alert('Nama pemilik wajib diisi.');
-    if (editTarget && editTarget.user_id !== user.id) return alert('Anda tidak memiliki izin untuk mengubah data ini.');
+    if (editTarget && editTarget.user_id && editTarget.user_id !== user.id) return alert('Anda tidak memiliki izin untuk mengubah data ini.');
     setSaving(true);
     const cfg = PALAWIJA_CONFIG[form.komoditas];
     const tgl = form.tanggal_tanam || null;
@@ -61,6 +61,9 @@ function Palawija({ palawijaKMZ, palawijaList, showPin, onToggleShow, user, mapR
     };
     let error;
     if (editTarget) {
+      if (!editTarget.user_id) {
+        payload.user_id = user.id;
+      }
       ({ error } = await supabase.from('komoditas_palawija').update(payload).eq('id', editTarget.id));
     } else {
       payload.user_id = user.id;
@@ -75,7 +78,7 @@ function Palawija({ palawijaKMZ, palawijaList, showPin, onToggleShow, user, mapR
   const handleDelete = async (id) => {
     if (!user) return alert('Silakan login terlebih dahulu.');
     const item = (palawijaList || []).find(x => x.id === id);
-    if (item && item.user_id !== user.id) return alert('Anda tidak memiliki izin untuk menghapus data ini.');
+    if (item && item.user_id && item.user_id !== user.id) return alert('Anda tidak memiliki izin untuk menghapus data ini.');
     if (!window.confirm('Tindakan ini tidak dapat dibatalkan (undo). Apakah Anda yakin ingin menghapus data lahan palawija ini secara permanen?')) return;
     const { error } = await supabase.from('komoditas_palawija').delete().eq('id', id);
     if (error) { alert('Gagal hapus: ' + error.message); return; }
@@ -187,7 +190,7 @@ function Palawija({ palawijaKMZ, palawijaList, showPin, onToggleShow, user, mapR
                       {p.catatan && <div style={{ fontSize: 10, color: '#aaa' }}>{p.catatan}</div>}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginLeft: 6 }}>
-                      {user && p.user_id === user.id && (
+                      {user && (!p.user_id || p.user_id === user.id) && (
                         <>
                           <button style={{ background: '#fff3e0', border: 'none', borderRadius: 4, padding: '3px 7px', fontSize: 11, cursor: 'pointer' }}
                             onClick={() => openEdit(p)}>✏️</button>

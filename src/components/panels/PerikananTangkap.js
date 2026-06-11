@@ -48,7 +48,7 @@ function PerikananTangkap({ nelayanTangkap, tangkapList, showNelayan, onToggleSh
 
   /* ── Open edit nelayan ── */
   const openEdit = (r) => {
-    if (user && r.user_id !== user.id) {
+    if (user && r.user_id && r.user_id !== user.id) {
       alert('Anda tidak memiliki izin untuk mengedit pangkalan ini.');
       return;
     }
@@ -71,9 +71,12 @@ function PerikananTangkap({ nelayanTangkap, tangkapList, showNelayan, onToggleSh
     const payload   = { nama_nelayan:formN.nama_kelompok, alat_tangkap:alatStr, perahu:armadaStr, jenis_ikan:formN.jenis_ikan, no_hp:formN.jumlah_anggota };
     if (pendingPin) { payload.lat=pendingPin.lat; payload.lng=pendingPin.lng; }
     if (editTarget) {
-      if (editTarget.user_id !== user.id) {
+      if (editTarget.user_id && editTarget.user_id !== user.id) {
         setSaving(false);
         return alert('Anda tidak memiliki izin untuk mengubah data ini.');
+      }
+      if (!editTarget.user_id) {
+        payload.user_id = user.id;
       }
       await supabase.from('nelayan_tangkap').update(payload).eq('id',editTarget.id);
     } else {
@@ -89,14 +92,18 @@ function PerikananTangkap({ nelayanTangkap, tangkapList, showNelayan, onToggleSh
   const saveProduksi = async () => {
     if (!user) return alert('Login dulu.');
     if (!prodTarget) return alert('Pilih pangkalan nelayan terlebih dahulu.');
-    if (prodTarget.user_id !== user.id) return alert('Anda tidak memiliki izin untuk menyimpan produksi pangkalan ini.');
+    if (prodTarget.user_id && prodTarget.user_id !== user.id) return alert('Anda tidak memiliki izin untuk menyimpan produksi pangkalan ini.');
     const total = Object.values(formP.ikan_kg).reduce((s,v)=>s+parseFloat(v||0),0);
     if (total <= 0) return alert('Isi minimal satu jenis ikan.');
     setSaving(true);
     const arr = [];
     try { arr.push(...JSON.parse(prodTarget.catatan||'[]')); } catch(e){}
     arr.push({ tgl:formP.tanggal, kg:total, ikan:formP.ikan_kg });
-    await supabase.from('nelayan_tangkap').update({ catatan:JSON.stringify(arr) }).eq('id',prodTarget.id);
+    const updatePayload = { catatan: JSON.stringify(arr) };
+    if (!prodTarget.user_id) {
+      updatePayload.user_id = user.id;
+    }
+    await supabase.from('nelayan_tangkap').update(updatePayload).eq('id',prodTarget.id);
     setSaving(false); setMode(null); setProdTarget(null);
     setFormP({ tanggal:new Date().toISOString().slice(0,10), ikan_kg:{} });
     onRefresh && onRefresh();
@@ -105,7 +112,7 @@ function PerikananTangkap({ nelayanTangkap, tangkapList, showNelayan, onToggleSh
   /* ── Hapus nelayan ── */
   const deleteNelayan = async (r) => {
     if (!user) return alert('Login dulu.');
-    if (r.user_id !== user.id) return alert('Anda tidak memiliki izin untuk menghapus data ini.');
+    if (r.user_id && r.user_id !== user.id) return alert('Anda tidak memiliki izin untuk menghapus data ini.');
     if (!window.confirm('Tindakan ini tidak dapat dibatalkan (undo). Apakah Anda yakin ingin menghapus pangkalan nelayan ini beserta seluruh catatan riwayat tangkapannya secara permanen?')) return;
     await supabase.from('nelayan_tangkap').delete().eq('id',r.id);
     setMode(null); setEditTarget(null); setPendingPin(null); setFormN(initForm);
@@ -237,7 +244,7 @@ function PerikananTangkap({ nelayanTangkap, tangkapList, showNelayan, onToggleSh
           {tag('Input Produksi Tangkap','#e76f51')}
           <select className="sp-select" value={prodTarget?.id||''} onChange={e=>{ const r=(tangkapList||[]).find(x=>String(x.id)===e.target.value); setProdTarget(r||null); }}>
             <option value="">-- Pilih Pangkalan Nelayan --</option>
-            {(tangkapList||[]).filter(r => user ? r.user_id === user.id : true).map(r=><option key={r.id} value={r.id}>{r.nama_nelayan}</option>)}
+            {(tangkapList||[]).filter(r => user ? (!r.user_id || r.user_id === user.id) : true).map(r=><option key={r.id} value={r.id}>{r.nama_nelayan}</option>)}
           </select>
           <input type="date" className="sp-input" style={{marginTop:8}} value={formP.tanggal}
             onChange={e=>setFormP(p=>({...p,tanggal:e.target.value}))} />
@@ -283,7 +290,7 @@ function PerikananTangkap({ nelayanTangkap, tangkapList, showNelayan, onToggleSh
                   {prodTotal>0 && <div style={S({color:'#0d9488',marginTop:2})}>🐟 Produksi: {(prodTotal/1000).toFixed(2)} ton</div>}
                   {r.lat&&r.lng&&r.lat!==0 && <div style={{fontSize:9,color:'#2ec4b6',marginTop:2}}>📍 Klik untuk lihat di peta</div>}
                 </div>
-                {user && r.user_id === user.id && (
+                {user && (!r.user_id || r.user_id === user.id) && (
                   <div style={{display:'flex',gap:4,flexShrink:0,marginLeft:8}}>
                     <button onClick={()=>openEdit(r)} style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:6,padding:'3px 8px',fontSize:10,cursor:'pointer',color:'#166534',fontWeight:600}}>✏️ Edit</button>
                   </div>

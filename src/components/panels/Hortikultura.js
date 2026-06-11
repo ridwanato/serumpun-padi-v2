@@ -28,7 +28,7 @@ function Hortikultura({
   };
 
   const openEdit = (h) => {
-    if (user && h.user_id !== user.id) {
+    if (user && h.user_id && h.user_id !== user.id) {
       alert('Anda tidak memiliki izin untuk mengedit data ini.');
       return;
     }
@@ -50,7 +50,7 @@ function Hortikultura({
   const handleSave = async () => {
     if (!user) return alert('Silakan login terlebih dahulu.');
     if (!pendingPin) return alert('Klik peta untuk menentukan lokasi pin.');
-    if (editTarget && editTarget.user_id !== user.id) return alert('Anda tidak memiliki izin untuk mengubah data ini.');
+    if (editTarget && editTarget.user_id && editTarget.user_id !== user.id) return alert('Anda tidak memiliki izin untuk mengubah data ini.');
     const cfg = HORTIKULTURA_CONFIG[form.komoditas];
     const tgl = form.tanggal_tanam || null;
     const prediksi = tgl && cfg
@@ -71,6 +71,9 @@ function Hortikultura({
 
     let error;
     if (editTarget) {
+      if (!editTarget.user_id) {
+        payload.user_id = user.id;
+      }
       ({ error } = await supabase.from('komoditas_hortikultura').update(payload).eq('id', editTarget.id));
     } else {
       payload.user_id = user.id;
@@ -89,7 +92,7 @@ function Hortikultura({
 
   const handleDelete = async (id) => {
     if (!user) return alert('Silakan login terlebih dahulu.');
-    if (editTarget && editTarget.user_id !== user.id) return alert('Anda tidak memiliki izin untuk menghapus data ini.');
+    if (editTarget && editTarget.user_id && editTarget.user_id !== user.id) return alert('Anda tidak memiliki izin untuk menghapus data ini.');
     if (!window.confirm('Tindakan ini tidak dapat dibatalkan (undo). Apakah Anda yakin ingin menghapus data lahan hortikultura ini secara permanen?')) return;
     await supabase.from('komoditas_hortikultura').delete().eq('id', id);
     setPendingPin(null);
@@ -233,7 +236,7 @@ function Hortikultura({
                   {h.prediksi_panen && <div style={{ fontSize: 11, color: '#52b788' }}>🌾 Est. Panen: {fmtTgl(h.prediksi_panen)}</div>}
                   <div style={{ fontSize: 10, color: '#aaa' }}>📍 {h.lat?.toFixed(5)}, {h.lon?.toFixed(5)}</div>
                 </div>
-                {user && h.user_id === user.id && (
+                {user && (!h.user_id || h.user_id === user.id) && (
                   <button className="sp-btn sp-btn-secondary" style={{ fontSize: 10, padding: '3px 8px', border: '1px solid #bfdbfe', background: '#eff6ff', color: '#1d4ed8' }}
                     onClick={() => openEdit(h)}>✏️ Edit</button>
                 )}

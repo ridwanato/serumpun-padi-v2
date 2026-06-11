@@ -64,13 +64,13 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
     }
   });
 
-  const filteredGroups = (poktanList || []).filter(p => p.jenis === prodJenisFilter && (user ? p.user_id === user.id : true));
+  const filteredGroups = (poktanList || []).filter(p => p.jenis === prodJenisFilter && (user ? (!p.user_id || p.user_id === user.id) : true));
 
   const openAdd = () => {
     setForm(initForm); setEditTarget(null); setPendingPin(null); setGpsInput(''); setMode('add_kelompok');
   };
   const openEdit = (p) => {
-    if (user && p.user_id !== user.id) {
+    if (user && p.user_id && p.user_id !== user.id) {
       alert('Anda tidak memiliki izin untuk mengedit kelompok ini.');
       return;
     }
@@ -87,7 +87,7 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
 
   const handleSave = async () => {
     if (!user) return alert('Login dulu.');
-    if (editTarget && editTarget.user_id !== user.id) return alert('Anda tidak memiliki izin untuk mengubah data ini.');
+    if (editTarget && editTarget.user_id && editTarget.user_id !== user.id) return alert('Anda tidak memiliki izin untuk mengubah data ini.');
     if (!form.nama_poktan) return alert('Nama kelompok wajib diisi.');
 
     let kelurahanVal = form.kelurahan;
@@ -111,6 +111,9 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
 
     let error;
     if (editTarget) {
+      if (!editTarget.user_id) {
+        payload.user_id = user.id;
+      }
       ({ error } = await supabase.from('poktan_kwt').update(payload).eq('id', editTarget.id));
     } else {
       payload.user_id = user.id;
@@ -124,7 +127,7 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
   };
 
   const handleDelete = async (id) => {
-    if (editTarget && editTarget.user_id !== user.id) return alert('Anda tidak memiliki izin untuk menghapus data ini.');
+    if (editTarget && editTarget.user_id && editTarget.user_id !== user.id) return alert('Anda tidak memiliki izin untuk menghapus data ini.');
     if (!window.confirm('Tindakan ini tidak dapat dibatalkan (undo). Apakah Anda yakin ingin menghapus kelompok ini beserta seluruh catatan riwayat produksinya?')) return;
     await supabase.from('poktan_kwt').delete().eq('id', id);
     setMode(null); setEditTarget(null); setForm(initForm); setPendingPin(null); setGpsInput('');
@@ -134,7 +137,7 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
   const saveProduksi = async () => {
     if (!user) return alert('Login dulu.');
     if (!prodTarget) return alert('Pilih kelompok terlebih dahulu.');
-    if (prodTarget.user_id !== user.id) return alert('Anda tidak memiliki izin untuk menyimpan produksi kelompok ini.');
+    if (prodTarget.user_id && prodTarget.user_id !== user.id) return alert('Anda tidak memiliki izin untuk menyimpan produksi kelompok ini.');
     
     // Check if at least one product has a quantity
     let hasQty = false;
@@ -175,7 +178,11 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
     
     arr.push(newEntry);
     
-    const { error } = await supabase.from('poktan_kwt').update({ catatan: arr }).eq('id', prodTarget.id);
+    const updatePayload = { catatan: arr };
+    if (!prodTarget.user_id) {
+      updatePayload.user_id = user.id;
+    }
+    const { error } = await supabase.from('poktan_kwt').update(updatePayload).eq('id', prodTarget.id);
     setSaving(false);
     if (error) {
       alert('Gagal simpan produksi: ' + error.message);
@@ -517,7 +524,7 @@ function PoktanKWT({ poktanKMZ, poktanList, showPoktan, showKWT, showGapoktan, o
                     </div>
                   )}
                 </div>
-                {user && p.user_id === user.id && (
+                {user && (!p.user_id || p.user_id === user.id) && (
                   <button onClick={() => openEdit(p)}
                     style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 6, padding: '3px 8px', fontSize: 10, cursor: 'pointer', color: '#1d4ed8', fontWeight: 600, flexShrink: 0, marginLeft: 8 }}>
                     ✏️ Edit
