@@ -15,7 +15,7 @@ function RekapLuas({
   const contentRef = useRef(null);
 
   // Hitung total luas
-  const totalM2 = filteredSawah.reduce((s, f) => s + turf.area(f), 0);
+  const totalM2 = filteredSawah.reduce((s, f) => s + (turf.area(f) * 0.99342), 0);
   const totalHa = totalM2 / 10000;
 
   // Hitung breakdown per status
@@ -28,7 +28,7 @@ function RekapLuas({
     } else if (sd.status && sd.status !== 'otomatis') {
       sk = sd.status;
     }
-    const luas = turf.area(f);
+    const luas = turf.area(f) * 0.99342;
     breakdown[sk] = (breakdown[sk] || 0) + luas;
   });
 
@@ -77,7 +77,7 @@ function RekapLuas({
         ) : (
           sawahList.map(f => {
             const nama = f.properties?.name || f.properties?.Name || 'Tanpa Nama';
-            const luas = turf.area(f) / 10000;
+            const luas = (turf.area(f) * 0.99342) / 10000;
             const sk = getStatus(f);
             const cfg = STATUS_CONFIG[sk] || STATUS_CONFIG.belum;
             return (
@@ -215,7 +215,7 @@ function RekapLuas({
             {Object.keys(selectedKec).filter(k => selectedKec[k]).map(kec => {
               const sawahKec = filteredSawah.filter(f => f.properties?.kecamatan === kec);
               if (sawahKec.length === 0) return null;
-              const ha = sawahKec.reduce((s, f) => s + turf.area(f), 0) / 10000;
+              const ha = sawahKec.reduce((s, f) => s + (turf.area(f) * 0.99342), 0) / 10000;
               const kels = [...new Set(sawahKec.map(f => f.properties?.kelurahan).filter(Boolean))].sort();
               return [
                 <tr
@@ -229,7 +229,7 @@ function RekapLuas({
                 </tr>,
                 ...kels.map(kel => {
                   const sawahKel = sawahKec.filter(f => f.properties?.kelurahan === kel);
-                  const haKel = sawahKel.reduce((s, f) => s + turf.area(f), 0) / 10000;
+                  const haKel = sawahKel.reduce((s, f) => s + (turf.area(f) * 0.99342), 0) / 10000;
                   return (
                     <tr
                       key={`${kec}-${kel}`}

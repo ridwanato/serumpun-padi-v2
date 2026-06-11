@@ -18,7 +18,7 @@ function Dashboard({
   const [bulanIdxT, setBulanIdxT] = useState(0);
   const [bulanIdxK, setBulanIdxK] = useState(0);
   // Hitung total luas
-  const totalM2 = filteredSawah.reduce((s, f) => s + turf.area(f), 0);
+  const totalM2 = filteredSawah.reduce((s, f) => s + (turf.area(f) * 0.99342), 0);
   const totalSawahHa = (totalM2 / 10000).toFixed(2);
 
   // Breakdown per status
@@ -31,7 +31,7 @@ function Dashboard({
     } else if (sd.status && sd.status !== 'otomatis') {
       sk = sd.status;
     }
-    breakdown[sk] = (breakdown[sk] || 0) + turf.area(f);
+    breakdown[sk] = (breakdown[sk] || 0) + (turf.area(f) * 0.99342);
   });
 
   const siapPanenHa = ((breakdown.siap_panen || 0) / 10000).toFixed(2);
@@ -43,7 +43,7 @@ function Dashboard({
   const totalGKG = filteredSawah.reduce((sum, f) => {
     const sd = sawahStatus[f._id] || {};
     if (!sd.hasilUbinan) return sum;
-    const prod = hitungProduksi(turf.area(f), sd.hasilUbinan);
+    const prod = hitungProduksi(turf.area(f) * 0.99342, sd.hasilUbinan);
     return sum + (prod?.gkg || 0);
   }, 0);
   const gkgStr = totalGKG >= 1000

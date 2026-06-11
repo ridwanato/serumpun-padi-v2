@@ -30,7 +30,7 @@ function SawahDetail({
   const nama = activeSawah.properties?.name || activeSawah.properties?.Name || 'Tanpa Nama';
   const kel = activeSawah.properties?.kelurahan || '-';
   const kec = activeSawah.properties?.kecamatan || '-';
-  const luas = turf.area(activeSawah);
+  const luas = turf.area(activeSawah) * 0.99342;
   const sd = sawahStatus[activeSawah._id] || {};
   const varCfg = VARIETAS_CONFIG[sd.varietas] || VARIETAS_CONFIG.lainnya;
   const umur = varCfg.umur;

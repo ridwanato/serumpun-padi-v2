@@ -37,13 +37,13 @@ function StatusSawah({
       if (sawahKec.length === 0) return;
       
       const kels = [...new Set(sawahKec.map(f => f.properties?.kelurahan).filter(Boolean))].sort();
-      const luasKec = sawahKec.reduce((s, f) => s + turf.area(f), 0) / 10000;
+      const luasKec = sawahKec.reduce((s, f) => s + (turf.area(f) * 0.99342), 0) / 10000;
       
       rows.push([ no++, kec, "", parseFloat(luasKec.toFixed(2)), "Ha" ]);
       
       kels.forEach(kel => {
         const sawahKel = sawahKec.filter(f => f.properties?.kelurahan === kel);
-        const luasKel = sawahKel.reduce((s, f) => s + turf.area(f), 0) / 10000;
+        const luasKel = sawahKel.reduce((s, f) => s + (turf.area(f) * 0.99342), 0) / 10000;
         rows.push([ "", "", kel, parseFloat(luasKel.toFixed(2)), "Ha" ]);
       });
     });
@@ -88,7 +88,7 @@ function StatusSawah({
         const sawahKec = filteredSawah.filter(f => f.properties?.kecamatan === kec);
         if (sawahKec.length === 0) return null;
 
-        const luasKec = sawahKec.reduce((s, f) => s + turf.area(f), 0) / 10000;
+        const luasKec = sawahKec.reduce((s, f) => s + (turf.area(f) * 0.99342), 0) / 10000;
         const isKecOpen = openAccKec === kec;
         const kels = [...new Set(sawahKec.map(f => f.properties?.kelurahan).filter(Boolean))].sort();
 
@@ -125,7 +125,7 @@ function StatusSawah({
               <div style={{ marginTop: 4, paddingLeft: 8 }}>
                 {kels.map(kel => {
                   const sawahKel = sawahKec.filter(f => f.properties?.kelurahan === kel);
-                  const luasKel = sawahKel.reduce((s, f) => s + turf.area(f), 0) / 10000;
+                  const luasKel = sawahKel.reduce((s, f) => s + (turf.area(f) * 0.99342), 0) / 10000;
                   const isKelOpen = openAccKel === `${kec}-${kel}`;
 
                   return (
@@ -167,7 +167,7 @@ function StatusSawah({
                               sk = sd.status;
                             }
                             const cfg = STATUS_CONFIG[sk] || STATUS_CONFIG.belum;
-                            const luas = turf.area(f) / 10000;
+                            const luas = (turf.area(f) * 0.99342) / 10000;
 
                             return (
                               <div

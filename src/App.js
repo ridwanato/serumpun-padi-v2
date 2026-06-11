@@ -272,7 +272,7 @@ function App() {
 
   const handleCreated = (e) => {
     const geojson = e.layer.toGeoJSON();
-    const area = turf.area(geojson);
+    const area = turf.area(geojson) * 0.99342;
     const perimeter = turf.length(geojson, { units: 'meters' });
 
     const areaHa = (area / 10000).toFixed(2);

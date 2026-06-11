@@ -12,7 +12,7 @@ function RekapProduksi({ filteredSawah, sawahStatus, user }) {
   filteredSawah.forEach(f => {
     const sd = sawahStatus[f._id] || {};
     if (!sd.hasilUbinan) return;
-    const luas = turf.area(f);
+    const luas = turf.area(f) * 0.99342;
     const prod = hitungProduksi(luas, sd.hasilUbinan);
     if (!prod) return;
 
