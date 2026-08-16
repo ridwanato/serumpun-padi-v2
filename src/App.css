@@ -1496,3 +1496,306 @@ body {
     margin-left: 0;
   }
 }
+
+/* ==========================================================================
+   10. CUSTOM MOBILE & SCREEN EXPANSION STYLES (ANDROID / RESPONSIVE)
+   ========================================================================== */
+
+/* ── Transparent Map Controls (No white/gray boxes, white icons with drop shadow) ── */
+.leaflet-draw-toolbar,
+.leaflet-control-zoom,
+.sp-map-action-btn {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.leaflet-draw-toolbar a,
+.leaflet-control-zoom a,
+.sp-map-action-btn {
+  background: rgba(0, 0, 0, 0.40) !important;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1.5px solid rgba(255, 255, 255, 0.35) !important;
+  color: #ffffff !important;
+  border-radius: 8px !important;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35) !important;
+  transition: all 0.15s ease !important;
+}
+
+.leaflet-draw-toolbar a:hover,
+.leaflet-control-zoom a:hover,
+.sp-map-action-btn:hover {
+  background: rgba(34, 197, 94, 0.75) !important;
+  color: #ffffff !important;
+  border-color: #86efac !important;
+  transform: scale(1.08);
+}
+
+.leaflet-draw-toolbar a,
+.leaflet-control-zoom a {
+  color: #ffffff !important;
+}
+
+.leaflet-draw-actions a {
+  background: rgba(0, 0, 0, 0.8) !important;
+  color: #ffffff !important;
+}
+
+.sp-map-action-btn svg,
+.leaflet-control-zoom a svg,
+.leaflet-draw-toolbar a svg,
+.leaflet-draw-toolbar a span {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.7));
+}
+
+/* ── Mobile Screen Breakpoint (< 768px) ── */
+@media (max-width: 768px) {
+  /* 1. Header Bar: Hide background, search, weather, date on mobile */
+  .sp-topbar {
+    background: transparent !important;
+    border-bottom: none !important;
+    box-shadow: none !important;
+    height: 0 !important;
+    padding: 0 !important;
+    pointer-events: none !important;
+  }
+
+  .sp-topbar__search-wrap,
+  .sp-topbar__date,
+  .sp-topbar__weather,
+  .sp-topbar__user-info,
+  .sp-topbar__user-caret {
+    display: none !important;
+  }
+
+  /* 2. Admin Login Button: Floating round icon at top right corner */
+  .sp-topbar__right {
+    position: fixed !important;
+    top: 10px !important;
+    right: 10px !important;
+    z-index: 2500 !important;
+    pointer-events: auto !important;
+  }
+
+  .sp-topbar__user-wrap {
+    pointer-events: auto !important;
+  }
+
+  .sp-topbar__user-btn {
+    background: linear-gradient(135deg, #15803d 0%, #166534 100%) !important;
+    border: 1.5px solid #86efac !important;
+    border-radius: 50% !important;
+    width: 38px !important;
+    height: 38px !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;
+  }
+
+  .sp-topbar__avatar {
+    width: 26px !important;
+    height: 26px !important;
+    background: transparent !important;
+    color: #ffffff !important;
+  }
+
+  .sp-topbar__avatar svg {
+    fill: #ffffff !important;
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  /* 3. Dashboard Ringkasan Metrik: Responsive 70% width limit on mobile */
+  .sp-right-dashboard {
+    width: 70vw !important;
+    max-width: 70vw !important;
+    right: 8px !important;
+    top: 10px !important;
+    max-height: calc(100vh - 20px) !important;
+    padding: 8px 10px !important;
+    gap: 8px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    border-radius: 14px !important;
+    background: rgba(20, 83, 45, 0.85) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border: 1.5px solid rgba(134, 239, 172, 0.6) !important;
+  }
+
+  .sp-dash-card {
+    padding: 8px 10px !important;
+    border-radius: 10px !important;
+  }
+
+  .sp-dash-card__hero-value {
+    font-size: 14px !important;
+  }
+
+  .sp-dash-card__header-label {
+    font-size: 11px !important;
+  }
+
+  .sp-dash-card__bullets {
+    font-size: 9.5px !important;
+  }
+
+  .sp-dash-card__badge-pill {
+    font-size: 8.5px !important;
+    padding: 2px 6px !important;
+  }
+
+  /* Adjust Leaflet map controls position on mobile */
+  .leaflet-top.leaflet-left {
+    top: 12px !important;
+    left: 56px !important;
+  }
+}
+
+
+/* ==========================================================================
+   FIX LEAFLET DRAW TOOLBAR WHITE ICONS (CAPTURE 1 FIX)
+   ========================================================================== */
+.leaflet-draw-toolbar {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.leaflet-draw-toolbar a {
+  background-color: rgba(0, 0, 0, 0.45) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.40) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35) !important;
+  filter: none !important;
+  transition: transform 0.15s ease !important;
+}
+
+.leaflet-draw-toolbar a:hover {
+  background-color: rgba(34, 197, 94, 0.85) !important;
+  border-color: #86efac !important;
+  transform: scale(1.08) !important;
+}
+
+.leaflet-draw-actions a {
+  background: rgba(0, 0, 0, 0.85) !important;
+  color: #ffffff !important;
+  filter: none !important;
+}
+
+
+/* ==========================================================================
+   LEAFLET DRAW TOOLBAR PERFECT DARK GLASS + WHITE ICONS FIX (CAPTURE 1)
+   ========================================================================== */
+.leaflet-draw-toolbar {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.leaflet-draw-toolbar a {
+  background: rgba(15, 23, 42, 0.70) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.40) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #ffffff !important;
+  transition: all 0.15s ease !important;
+}
+
+.leaflet-draw-toolbar a:hover {
+  background: rgba(34, 197, 94, 0.85) !important;
+  border-color: #86efac !important;
+  transform: scale(1.08) !important;
+}
+
+/* Ensure Leaflet Draw sprite images are inverted to pure white */
+.leaflet-draw-toolbar a.leaflet-draw-draw-polygon,
+.leaflet-draw-toolbar a.leaflet-draw-draw-polyline,
+.leaflet-draw-toolbar a.leaflet-draw-draw-rectangle,
+.leaflet-draw-toolbar a.leaflet-draw-draw-circle,
+.leaflet-draw-toolbar a.leaflet-draw-draw-marker,
+.leaflet-draw-toolbar a.leaflet-draw-edit-edit,
+.leaflet-draw-toolbar a.leaflet-draw-edit-remove {
+  background-color: rgba(15, 23, 42, 0.70) !important;
+  filter: none !important;
+}
+
+
+/* ==========================================================================
+   MATCH LEAFLET DRAW BUTTONS EXACTLY TO ZOOM & GPS BUTTONS (DARK GLASS + WHITE VECTOR)
+   ========================================================================== */
+.leaflet-draw-toolbar {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  margin-top: 0 !important;
+}
+
+.leaflet-draw-toolbar a,
+.leaflet-draw-toolbar a:hover,
+.leaflet-draw-toolbar a.leaflet-draw-draw-polygon,
+.leaflet-draw-toolbar a.leaflet-draw-draw-polyline,
+.leaflet-draw-toolbar a.leaflet-draw-draw-rectangle,
+.leaflet-draw-toolbar a.leaflet-draw-draw-circle,
+.leaflet-draw-toolbar a.leaflet-draw-draw-marker,
+.leaflet-draw-toolbar a.leaflet-draw-edit-edit,
+.leaflet-draw-toolbar a.leaflet-draw-edit-remove {
+  background: rgba(0, 0, 0, 0.40) !important;
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.35) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35) !important;
+  color: #ffffff !important;
+  filter: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 34px !important;
+  height: 34px !important;
+  line-height: 34px !important;
+  margin-bottom: 4px !important;
+  transition: all 0.15s ease !important;
+}
+
+.leaflet-draw-toolbar a:hover {
+  background: rgba(34, 197, 94, 0.75) !important;
+  border-color: #86efac !important;
+  transform: scale(1.06) !important;
+}
+
+.leaflet-draw-actions a {
+  background: rgba(0, 0, 0, 0.85) !important;
+  color: #ffffff !important;
+  border-radius: 6px !important;
+}
+
+
+
+/* ==========================================================================
+   MOVE DRAW + ZOOM/GPS ICON GROUP TO BOTTOM-RIGHT CORNER ON MOBILE (< 768px)
+   ========================================================================== */
+@media (max-width: 768px) {
+  .leaflet-top.leaflet-left,
+  .leaflet-control-container .leaflet-left {
+    top: auto !important;
+    bottom: 28px !important;
+    right: 12px !important;
+    left: auto !important;
+    z-index: 1200 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+  }
+}
+

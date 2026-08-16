@@ -1,3 +1,4 @@
+import { exportOPTData } from '../../utils/excelExporter';
 import React, { useState } from 'react';
 import { WARNING_CONFIG } from '../../config/komoditas';
 import { ALL_KEL, KEL_TO_KEC } from '../../config/wilayah';

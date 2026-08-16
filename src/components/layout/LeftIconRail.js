@@ -17,13 +17,11 @@ function LeftIconRail({
     { id: 'poktan_kwt', icon: '👩‍🌾', label: 'Poktan & KWT', type: 'view' },
     { id: 'gapoktan', icon: '🤝', label: 'Gapoktan', type: 'view' },
     { id: 'ketahanan_pangan', icon: '🥣', label: 'Ketahanan Pangan', type: 'view' },
-    { id: 'peta_administrasi', icon: '🗺️', label: 'Peta Administrasi', type: 'view' },
     { id: 'warning', icon: '⚠️', label: 'Peringatan OPT', type: 'view' },
     { id: 'upload_kmz', icon: '📤', label: 'Upload KMZ / Shapefile', type: 'modal' },
     { id: 'fsva_skpg', icon: '📋', label: 'FSVA / SKPG', type: 'modal' },
     { id: 'analisis', icon: '🧮', label: 'Analisis & Perhitungan', type: 'modal' },
-    { id: 'cetak_peta', icon: '🖨️', label: 'Cetak Peta', type: 'action' },
-    { id: 'pengaturan', icon: '⚙️', label: 'Pengaturan', type: 'modal' },
+    { id: 'pengaturan', icon: '⚙️', label: 'Transparansi Layer', type: 'modal' },
   ];
 
   const handleClick = (item) => {

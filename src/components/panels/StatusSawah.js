@@ -1,3 +1,4 @@
+import { exportPertanianData } from '../../utils/excelExporter';
 import React, { useState, useRef } from 'react';
 import * as turf from '@turf/turf';
 import { STATUS_CONFIG } from '../../config/komoditas';

@@ -89,7 +89,7 @@ function SidebarMenu({
     },
     {
       id: 'peta_administrasi',
-      label: 'Peta Administrasi',
+      label: 'Nama kelurahan',
       icon: '🗺️',
       view: 'gambar_poligon',
       checked: layerStates.showKelNama,
@@ -215,20 +215,14 @@ function SidebarMenu({
               <span>Analisis & Perhitungan</span>
             </button>
 
-            <button
-              className="sp-sidebar__tool-btn"
-              onClick={() => window.print()}
-            >
-              <span className="sp-sidebar__tool-icon">🖨️</span>
-              <span>Cetak Peta</span>
-            </button>
+            
 
             <button
               className="sp-sidebar__tool-btn"
               onClick={() => onOpenModal('pengaturan')}
             >
               <span className="sp-sidebar__tool-icon">⚙️</span>
-              <span>Pengaturan</span>
+              <span>Transparansi Layer</span>
             </button>
           </div>
         </div>

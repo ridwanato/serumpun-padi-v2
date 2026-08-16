@@ -45,7 +45,19 @@ function App() {
 
   /* ── UI state ── */
   const [mapZoom, setMapZoom] = useState(12.5);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 768);
+
+  // Auto-collapse sidebar on mobile screens (< 768px)
+  useEffect(() => {
+    const handleCheckMobile = () => {
+      if (window.innerWidth < 768) {
+        setIsSidebarOpen(false);
+      }
+    };
+    handleCheckMobile();
+    window.addEventListener('resize', handleCheckMobile);
+    return () => window.removeEventListener('resize', handleCheckMobile);
+  }, []);
   const [isDashboardPanelOpen, setIsDashboardPanelOpen] = useState(true);
   const [activeView, setActiveView] = useState('dashboard');
   const [activeModal, setActiveModal] = useState(null); // 'panduan' | 'pengaturan' | 'unduh_data' | 'pilih_pin'

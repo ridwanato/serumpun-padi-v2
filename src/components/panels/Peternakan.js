@@ -1,3 +1,4 @@
+import { exportPeternakanData } from '../../utils/excelExporter';
 import React, { useState, useEffect, useCallback } from 'react';
 import * as turf from '@turf/turf';
 import { ALL_KEC } from '../../config/wilayah';

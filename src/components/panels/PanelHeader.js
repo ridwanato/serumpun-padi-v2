@@ -1,3 +1,4 @@
+import { exportKWTData, exportPertanianData, exportBudidayaData, exportTangkapData, exportPeternakanData, exportHortikulturaData, exportPalawijaData, exportOPTData } from '../../utils/excelExporter';
 import React from 'react';
 
 const PANEL_TITLES = {
@@ -45,7 +46,38 @@ function PanelHeader({ panelView, onClose, onBack, user, setUser, supabase, setS
     return (
       <div className="sp-panel__header sp-panel__header--dashboard" style={{ position: 'relative' }}>
         <div className="sp-panel__header-titleblock">
-          <span className="sp-panel__title">{t.icon} {t.text}</span>
+          <span className="sp-panel__title" style={{ flex: 1 }}>{t.icon} {t.text}</span>
+      <button
+        onClick={() => {
+          if (panelView === 'poktan_kwt') exportKWTData();
+          else if (panelView === 'status_sawah' || panelView === 'rekap_luas' || panelView === 'rekap_produksi') exportPertanianData();
+          else if (panelView === 'perikanan_budidaya') exportBudidayaData();
+          else if (panelView === 'perikanan_tangkap') exportTangkapData();
+          else if (panelView === 'peternakan') exportPeternakanData();
+          else if (panelView === 'hortikultura') exportHortikulturaData();
+          else if (panelView === 'palawija') exportPalawijaData();
+          else if (panelView === 'warning') exportOPTData();
+          else exportKWTData();
+        }}
+        style={{
+          background: 'linear-gradient(135deg, #166534 0%, #15803d 100%)',
+          color: '#ffffff',
+          border: '1.5px solid #86efac',
+          padding: '4px 10px',
+          borderRadius: '16px',
+          fontSize: '10.5px',
+          fontWeight: 700,
+          cursor: 'pointer',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px',
+          marginRight: '10px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+        }}
+        title="Unduh Data Panel ini Format Excel (.xlsx)"
+      >
+        <span>📥</span> Unduh XLSX
+      </button>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
             <div className="sp-panel__date" style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
               <span>{today}</span>

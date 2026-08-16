@@ -1,3 +1,4 @@
+import { exportTangkapData } from '../../utils/excelExporter';
 import React, { useState, useMemo } from 'react';
 import { ALAT_TANGKAP, ARMADA_TYPES } from '../../config/komoditas';
 import { parseCoordinates } from '../../utils/parsers';

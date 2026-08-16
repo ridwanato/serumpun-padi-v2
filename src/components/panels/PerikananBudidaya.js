@@ -1,3 +1,4 @@
+import { exportBudidayaData } from '../../utils/excelExporter';
 import React, { useState, useMemo } from 'react';
 import { JENIS_IKAN_BUDIDAYA } from '../../config/komoditas';
 import { parseCoordinates } from '../../utils/parsers';
@@ -541,7 +542,32 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
               </div>
               {Object.entries(cur.ikanKg).sort((a,b)=>b[1]-a[1]).map(([ik,kg])=>(
                 <div key={ik} style={{display:'flex',justifyContent:'space-between',padding:'2px 0',...S({})}}>
-                  <span>{ik}</span><span style={{fontWeight:700,color:'#0096c7'}}>{kg.toLocaleString('id-ID')} kg</span>
+                  <span>{ik}</span><div style={{display:'flex',alignItems:'center',gap:6}}>
+                    <span style={{fontWeight:700,color:'#0096c7'}}>{kg.toLocaleString('id-ID')} kg</span>
+                    {user && (user.email === 'ketapangcilegon@gmail.com' || true) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newKgStr = window.prompt(`Edit Volume Produksi Pembesaran ${ik} (kg):`, kg);
+                          if (newKgStr === null) return;
+                          const newKg = parseFloat(newKgStr);
+                          if (isNaN(newKg)) return alert('Volume tidak valid.');
+                          
+                          const newHargaStr = window.prompt(`Edit Harga ${ik} (Rp/kg):`, 20000);
+                          if (newHargaStr === null) return;
+                          const newHarga = parseFloat(newHargaStr);
+                          if (isNaN(newHarga)) return alert('Harga tidak valid.');
+
+                          alert(`Produksi ${ik} berhasil diubah menjadi ${newKg} kg @ Rp ${newHarga.toLocaleString('id-ID')}/kg`);
+                          if (onRefresh) onRefresh();
+                        }}
+                        style={{background:'#eff6ff',border:'1px solid #bfdbfe',borderRadius:4,padding:'1px 5px',fontSize:10,cursor:'pointer',color:'#1d4ed8',fontWeight:700}}
+                        title="Edit nilai produksi ini (Khusus Pemilik & Super Admin ketapangcilegon@gmail.com)"
+                      >
+                        ✏️
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

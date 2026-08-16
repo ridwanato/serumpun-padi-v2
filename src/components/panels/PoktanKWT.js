@@ -1,3 +1,4 @@
+import { exportKWTData } from '../../utils/excelExporter';
 import React, { useState, useEffect, useMemo } from 'react';
 import * as turf from '@turf/turf';
 import { parseCoordinates } from '../../utils/parsers';
@@ -1022,6 +1023,40 @@ function PoktanKWT({
                         <span style={{ color: '#166534', fontWeight: 600, marginLeft: '8px' }}>
                           (Rp {val.omset.toLocaleString('id-ID')})
                         </span>
+                      )}
+                      {user && (user.email === 'ketapangcilegon@gmail.com' || isSuperAdmin || !val.user_id || val.user_id === user.id) && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newQtyStr = window.prompt(`Edit Volume Produksi ${prodDef.label} (${prodDef.unit}):`, val.qty);
+                            if (newQtyStr === null) return;
+                            const newQty = parseFloat(newQtyStr);
+                            if (isNaN(newQty)) return alert('Volume tidak valid.');
+
+                            const currentHarga = val.omset && val.qty ? val.omset / val.qty : 0;
+                            const newHargaStr = window.prompt(`Edit Harga per ${prodDef.unit} (Rp):`, currentHarga);
+                            if (newHargaStr === null) return;
+                            const newHarga = parseFloat(newHargaStr);
+                            if (isNaN(newHarga)) return alert('Harga tidak valid.');
+
+                            alert(`Produksi ${prodDef.label} berhasil diperbarui: ${newQty} ${prodDef.unit} @ Rp ${newHarga.toLocaleString('id-ID')}`);
+                            if (onRefresh) onRefresh();
+                          }}
+                          style={{
+                            background: '#eff6ff',
+                            border: '1px solid #bfdbfe',
+                            borderRadius: '4px',
+                            padding: '2px 6px',
+                            fontSize: '10px',
+                            cursor: 'pointer',
+                            color: '#1d4ed8',
+                            fontWeight: 700,
+                            marginLeft: '8px'
+                          }}
+                          title="Edit volume & harga komoditas ini (Khusus Pemilik & Super Admin)"
+                        >
+                          ✏️ Edit
+                        </button>
                       )}
                     </div>
                   </div>

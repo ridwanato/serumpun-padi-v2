@@ -1,3 +1,4 @@
+import { exportHortikulturaData } from '../../utils/excelExporter';
 // eslint-disable-next-line no-unused-vars
 import React, { useState } from 'react';
 import { HORTIKULTURA_CONFIG } from '../../config/komoditas';
