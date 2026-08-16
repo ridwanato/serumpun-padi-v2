@@ -185,7 +185,9 @@ function Dashboard({
 
     const list12 = generate12MonthsList(realCurrentYear, bulanMap);
 
-        
+    const yearKg = list12.reduce((acc, m) => acc + (m.totalKg || 0), 0);
+    const yearOmset = list12.reduce((acc, m) => acc + (m.totalOmset || 0), 0);
+
     return {
       kwtMonthly: list12,
       kwtTahunKg: yearKg,
