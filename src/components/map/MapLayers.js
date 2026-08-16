@@ -82,18 +82,6 @@ export function SawahLayer({ data, showSawah, getStyle, onEachFeature, sawahStat
 }
 
 /* ─────────── Icon helper ─────────── */
-const PETANI_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="20" height="20">
-  <polygon points="16,3 1,20 31,20" fill="#c8860a" stroke="#7a4f00" stroke-width="1.2"/>
-  <rect x="1" y="19" width="30" height="3" rx="1.5" fill="#b07010" />
-  <circle cx="16" cy="25" r="6" fill="#f5c07a" stroke="#c88040" stroke-width="1"/>
-  <circle cx="13.5" cy="24" r="0.9" fill="#3a2000"/><circle cx="18.5" cy="24" r="0.9" fill="#3a2000"/>
-  <path d="M13.5 27 Q16 29.5 18.5 27" fill="none" stroke="#a05020" stroke-width="0.9" stroke-linecap="round"/>
-</svg>`;
-
-const POKTAN_ICON_HTML = `<div style="width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:#2d6a4f;border:2.5px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 8px rgba(0,0,0,0.45)">
-  <div style="transform:rotate(45deg);display:flex;align-items:center;justify-content:center">${PETANI_SVG}</div>
-</div>`;
-
 const makeIcon = (emoji, bgColor, size = 26) =>
   L.divIcon({
     className: '',

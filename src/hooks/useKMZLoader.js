@@ -7,6 +7,61 @@ import { supabase } from '../supabase';
 
 const KMZ_URL = `https://xxdbgnxxlumdfczflytg.supabase.co/storage/v1/object/public/kmz-files/my-places-apr-2026-v250426.kmz?t=${Date.now()}`;
 
+const mergeIntoList = (list, feature, nama) => {
+  const ex = list.find(f => (f.properties?.name || f.properties?.Name) === nama);
+  if (ex) {
+    const ec = ex.geometry.type === 'MultiPolygon' ? ex.geometry.coordinates : [ex.geometry.coordinates];
+    const nc = feature.geometry.type === 'MultiPolygon' ? feature.geometry.coordinates : [feature.geometry.coordinates];
+    ex.geometry = { type: 'MultiPolygon', coordinates: [...ec, ...nc] };
+  } else {
+    list.push({ ...feature });
+  }
+};
+
+const findLocation = (feature, kelList, kecList) => {
+  try {
+    const center = turf.centroid(feature);
+    let namaKelurahan = '-', namaKecamatan = '-';
+    for (const kel of kelList) {
+      if (kel.geometry && turf.booleanPointInPolygon(center, kel)) {
+        namaKelurahan = kel.properties?.name || kel.properties?.Name || '-';
+        break;
+      }
+    }
+    if (namaKelurahan !== '-') {
+      namaKecamatan = KEL_TO_KEC[namaKelurahan] || '-';
+    } else {
+      for (const kec of kecList) {
+        if (kec.geometry && turf.booleanPointInPolygon(center, kec)) {
+          namaKecamatan = kec.properties?.name || kec.properties?.Name || '-';
+          break;
+        }
+      }
+    }
+    return { namaKelurahan, namaKecamatan };
+  } catch {
+    return { namaKelurahan: '-', namaKecamatan: '-' };
+  }
+};
+
+const parseDesc = (txt) => {
+  const obj = {};
+  if (!txt) return obj;
+  txt.split(/\n|<br\s*\/?>/).forEach(line => {
+    const m = line.replace(/<[^>]+>/g, '').match(/^([^:]+):\s*(.+)$/);
+    if (m) obj[m[1].trim().toLowerCase().replace(/\s+/g, '_')] = m[2].trim();
+  });
+  return obj;
+};
+
+const mkPin = (pmName, pmCoord, pmDesc, prefix) => ({
+  _id: `${prefix}_${Math.abs(pmCoord.lng * 10000).toFixed(0)}_${Math.abs(pmCoord.lat * 10000).toFixed(0)}`,
+  _name: pmName,
+  _lat: pmCoord.lat,
+  _lng: pmCoord.lng,
+  ...parseDesc(pmDesc),
+});
+
 export function useKMZLoader(mapRef) {
   const [layers, setLayers] = useState({ kecamatan: [], kelurahan: [], sawah: [] });
   const [kolamBudidaya, setKolamBudidaya] = useState([]);
@@ -21,61 +76,6 @@ export function useKMZLoader(mapRef) {
 
   // Cegah fetch berulang
   const loadedRef = useRef(false);
-
-  const mergeIntoList = (list, feature, nama) => {
-    const ex = list.find(f => (f.properties?.name || f.properties?.Name) === nama);
-    if (ex) {
-      const ec = ex.geometry.type === 'MultiPolygon' ? ex.geometry.coordinates : [ex.geometry.coordinates];
-      const nc = feature.geometry.type === 'MultiPolygon' ? feature.geometry.coordinates : [feature.geometry.coordinates];
-      ex.geometry = { type: 'MultiPolygon', coordinates: [...ec, ...nc] };
-    } else {
-      list.push({ ...feature });
-    }
-  };
-
-  const findLocation = (feature, kelList, kecList) => {
-    try {
-      const center = turf.centroid(feature);
-      let namaKelurahan = '-', namaKecamatan = '-';
-      for (const kel of kelList) {
-        if (kel.geometry && turf.booleanPointInPolygon(center, kel)) {
-          namaKelurahan = kel.properties?.name || kel.properties?.Name || '-';
-          break;
-        }
-      }
-      if (namaKelurahan !== '-') {
-        namaKecamatan = KEL_TO_KEC[namaKelurahan] || '-';
-      } else {
-        for (const kec of kecList) {
-          if (kec.geometry && turf.booleanPointInPolygon(center, kec)) {
-            namaKecamatan = kec.properties?.name || kec.properties?.Name || '-';
-            break;
-          }
-        }
-      }
-      return { namaKelurahan, namaKecamatan };
-    } catch {
-      return { namaKelurahan: '-', namaKecamatan: '-' };
-    }
-  };
-
-  const parseDesc = (txt) => {
-    const obj = {};
-    if (!txt) return obj;
-    txt.split(/\n|<br\s*\/?>/).forEach(line => {
-      const m = line.replace(/<[^>]+>/g, '').match(/^([^:]+):\s*(.+)$/);
-      if (m) obj[m[1].trim().toLowerCase().replace(/\s+/g, '_')] = m[2].trim();
-    });
-    return obj;
-  };
-
-  const mkPin = (pmName, pmCoord, pmDesc, prefix) => ({
-    _id: `${prefix}_${Math.abs(pmCoord.lng * 10000).toFixed(0)}_${Math.abs(pmCoord.lat * 10000).toFixed(0)}`,
-    _name: pmName,
-    _lat: pmCoord.lat,
-    _lng: pmCoord.lng,
-    ...parseDesc(pmDesc),
-  });
 
   const processKML = useCallback(async (kmlText) => {
     setLoading(true);

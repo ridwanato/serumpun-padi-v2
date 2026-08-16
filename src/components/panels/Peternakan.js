@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import * as turf from '@turf/turf';
 import { ALL_KEC } from '../../config/wilayah';
 import { parseCoordinates } from '../../utils/parsers';
@@ -41,7 +41,7 @@ function Peternakan({ onOpenPanel, user, supabase, onRefresh, onPickLocation, on
     harga_itik: 50000,
   });
 
-  const loadDataPeternakan = async () => {
+  const loadDataPeternakan = useCallback(async () => {
     if (!supabase) return;
     try {
       const { data, error } = await supabase.from('peternakan').select('*').order('id', { ascending: false });
@@ -51,11 +51,11 @@ function Peternakan({ onOpenPanel, user, supabase, onRefresh, onPickLocation, on
     } catch (e) {
       console.error('Error fetching peternakan:', e);
     }
-  };
+  }, [supabase]);
 
   useEffect(() => {
     loadDataPeternakan();
-  }, [supabase]);
+  }, [loadDataPeternakan]);
 
   const totalSapi = dataTernak.reduce((s, d) => s + (parseInt(d.sapi) || 0), 0);
   const totalKambing = dataTernak.reduce((s, d) => s + (parseInt(d.kambing) || 0), 0);
