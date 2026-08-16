@@ -139,19 +139,48 @@ function SawahDetail({
 
       {/* Estimasi Produksi */}
       <div className="sp-info-box">
-        <div className="sp-info-box__title">📊 Estimasi Produksi</div>
+        <div className="sp-info-box__title">📊 Estimasi Produksi & Nilai Rupiah</div>
         <label style={{ fontSize: 11, color: '#888' }}>Hasil Ubinan (kg/6.25m²)</label>
         <input type="number" className="sp-input" placeholder="cth: 2.5" value={sd.hasilUbinan || ''}
           onChange={e => onUpdateStatus(activeSawah._id, 'hasilUbinan', e.target.value)} />
 
-        {prod && (
-          <div style={{ marginTop: 8 }}>
-            <div className="sp-prod-box"><span>GKP</span><b>{prod.gkp.toFixed(2)} ton</b></div>
-            <div className="sp-prod-box"><span>GKG</span><b>{prod.gkg.toFixed(2)} ton</b></div>
-            <div className="sp-prod-box"><span>Beras</span><b>{prod.beras.toFixed(2)} ton</b></div>
-            <div className="sp-prod-box"><span>Produktivitas</span><b>{prod.tonHa.toFixed(2)} ton/Ha</b></div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 8 }}>
+          <div>
+            <label style={{ fontSize: 10, fontWeight: 600, color: '#666' }}>Harga GKP (Rp/kg)</label>
+            <input type="number" className="sp-input" placeholder="cth: 6500" value={sd.hargaGKP ?? ''}
+              onChange={e => onUpdateStatus(activeSawah._id, 'hargaGKP', e.target.value)} />
           </div>
-        )}
+          <div>
+            <label style={{ fontSize: 10, fontWeight: 600, color: '#666' }}>Harga Beras (Rp/kg)</label>
+            <input type="number" className="sp-input" placeholder="cth: 13500" value={sd.hargaBeras ?? ''}
+              onChange={e => onUpdateStatus(activeSawah._id, 'hargaBeras', e.target.value)} />
+          </div>
+        </div>
+
+        {prod && (() => {
+          const pGKP = parseFloat(sd.hargaGKP || 6500);
+          const pBeras = parseFloat(sd.hargaBeras || 13500);
+          const omsetGKP = prod.gkp * 1000 * pGKP;
+          const omsetBeras = prod.beras * 1000 * pBeras;
+          return (
+            <div style={{ marginTop: 10 }}>
+              <div className="sp-prod-box"><span>GKP</span><b>{prod.gkp.toFixed(2)} ton</b></div>
+              <div className="sp-prod-box"><span>GKG</span><b>{prod.gkg.toFixed(2)} ton</b></div>
+              <div className="sp-prod-box"><span>Beras</span><b>{prod.beras.toFixed(2)} ton</b></div>
+              <div className="sp-prod-box"><span>Produktivitas</span><b>{prod.tonHa.toFixed(2)} ton/Ha</b></div>
+              <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '8px 10px', marginTop: 8 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
+                  <span style={{ color: '#166534' }}>💰 Est. Nilai GKP:</span>
+                  <b style={{ color: '#166534' }}>Rp {Math.round(omsetGKP).toLocaleString('id-ID')}</b>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginTop: 4 }}>
+                  <span style={{ color: '#15803d' }}>💰 Est. Nilai Beras:</span>
+                  <b style={{ color: '#15803d' }}>Rp {Math.round(omsetBeras).toLocaleString('id-ID')}</b>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Tombol Simpan */}

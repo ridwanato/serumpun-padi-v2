@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { JENIS_IKAN_BUDIDAYA } from '../../config/komoditas';
 import { parseCoordinates } from '../../utils/parsers';
+import { canEditRecord } from '../../utils/authHelper';
 
 const JENIS_KOLAM = ['Kolam tanah','Kolam beton','Kolam terpal','Karamba','Lainnya'];
 const S = (s) => ({ fontSize:11, ...s });
@@ -34,14 +35,32 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
           const d=new Date(p.tgl);
           const k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
           const lb=d.toLocaleDateString('id-ID',{month:'long',year:'numeric'});
-          if(!bulanMap[k]) bulanMap[k]={totalKg:0, totalEkor:0, ikanKg:{}, ikanEkor:{}, label:lb};
+          if(!bulanMap[k]) bulanMap[k]={totalKg:0, totalEkor:0, totalOmset:0, totalOmsetKg:0, totalOmsetEkor:0, ikanKg:{}, ikanEkor:{}, label:lb};
+          
+          let omsetEntry = parseFloat(p.omset || 0);
+
           if(p.type === 'pembenihan') {
-            bulanMap[k].totalEkor += parseFloat(p.ekor||0);
-            Object.entries(p.ikan||{}).forEach(([ik,v])=>{ bulanMap[k].ikanEkor[ik]=(bulanMap[k].ikanEkor[ik]||0)+parseFloat(v||0); });
+            const ekorVal = parseFloat(p.ekor || (typeof p.kg === 'number' ? p.kg : 0) || 0);
+            bulanMap[k].totalEkor += ekorVal;
+            Object.entries(p.ikan||{}).forEach(([ik,v])=>{
+              const qty = typeof v === 'object' ? parseFloat(v?.qty || 0) : parseFloat(v || 0);
+              const harga = typeof v === 'object' ? parseFloat(v?.harga || 0) : 0;
+              bulanMap[k].ikanEkor[ik] = (bulanMap[k].ikanEkor[ik]||0) + qty;
+              if (harga > 0 && !p.omset) omsetEntry += qty * harga;
+            });
+            bulanMap[k].totalOmsetEkor += omsetEntry;
           } else {
-            bulanMap[k].totalKg += parseFloat(p.kg||0);
-            Object.entries(p.ikan||{}).forEach(([ik,v])=>{ bulanMap[k].ikanKg[ik]=(bulanMap[k].ikanKg[ik]||0)+parseFloat(v||0); });
+            const kgVal = parseFloat(p.kg || 0);
+            bulanMap[k].totalKg += kgVal;
+            Object.entries(p.ikan||{}).forEach(([ik,v])=>{
+              const qty = typeof v === 'object' ? parseFloat(v?.qty || 0) : parseFloat(v || 0);
+              const harga = typeof v === 'object' ? parseFloat(v?.harga || 0) : 0;
+              bulanMap[k].ikanKg[ik] = (bulanMap[k].ikanKg[ik]||0) + qty;
+              if (harga > 0 && !p.omset) omsetEntry += qty * harga;
+            });
+            bulanMap[k].totalOmsetKg += omsetEntry;
           }
+          bulanMap[k].totalOmset += omsetEntry;
         });
       }catch(e){}
     });
@@ -51,9 +70,10 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
   const cur            = produksiBulanan[bulanIdx]||null;
   const totalTahunKg   = produksiBulanan.reduce((s,b)=>s+b.totalKg,0);
   const totalTahunEkor = produksiBulanan.reduce((s,b)=>s+b.totalEkor,0);
+  const totalTahunOmset = produksiBulanan.reduce((s,b)=>s+b.totalOmset,0);
 
   const openEdit = (r) => {
-    if (user && r.user_id && r.user_id !== user.id) {
+    if (!canEditRecord(user, r)) {
       alert('Anda tidak memiliki izin untuk mengedit pembudidaya ini.');
       return;
     }
@@ -84,7 +104,7 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
     };
     let error;
     if(editTarget) {
-      if (editTarget.user_id && editTarget.user_id !== user.id) {
+      if (!canEditRecord(user, editTarget)) {
         setSaving(false);
         return alert('Anda tidak memiliki izin untuk mengubah data ini.');
       }
@@ -106,9 +126,23 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
   const saveProduksi = async () => {
     if(!user) return alert('Login dulu.');
     if(!prodTarget) return alert('Pilih pembudidaya terlebih dahulu.');
-    if (prodTarget.user_id && prodTarget.user_id !== user.id) return alert('Anda tidak memiliki izin untuk menyimpan produksi pembudidaya ini.');
-    const total=Object.values(formP.ikan_val).reduce((s,v)=>s+parseFloat(v||0),0);
-    if(total<=0) return alert('Isi minimal satu jenis ikan.');
+    if (!canEditRecord(user, prodTarget)) return alert('Anda tidak memiliki izin untuk menyimpan produksi pembudidaya ini.');
+    
+    let totalQty = 0;
+    let totalOmset = 0;
+    const cleanIkanData = {};
+
+    Object.entries(formP.ikan_val).forEach(([ik, val]) => {
+      const qty = typeof val === 'object' ? parseFloat(val?.qty || 0) : parseFloat(val || 0);
+      const harga = typeof val === 'object' ? parseFloat(val?.harga || 0) : 0;
+      if (qty > 0) {
+        cleanIkanData[ik] = { qty, harga };
+        totalQty += qty;
+        totalOmset += qty * harga;
+      }
+    });
+
+    if(totalQty <= 0) return alert('Isi minimal satu kuantitas jenis ikan.');
     setSaving(true);
     // Gunakan catatan sebelumnya (tanpa menimpa kolom data lain)
     const {data:row}=await supabase.from('kolam_budidaya').select('catatan').eq('id',prodTarget.id).single();
@@ -116,9 +150,9 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
     try{ arr.push(...JSON.parse(row?.catatan||'[]')); }catch(e){}
     
     if(prodMode === 'pembenihan') {
-      arr.push({tgl:formP.tanggal, type:'pembenihan', ekor:total, ikan:formP.ikan_val});
+      arr.push({tgl:formP.tanggal, type:'pembenihan', ekor:totalQty, omset:totalOmset, ikan:cleanIkanData});
     } else {
-      arr.push({tgl:formP.tanggal, type:'pembesaran', kg:total, ikan:formP.ikan_val});
+      arr.push({tgl:formP.tanggal, type:'pembesaran', kg:totalQty, omset:totalOmset, ikan:cleanIkanData});
     }
 
     const updatePayload = { catatan: JSON.stringify(arr) };
@@ -133,7 +167,7 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
 
   const deleteBudidaya = async (r) => {
     if(!user) return alert('Login dulu.');
-    if(r.user_id && r.user_id !== user.id) return alert('Anda tidak memiliki izin untuk menghapus data ini.');
+    if(!canEditRecord(user, r)) return alert('Anda tidak memiliki izin untuk menghapus data ini.');
     if(!window.confirm('Tindakan ini tidak dapat dibatalkan (undo). Apakah Anda yakin ingin menghapus data pembudidaya ini beserta seluruh catatan riwayat kolamnya secara permanen?')) return;
     await supabase.from('kolam_budidaya').delete().eq('id',r.id);
     setMode(null); setEditTarget(null); setPendingPin(null); setFormB(initForm);
@@ -165,9 +199,19 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
             <div style={{fontSize:11,fontWeight:700,color:'#ffd166',whiteSpace:'nowrap'}}>
               {cur?`${cur.label.toUpperCase()} : ${(cur.totalKg/1000).toFixed(1)} Ton | ${cur.totalEkor.toLocaleString('id-ID')} Ekor`:'BELUM ADA DATA'}
             </div>
-            <div style={{fontSize:10,fontWeight:700,marginTop:2,whiteSpace:'nowrap'}}>
+            {cur && cur.totalOmset > 0 && (
+              <div style={{fontSize:11,fontWeight:700,color:'#86efac',marginTop:1,whiteSpace:'nowrap'}}>
+                💰 Rp {cur.totalOmset.toLocaleString('id-ID')}
+              </div>
+            )}
+            <div style={{fontSize:10,fontWeight:700,marginTop:2,whiteSpace:'nowrap',opacity:.9}}>
               TOTAL : {(totalTahunKg/1000).toFixed(1)} Ton | {totalTahunEkor.toLocaleString('id-ID')} Ekor
             </div>
+            {totalTahunOmset > 0 && (
+              <div style={{fontSize:10,fontWeight:700,color:'#ffd166',whiteSpace:'nowrap'}}>
+                💰 Total: Rp {totalTahunOmset.toLocaleString('id-ID')}
+              </div>
+            )}
             <div style={{display:'flex',gap:6,marginTop:6,justifyContent:'flex-end'}}>
               <button onClick={()=>setBulanIdx(p=>Math.min(p+1,produksiBulanan.length-1))} style={{background:'rgba(255,255,255,0.2)',border:'none',borderRadius:4,color:'#fff',padding:'2px 8px',fontSize:10,cursor:'pointer'}}>◀ Prev</button>
               <button onClick={()=>setBulanIdx(p=>Math.max(p-1,0))} style={{background:'rgba(255,255,255,0.2)',border:'none',borderRadius:4,color:'#fff',padding:'2px 8px',fontSize:10,cursor:'pointer'}}>Next ▶</button>
@@ -240,21 +284,114 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
             </div>
           </div>
 
-          <button className="sp-btn sp-btn-secondary" style={{width:'100%',marginTop:8}}
-            onClick={()=> onPickLocation && onPickLocation((latlng) => setPendingPin(latlng))}>
-            📍 {pendingPin?`✅ ${pendingPin.lat.toFixed(5)}, ${pendingPin.lng.toFixed(5)}`:'Pilih Lokasi di Peta'}
-          </button>
-          <div style={{display:'flex', gap:6, marginTop:8}}>
-            <input className="sp-input" placeholder="Atau masukkan koordinat GPS" value={gpsInput} onChange={e=>setGpsInput(e.target.value)} />
-            <button className="sp-btn" style={{background:'#e5e7eb', color:'#374151', padding:'0 12px'}} onClick={() => {
-              const coords = parseCoordinates(gpsInput);
-              if(coords) {
-                setPendingPin(coords);
-                onFlyToLocation && onFlyToLocation(coords.lat, coords.lng);
-              } else {
-                alert('Format koordinat tidak valid.');
-              }
-            }}>Cari</button>
+          {/* Lokasi Koordinat (Pilih di Peta atau Input Manual) */}
+          <div style={{
+            marginTop: 12,
+            padding: '12px',
+            background: '#f0fdf4',
+            border: '1px solid #bbf7d0',
+            borderRadius: '10px',
+            marginBottom: 10
+          }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#166534', marginBottom: 6, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span>📍 Lokasi Koordinat (GPS)</span>
+              {pendingPin && (
+                <span style={{ fontSize: 10, background: '#dcfce7', color: '#15803d', padding: '1px 6px', borderRadius: 4, fontWeight: 700 }}>
+                  ✓ {pendingPin.lat.toFixed(4)}, {pendingPin.lng.toFixed(4)}
+                </span>
+              )}
+            </div>
+
+            <button
+              type="button"
+              className="sp-btn"
+              style={{
+                width: '100%',
+                background: '#0096c7',
+                color: '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                fontWeight: 700,
+                padding: '9px',
+                borderRadius: '8px',
+                marginBottom: 8,
+                boxShadow: '0 2px 6px rgba(0, 150, 199, 0.25)',
+                cursor: 'pointer'
+              }}
+              onClick={() => {
+                if (onPickLocation) {
+                  onPickLocation((coords) => {
+                    setPendingPin(coords);
+                    if (onFlyToLocation) onFlyToLocation(coords.lat, coords.lng);
+                  });
+                }
+              }}
+            >
+              <span>📍</span> Pilih Lokasi di Peta
+            </button>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+              <div>
+                <label style={{ fontSize: 10, fontWeight: 600, color: '#4b5563', display: 'block' }}>Latitude</label>
+                <input
+                  type="number"
+                  step="any"
+                  className="sp-input"
+                  placeholder="-6.012345"
+                  style={{ marginTop: 2 }}
+                  value={pendingPin?.lat ?? ''}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    const currentLng = pendingPin?.lng ?? 106.05;
+                    setPendingPin({ lat: isNaN(val) ? 0 : val, lng: currentLng });
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: 10, fontWeight: 600, color: '#4b5563', display: 'block' }}>Longitude</label>
+                <input
+                  type="number"
+                  step="any"
+                  className="sp-input"
+                  placeholder="106.054321"
+                  style={{ marginTop: 2 }}
+                  value={pendingPin?.lng ?? ''}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    const currentLat = pendingPin?.lat ?? -6.01;
+                    setPendingPin({ lat: currentLat, lng: isNaN(val) ? 0 : val });
+                  }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 6 }}>
+              <input
+                className="sp-input"
+                style={{ marginTop: 0, fontSize: 11 }}
+                placeholder="Atau tempel: -6.0123, 106.0543"
+                value={gpsInput}
+                onChange={(e) => setGpsInput(e.target.value)}
+              />
+              <button
+                type="button"
+                className="sp-btn"
+                style={{ background: '#dcfce7', color: '#166534', fontWeight: 700, padding: '0 12px', border: '1px solid #86efac', flexShrink: 0, cursor: 'pointer' }}
+                onClick={() => {
+                  const coords = parseCoordinates(gpsInput);
+                  if (coords) {
+                    setPendingPin(coords);
+                    if (onFlyToLocation) onFlyToLocation(coords.lat, coords.lng);
+                  } else {
+                    alert('Format koordinat tidak valid. Contoh: -6.012345, 106.054321');
+                  }
+                }}
+              >
+                Terapkan
+              </button>
+            </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 12 }}>
@@ -278,7 +415,7 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
           {tag('Input Produksi Ikan Budidaya','#e76f51')}
           <select className="sp-select" value={prodTarget?.id||''} onChange={e=>{ const r=(budidayaList||[]).find(x=>String(x.id)===e.target.value); setProdTarget(r||null); }}>
             <option value="">-- Pilih Pembudidaya --</option>
-            {(budidayaList||[]).filter(r => user ? (!r.user_id || r.user_id === user.id) : true).map(r=><option key={r.id} value={r.id}>{r.nama_pemilik}</option>)}
+            {(budidayaList||[]).filter(r => canEditRecord(user, r)).map(r=><option key={r.id} value={r.id}>{r.nama_pemilik}</option>)}
           </select>
           <input type="date" className="sp-input" style={{marginTop:8}} value={formP.tanggal}
             onChange={e=>setFormP(p=>({...p,tanggal:e.target.value}))} />
@@ -295,15 +432,50 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
           </div>
 
           <div style={{border:'1px solid #e5e7eb',borderRadius:8,padding:'8px 10px',marginTop:8,background:'#fafafa'}}>
-            {prodMode==='pembesaran' ? tag('Jenis Ikan (kg)') : tag('Jenis Ikan (ekor)')}
-            {(prodTarget ? (prodMode==='pembenihan' ? prodTarget.jenis_ikan_pembenihan||'' : prodTarget.jenis_ikan||'').split(',').filter(Boolean) : JENIS_IKAN_BUDIDAYA).map(ikan=>(
-              <div key={ikan} style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
-                <span style={S({flex:1})}>{ikan.trim()}</span>
-                <input type="number" min="0" placeholder="0" style={{width:64,...S({padding:'2px 6px',border:'1px solid #d1d5db',borderRadius:4})}}
-                  value={formP.ikan_val[ikan.trim()]||''} onChange={e=>{ const ik={...formP.ikan_val}; ik[ikan.trim()]=e.target.value; setFormP(p=>({...p,ikan_val:ik})); }} />
-                <span style={S({color:'#999',width:30})}>{prodMode==='pembesaran' ? 'kg' : 'ekor'}</span>
-              </div>
-            ))}
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', marginBottom: 8, textTransform: 'uppercase' }}>
+              {prodMode==='pembesaran' ? 'PRODUKSI DAN HARGA PEMBESARAN (KG)' : 'PRODUKSI DAN HARGA PEMBENIHAN (EKOR)'}
+            </div>
+            {(prodTarget ? (prodMode==='pembenihan' ? prodTarget.jenis_ikan_pembenihan||'' : prodTarget.jenis_ikan||'').split(',').filter(Boolean) : JENIS_IKAN_BUDIDAYA).map(ikan=>{
+              const ikName = ikan.trim();
+              const curVal = formP.ikan_val[ikName];
+              const qtyVal = typeof curVal === 'object' ? (curVal?.qty ?? '') : (curVal ?? '');
+              const hargaVal = typeof curVal === 'object' ? (curVal?.harga ?? '') : '';
+              return (
+                <div key={ikName} style={{display:'flex',alignItems:'center',gap:6,marginBottom:6}}>
+                  <span style={S({flex:1.2, fontWeight:500})}>{ikName}</span>
+                  <input type="number" min="0" placeholder="0" style={{width:55,...S({padding:'2px 4px',border:'1px solid #d1d5db',borderRadius:4})}}
+                    value={qtyVal} onChange={e=>{
+                      const q = e.target.value;
+                      setFormP(p=>({
+                        ...p,
+                        ikan_val: {
+                          ...p.ikan_val,
+                          [ikName]: {
+                            ...(typeof p.ikan_val[ikName] === 'object' ? p.ikan_val[ikName] : {}),
+                            qty: q
+                          }
+                        }
+                      }));
+                    }} />
+                  <span style={S({color:'#999',width:28})}>{prodMode==='pembesaran' ? 'kg' : 'ekor'}</span>
+                  <span style={S({color:'#666',fontSize:10})}>{prodMode==='pembesaran' ? 'Rp/kg' : 'Rp/ekor'}</span>
+                  <input type="number" min="0" placeholder="0" style={{width:70,...S({padding:'2px 4px',border:'1px solid #d1d5db',borderRadius:4})}}
+                    value={hargaVal} onChange={e=>{
+                      const h = e.target.value;
+                      setFormP(p=>({
+                        ...p,
+                        ikan_val: {
+                          ...p.ikan_val,
+                          [ikName]: {
+                            ...(typeof p.ikan_val[ikName] === 'object' ? p.ikan_val[ikName] : {}),
+                            harga: h
+                          }
+                        }
+                      }));
+                    }} />
+                </div>
+              );
+            })}
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 12 }}>
@@ -325,7 +497,13 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
           let kolamInfo='';
           try{ const k=JSON.parse(r.jenis_kolam||'{}'); kolamInfo=Object.entries(k).filter(([,v])=>parseFloat(v)>0).map(([jk,v])=>`${jk}:${v}m²`).join(', '); }catch(e){ kolamInfo=r.luas_m2?`${r.luas_m2}m²`:''; }
           let prodTotal=0;
-          try{ JSON.parse(r.catatan||'[]').forEach(p=>prodTotal+=parseFloat(p.kg||0)); }catch(e){}
+          let omsetTotal=0;
+          try{
+            JSON.parse(r.catatan||'[]').forEach(p=>{
+              prodTotal += parseFloat(p.kg||0);
+              omsetTotal += parseFloat(p.omset||0);
+            });
+          }catch(e){}
           return (
             <div key={r.id} style={{background:'#f9fafb',borderLeft:'3px solid #0096c7',borderRadius:8,padding:'9px 10px',marginBottom:8}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
@@ -336,10 +514,14 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
                     {r.jenis_ikan_pembenihan ? ` · 🌱 Pembenihan: ${r.jenis_ikan_pembenihan}` : ''} 
                     <br/>📐 {kolamInfo||'-'} · {r.status_kolam||'-'}
                   </div>
-                  {prodTotal>0 && <div style={S({color:'#0096c7',marginTop:2})}>📦 Produksi: {(prodTotal/1000).toFixed(2)} ton</div>}
+                  {prodTotal>0 && (
+                    <div style={S({color:'#0096c7',marginTop:2,fontWeight:600})}>
+                      📦 Produksi: {(prodTotal/1000).toFixed(2)} ton {omsetTotal>0 && `· 💰 Rp ${omsetTotal.toLocaleString('id-ID')}`}
+                    </div>
+                  )}
                   {r.lat&&r.lng&&<div style={{fontSize:9,color:'#0096c7',marginTop:2}}>📍 Klik untuk lihat di peta</div>}
                 </div>
-                {user && (!r.user_id || r.user_id === user.id) && (
+                {user && canEditRecord(user, r) && (
                   <button onClick={()=>openEdit(r)} style={{background:'#eff6ff',border:'1px solid #bfdbfe',borderRadius:6,padding:'3px 8px',fontSize:10,cursor:'pointer',color:'#1d4ed8',fontWeight:600,flexShrink:0,marginLeft:8}}>✏️ Edit</button>
                 )}
               </div>
@@ -354,7 +536,9 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
           <div className="sp-info-box__title">📊 {cur.label}</div>
           {cur.totalKg > 0 && (
             <div style={{marginBottom:10}}>
-              <div style={S({color:'#e76f51',fontWeight:'bold'})}>Pembesaran ({(cur.totalKg/1000).toFixed(2)} Ton)</div>
+              <div style={S({color:'#e76f51',fontWeight:'bold'})}>
+                Pembesaran ({(cur.totalKg/1000).toFixed(2)} Ton) {cur.totalOmsetKg > 0 && `· 💰 Rp ${cur.totalOmsetKg.toLocaleString('id-ID')}`}
+              </div>
               {Object.entries(cur.ikanKg).sort((a,b)=>b[1]-a[1]).map(([ik,kg])=>(
                 <div key={ik} style={{display:'flex',justifyContent:'space-between',padding:'2px 0',...S({})}}>
                   <span>{ik}</span><span style={{fontWeight:700,color:'#0096c7'}}>{kg.toLocaleString('id-ID')} kg</span>
@@ -364,7 +548,9 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
           )}
           {cur.totalEkor > 0 && (
             <div>
-              <div style={S({color:'#2a9d8f',fontWeight:'bold'})}>Pembenihan ({cur.totalEkor.toLocaleString('id-ID')} Ekor)</div>
+              <div style={S({color:'#2a9d8f',fontWeight:'bold'})}>
+                Pembenihan ({cur.totalEkor.toLocaleString('id-ID')} Ekor) {cur.totalOmsetEkor > 0 && `· 💰 Rp ${cur.totalOmsetEkor.toLocaleString('id-ID')}`}
+              </div>
               {Object.entries(cur.ikanEkor).sort((a,b)=>b[1]-a[1]).map(([ik,v])=>(
                 <div key={ik} style={{display:'flex',justifyContent:'space-between',padding:'2px 0',...S({})}}>
                   <span>{ik}</span><span style={{fontWeight:700,color:'#0096c7'}}>{v.toLocaleString('id-ID')} ekor</span>

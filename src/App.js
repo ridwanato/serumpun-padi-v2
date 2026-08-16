@@ -3,7 +3,7 @@ import { Pane } from 'react-leaflet';
 import './App.css';
 import { useKMZLoader } from './hooks/useKMZLoader';
 import { STATUS_CONFIG, VARIETAS_CONFIG } from './config/komoditas';
-import { hitungHariTanam, hitungStatusOtomatis } from './utils/agronomi';
+import { hitungStatusOtomatis } from './utils/agronomi';
 import {
   MapView,
   KecamatanLayer, KelurahanLayer, SawahLayer,
@@ -17,8 +17,12 @@ import {
   RekapLuas, RekapProduksi, Dashboard,
   Hortikultura, Palawija, WarningOPT, PoktanKWT,
   PerikananBudidaya, PerikananTangkap, IKPGAdmin,
+  Peternakan, LaporanGrafik,
+  PanduanModal, PengaturanModal, UnduhDataModal,
 } from './components/panels';
-import FSVASelector from './components/common/FSVASelector';
+import LeftIconRail from './components/layout/LeftIconRail';
+import SidebarMenu from './components/layout/SidebarMenu';
+import TopNavbar from './components/layout/TopNavbar';
 import Auth from './Auth';
 import { ALL_KEC, ALL_KEL, KEL_TO_KEC } from './config/wilayah';
 import { supabase } from './supabase';
@@ -40,16 +44,19 @@ function App() {
   } = useKMZLoader(mapRef);
 
   /* ── UI state ── */
-  const [mapZoom, setMapZoom] = useState(13);
+  const [mapZoom, setMapZoom] = useState(12.5);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isDashboardPanelOpen, setIsDashboardPanelOpen] = useState(true);
+  const [activeView, setActiveView] = useState('dashboard');
+  const [activeModal, setActiveModal] = useState(null); // 'panduan' | 'pengaturan' | 'unduh_data' | 'pilih_pin'
   const [showDrawBar, setShowDrawBar] = useState(false);
-  const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [panelView, setPanelView] = useState('dashboard');
   const [user, setUser] = useState(null);
   const [showAuth, setShowAuth] = useState(false);
+  const [authInitialMode, setAuthInitialMode] = useState('login');
   const [activeSawahId, setActiveSawahId] = useState(null);
   const [drawMode, setDrawMode] = useState(null);
   const [drawnPolygons, setDrawnPolygons] = useState([]);
-  const [fillOpacity, setFillOpacity] = useState(0.5);
+  const [fillOpacity, setFillOpacity] = useState(0.55);
   const [isPicking, setIsPicking] = useState(false); // overlay picking mode
 
   /* ── Layer toggles ── */
@@ -63,14 +70,11 @@ function App() {
   const [showGapoktanPin, setShowGapoktanPin] = useState(true);
   const [showWarningPin, setShowWarningPin] = useState(true);
   const [showKelNama, setShowKelNama] = useState(true);
+  const [showPeternakan, setShowPeternakan] = useState(true);
 
-  /* ── Dropdown toggles ── */
-  const [showLayerDropdown, setShowLayerDropdown] = useState(false);
-  const [showIKPGPanel, setShowIKPGPanel] = useState(false);
-
-  /* ── IKPG ── */
+  /* ── IKPG (Ketahanan Pangan Layer Opacity 30%) ── */
   const [activeIKPGLayer, setActiveIKPGLayer] = useState(null);
-  const [ikpgOpacity, setIkpgOpacity] = useState(0.55);
+  const [ikpgOpacity, setIkpgOpacity] = useState(0.30);
 
   /* ── Wilayah filter ── */
   const [selectedKec, setSelectedKec] = useState(() => {
@@ -96,12 +100,34 @@ function App() {
   /* ── Auto-load on mount ── */
   useEffect(() => { loadFromURL(); }, []); // eslint-disable-line
 
-  /* ── Supabase listeners ── */
+  /* ── Supabase listeners & Password Recovery ── */
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => { if (data?.user) setUser(data.user); });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
+      if (event === 'PASSWORD_RECOVERY') {
+        setAuthInitialMode('reset_password');
+        setShowAuth(true);
+      }
     });
+
+    const checkRecoveryURL = () => {
+      const hash = window.location.hash || '';
+      const search = window.location.search || '';
+      const href = window.location.href || '';
+      if (
+        hash.includes('type=recovery') ||
+        hash.includes('access_token') ||
+        search.includes('type=recovery') ||
+        search.includes('code=') ||
+        href.includes('recovery')
+      ) {
+        setAuthInitialMode('reset_password');
+        setShowAuth(true);
+      }
+    };
+    checkRecoveryURL();
+
     return () => subscription.unsubscribe();
   }, []);
 
@@ -125,7 +151,6 @@ function App() {
       if (!ht.error) setHortiList(ht.data || []);
       if (!wo.error) setWarningList(wo.data || []);
       if (!pl.error) setPalawijaList(pl.data || []);
-      // Hydrate sawahStatus dari cloud — pakai kolom sawah_id sesuai skema v1
       if (!sw.error && sw.data?.length) {
         const map = {};
         sw.data.forEach(r => {
@@ -161,13 +186,35 @@ function App() {
   });
   const activeSawah = activeSawahId ? layers.sawah.find(f => f._id === activeSawahId) : null;
 
-  /* ── Panel navigation ── */
-  const openPanel = useCallback((view = 'dashboard') => {
-    setPanelView(view); setIsPanelOpen(true); setShowDrawBar(view === 'gambar_poligon');
+  /* ── Navigation & View selection ── */
+  const handleSelectView = useCallback((view) => {
+    setActiveView(view);
+    setShowDrawBar(view === 'gambar_poligon');
   }, []);
-  const closePanel = useCallback(() => setIsPanelOpen(false), []);
-  const goBack = useCallback(() => {
-    setPanelView('dashboard'); setShowDrawBar(false); setActiveSawahId(null);
+
+  const goBackToDashboard = useCallback(() => {
+    setActiveView('dashboard');
+    setShowDrawBar(false);
+    setActiveSawahId(null);
+  }, []);
+
+  /* ── Toggle Layer Checkbox from Sidebar ── */
+  const handleToggleLayer = useCallback((key, value) => {
+    switch (key) {
+      case 'showSawah': setShowSawah(value); break;
+      case 'showKolam': setShowKolam(value); break;
+      case 'showNelayan': setShowNelayan(value); break;
+      case 'showHortiPin': setShowHortiPin(value); break;
+      case 'showPalawijaPin': setShowPalawijaPin(value); break;
+      case 'showPoktanPin': setShowPoktanPin(value); break;
+      case 'showKWTPin': setShowKWTPin(value); break;
+      case 'showGapoktanPin': setShowGapoktanPin(value); break;
+      case 'showWarningPin': setShowWarningPin(value); break;
+      case 'showKelNama': setShowKelNama(value); break;
+      case 'showPeternakan': setShowPeternakan(value); break;
+      case 'showIKPGLayer': setActiveIKPGLayer(value ? 'fsva' : null); break;
+      default: break;
+    }
   }, []);
 
   /* ── Wilayah toggles ── */
@@ -176,10 +223,9 @@ function App() {
   const toggleAllKec = () => { const next = {}; ALL_KEC.forEach(n => next[n] = !allKecChecked); setSelectedKec(next); };
   const toggleAllKel = () => { const next = {}; visibleKelList.forEach(n => next[n] = !allKelChecked); setSelectedKel(next); };
 
-  /* ── Pick Location — Leaflet Map Click approach ── */
+  /* ── Pick Location Callback ── */
   const pickCallbackRef = useRef(null);
   const startPickLocation = useCallback((callback) => {
-    setIsPanelOpen(false);
     setIsPicking(true);
     if (mapRef.current) {
       mapRef.current.getContainer().classList.add('is-picking-mode');
@@ -188,7 +234,6 @@ function App() {
           pickCallbackRef.current.cb({ lat: e.latlng.lat, lng: e.latlng.lng });
         }
         setIsPicking(false);
-        setIsPanelOpen(true);
         mapRef.current.getContainer().classList.remove('is-picking-mode');
         mapRef.current.off('click', pickCallbackRef.current.onMapClick);
         pickCallbackRef.current = null;
@@ -197,9 +242,9 @@ function App() {
       mapRef.current.on('click', onMapClick);
     }
   }, []);
+
   const cancelPick = useCallback(() => {
     setIsPicking(false);
-    setIsPanelOpen(true);
     if (mapRef.current && pickCallbackRef.current) {
       mapRef.current.getContainer().classList.remove('is-picking-mode');
       mapRef.current.off('click', pickCallbackRef.current.onMapClick);
@@ -207,7 +252,7 @@ function App() {
     pickCallbackRef.current = null;
   }, []);
 
-  /* ── Draw mode — programmatically trigger Leaflet Draw ── */
+  /* ── Draw mode ── */
   const drawHandlerRef = useRef(null);
   const triggerDraw = () => {
     if (drawMode === 'draw') {
@@ -256,9 +301,16 @@ function App() {
   };
 
   const handleFileImport = async (e) => {
-    const file = e.target.files[0]; if (!file) return;
-    try { await loadFromFile(file); } catch (err) { alert(err.message); }
+    const file = e.target?.files?.[0] || e;
+    if (!file) return;
+    try {
+      await loadFromFile(file);
+      alert('✅ File spasial berhasil dimuat ke peta!');
+    } catch (err) {
+      alert('Gagal memuat file: ' + err.message);
+    }
   };
+
   const deleteDrawnPolygon = (id) => {
     const layer = drawnLayersRef.current[id];
     if (layer && featureGroupRef.current) featureGroupRef.current.removeLayer(layer);
@@ -317,26 +369,25 @@ function App() {
   }, []);
 
   /* ── Map event handlers ── */
-  // Ref agar onEachSawah tahu kapan sedang draw mode — tidak butuh closure baru
   const drawModeRef = useRef(null);
   useEffect(() => { drawModeRef.current = drawMode; }, [drawMode]);
 
   const getSawahStyle = (feature) => {
     const sd = sawahStatus[feature?._id] || {};
     const varCfg = VARIETAS_CONFIG[sd.varietas] || VARIETAS_CONFIG.lainnya;
-    const hari = hitungHariTanam(sd.tanggalTanam);
     const status = sd.status === 'otomatis' && sd.tanggalTanam
       ? hitungStatusOtomatis(sd.tanggalTanam, varCfg.umur)
       : sd.status || 'belum';
     const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.belum;
     return { color: '#00ff00', weight: 2, fillOpacity, fillColor: cfg.fillColor || '#cccccc' };
   };
+
   const onEachSawah = (feature, layer) => {
-    // Menghapus layer.on('add', bringToFront) yang membuat lag (O(N^2))
     layer.on('click', (e) => {
-      if (drawModeRef.current) return; // biarkan L.Draw menangani klik saat draw aktif
+      if (drawModeRef.current) return;
       L.DomEvent.stopPropagation(e);
-      setActiveSawahId(feature._id); openPanel('sawah_detail');
+      setActiveSawahId(feature._id);
+      handleSelectView('sawah_detail');
     });
   };
   const onEachKecamatan = (f, l) => {
@@ -344,7 +395,6 @@ function App() {
   };
   const onEachKelurahan = (f, l) => {
     const nama = f.properties?.name || '';
-    // Selalu bind tooltip — visibility dikontrol oleh CSS class di map container
     const fs = Math.max(7, Math.min(13, (mapZoom - 8) * 1.5)).toFixed(1);
     l.bindTooltip(
       `<span style="font-size:${fs}px;font-weight:700;color:#fff;text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;white-space:nowrap">${nama}</span>`,
@@ -353,15 +403,20 @@ function App() {
     l.bindPopup(`<b style="color:#0d9488">🏘️ ${nama}</b>`);
   };
 
-  /* ── Misc ── */
-  const handleHamburger = () => { isPanelOpen ? closePanel() : openPanel('dashboard'); };
-  const zoomToSawah = (feature) => {
-    if (!mapRef.current) return;
+  const zoomToSawah = useCallback((feature) => {
+    if (!mapRef.current || !feature) return;
     const bbox = turf.bbox(feature);
-    setActiveSawahId(feature._id); closePanel();
+    setActiveSawahId(feature._id);
     mapRef.current.flyToBounds([[bbox[1], bbox[0]], [bbox[3], bbox[2]]], { padding: [60, 60], animate: true, duration: 1.2 });
-    setTimeout(() => openPanel('sawah_detail'), 1300);
-  };
+    handleSelectView('sawah_detail');
+  }, [handleSelectView]);
+
+  const flyToLocation = useCallback((lat, lng) => {
+    if (mapRef.current) {
+      mapRef.current.flyTo([lat, lng], 17, { duration: 1 });
+    }
+  }, []);
+
   const refreshSupabase = useCallback(async () => {
     const [bd, nl, fv, sk, pk, ht, wo, pl] = await Promise.all([
       supabase.from('kolam_budidaya').select('*'),
@@ -383,22 +438,9 @@ function App() {
     if (!pl.error) setPalawijaList(pl.data || []);
   }, []);
 
-  const flyToLocation = useCallback((lat, lng) => {
-    if (mapRef.current) {
-      mapRef.current.flyTo([lat, lng], 18, { duration: 1 });
-    }
-  }, []);
-
-  /* ── Panel content ── */
-  const renderPanelContent = () => {
-    switch (panelView) {
-      case 'dashboard':
-        return <Dashboard
-          filteredSawah={filteredSawah} sawahStatus={sawahStatus}
-          kolamBudidaya={kolamBudidaya} budidayaList={budidayaList}
-          nelayanTangkap={nelayanTangkap} tangkapList={tangkapList}
-          poktanKMZ={poktanKMZ} poktanList={poktanList}
-          onOpenPanel={openPanel} onClosePanel={closePanel} />;
+  /* ── Panel router for Submodule views ── */
+  const renderSubmoduleContent = () => {
+    switch (activeView) {
       case 'gambar_poligon':
         return <GambarPoligon
           layers={layers} selectedKec={selectedKec} selectedKel={selectedKel}
@@ -475,173 +517,259 @@ function App() {
           setFsvaData={setFsvaData} setSkpgData={setSkpgData}
           setIkpgUploadStatus={setIkpgUploadStatus}
           onRefresh={refreshSupabase} />;
+      case 'peternakan':
+        return <Peternakan
+          onOpenPanel={handleSelectView} user={user}
+          supabase={supabase} onRefresh={refreshSupabase}
+          onPickLocation={startPickLocation} onFlyToLocation={flyToLocation}
+          kelurahanBoundaries={layers.kelurahan} kecamatanBoundaries={layers.kecamatan} />;
+      case 'laporan_grafik':
+        return <LaporanGrafik filteredSawah={filteredSawah} sawahStatus={sawahStatus} onOpenPanel={handleSelectView} />;
       default:
-        return <p style={{ padding: 16, color: '#999' }}>Panel belum tersedia</p>;
+        return null;
     }
   };
 
-  /* ── Loading screen ── */
+  /* ── Loading Screen ── */
   if (kmzLoading && layers.sawah.length === 0) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#f0fdf4' }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: 48 }}>🌾</div>
-          <p style={{ color: '#166534', fontWeight: 700 }}>Memuat data peta...</p>
+          <p style={{ color: '#166534', fontWeight: 700, marginTop: 8 }}>Memuat data peta spasial Cilegon...</p>
         </div>
       </div>
     );
   }
 
-  /* ── Pilih Pin dropdown items ── */
-  const pinItems = [
-    { icon: '🌾', label: 'Padi Sawah (poligon)', checked: showSawah, set: setShowSawah },
-    { icon: '🐟', label: 'Budidaya Ikan', checked: showKolam, set: setShowKolam },
-    { icon: '⛵', label: 'Pangkalan Nelayan', checked: showNelayan, set: setShowNelayan },
-    { icon: '🌶️', label: 'Hortikultura', checked: showHortiPin, set: setShowHortiPin },
-    { icon: '🌿', label: 'Palawija', checked: showPalawijaPin, set: setShowPalawijaPin },
-    { icon: '👨‍🌾', label: 'Poktan', checked: showPoktanPin, set: setShowPoktanPin },
-    { icon: '👩‍🌾', label: 'KWT', checked: showKWTPin, set: setShowKWTPin },
-    { icon: '🤝', label: 'Gapoktan', checked: showGapoktanPin, set: setShowGapoktanPin },
-    { icon: '⚠️', label: 'Warning OPT', checked: showWarningPin, set: setShowWarningPin },
-    { icon: '🏘️', label: 'Nama Kelurahan', checked: showKelNama, set: setShowKelNama },
-  ];
+  const isSubmoduleOpen = activeView !== 'dashboard';
 
   return (
-    <div className="sp-app" data-drawmode={drawMode || ''}>
-      {showAuth && <Auth onLogin={() => setShowAuth(false)} />}
+    <div className={`sp-app ${!isSidebarOpen ? 'is-sidebar-collapsed' : ''}`} data-drawmode={drawMode || ''}>
+      {/* ── Auth Modal ── */}
+      {showAuth && <Auth onLogin={() => setShowAuth(false)} initialMode={authInitialMode} />}
 
-      {/* ── Pick Location Overlay — di atas semua layer termasuk poligon ── */}
+      {/* ── Pick Location Overlay ── */}
       {isPicking && (
-        <>
-          {/* Banner instruksi */}
-          <div className="sp-pick-banner">
-            <span>📍 Geser/Zoom peta, lalu klik untuk pin lokasi</span>
-            <button onClick={cancelPick}>✕ Batal</button>
-          </div>
-        </>
+        <div className="sp-pick-banner">
+          <span>📍 Geser/Zoom peta, lalu klik untuk pin lokasi</span>
+          <button onClick={cancelPick}>✕ Batal</button>
+        </div>
       )}
 
-      {/* ── Header group: SERUMPUN PADI + Pilih Pin + FSVA/SKPG ── */}
-      <div className={`sp-header-group${isPanelOpen ? ' sp-header-group--hidden' : ''}`}>
-        <div className="sp-header">
-          <span className="sp-header__icon">🌾</span>
-          <span className="sp-header__title">SERUMPUN PADI</span>
-        </div>
-        <div className="sp-header-btn-row">
-          {/* Pilih Pin */}
-          <div className="sp-layer-wrap">
-            <button className="sp-layer-btn"
-              onClick={() => { setShowLayerDropdown(v => !v); setShowIKPGPanel(false); }}>
-              🗺️ Pilih Pin {showLayerDropdown ? '▲' : '▼'}
-            </button>
-            {showLayerDropdown && (
-              <div className="sp-layer-panel">
-                {pinItems.map((item, i) => (
-                  <label key={i} className="sp-layer-row">
-                    <span className="sp-layer-row__icon">{item.icon}</span>
-                    <span className="sp-layer-row__label">{item.label}</span>
-                    <input type="checkbox" className="sp-layer-row__check"
-                      checked={item.checked} onChange={e => item.set(e.target.checked)} />
-                  </label>
-                ))}
-              </div>
-            )}
-          </div>
-          {/* FSVA/SKPG */}
-          <div className="sp-ikpg-wrap">
-            <button className={`sp-ikpg-btn${activeIKPGLayer ? ' active' : ''}`}
-              onClick={() => { setShowIKPGPanel(v => !v); setShowLayerDropdown(false); }}>
-              FSVA/SKPG {showIKPGPanel ? '▲' : '▼'}
-            </button>
-            {showIKPGPanel && (
-              <div className="sp-ikpg-panel">
-                <FSVASelector
-                  activeLayer={activeIKPGLayer}
-                  onLayerChange={setActiveIKPGLayer}
-                  ikpgOpacity={ikpgOpacity}
-                  onOpacityChange={setIkpgOpacity} />
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      {/* ── 1. LEFT ICON RAIL ── */}
+      <LeftIconRail
+        activeView={activeView}
+        onSelectView={handleSelectView}
+        onToggleSidebar={() => setIsSidebarOpen(v => !v)}
+        isSidebarOpen={isSidebarOpen}
+        onOpenModal={setActiveModal}
+      />
 
-      {/* ── Top Right Controls: Hamburger ── */}
-      <div className="sp-top-right" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
-        <button className={`sp-btn-menu${isPanelOpen ? ' is-open' : ''}`} onClick={handleHamburger}>
-          <span className="sp-btn-menu__bar" /><span className="sp-btn-menu__bar" /><span className="sp-btn-menu__bar" />
-        </button>
-      </div>
-
-      {/* ── Overlay + Panel ── */}
-      {isPanelOpen && <div className="sp-overlay" onClick={closePanel} />}
-      <div className={`sp-panel${isPanelOpen ? ' is-open' : ''}`}>
-        <PanelHeader
-          panelView={panelView} onClose={closePanel} onBack={goBack}
-          user={user} setUser={setUser} supabase={supabase} setShowAuth={setShowAuth} />
-        <div className="sp-panel__body">{renderPanelContent()}</div>
-      </div>
-
-      {/* ── Draw Toolbar ── */}
-      {showDrawBar && (
-        <DrawToolbar
-          drawMode={drawMode}
-          triggerDraw={triggerDraw} triggerEdit={triggerEdit} triggerDelete={triggerDelete}
-          finishDrawMode={finishDrawMode} cancelDrawMode={cancelDrawMode}
-          onClose={() => setShowDrawBar(false)} />
-      )}
-
-      {/* ── Peta ── */}
-      <div
-        style={{
-          height: '100vh', width: '100vw',
-          '--pin-scale': Math.max(0.4, Math.min(1.5, (mapZoom - 11) * 0.16 + 0.6))
+      {/* ── 2. COLLAPSIBLE LEFT SIDEBAR (DKPP.INFO) ── */}
+      <SidebarMenu
+        isOpen={isSidebarOpen}
+        onToggleSidebar={() => setIsSidebarOpen(v => !v)}
+        activeView={activeView}
+        onSelectView={handleSelectView}
+        layerStates={{
+          showSawah,
+          showKolam,
+          showNelayan,
+          showHortiPin,
+          showPalawijaPin,
+          showPoktanPin,
+          showKWTPin,
+          showGapoktanPin,
+          showWarningPin,
+          showKelNama,
+          showPeternakan,
+          showIKPGLayer: activeIKPGLayer,
         }}
-        className={!showKelNama ? 'sp-hide-kel-names' : ''}>
-        <MapView
-          mapRef={mapRef} featureGroupRef={featureGroupRef}
-          mapZoom={mapZoom} setMapZoom={setMapZoom}
-          showDrawBar={showDrawBar} onCreated={handleCreated}>
+        onToggleLayer={handleToggleLayer}
+        onOpenModal={setActiveModal}
+        onImportFile={handleFileImport}
+      />
 
-          {/* Admin boundaries (Z-Index 400) */}
-          <Pane name="admin-pane" style={{ zIndex: 400 }}>
-            <KecamatanLayer data={filteredKec} onEachFeature={onEachKecamatan} />
-            <KelurahanLayer
-              data={filteredKel}
-              onEachFeature={onEachKelurahan}
-              activeIKPGLayer={activeIKPGLayer}
-              ikpgOpacity={ikpgOpacity}
-              fsvaData={fsvaData}
-              skpgData={skpgData}
-              activeKelNames={activeKelNames} />
-          </Pane>
+      {/* ── 3. MAIN WORKSPACE (MAP + TOPBAR + RIGHT DASHBOARD) ── */}
+      <main className="sp-main-area">
+        {/* Top Navbar */}
+        <TopNavbar
+          layers={layers}
+          sawahStatus={sawahStatus}
+          budidayaList={budidayaList}
+          tangkapList={tangkapList}
+          poktanList={poktanList}
+          hortiList={hortiList}
+          palawijaList={palawijaList}
+          warningList={warningList}
+          onSelectView={handleSelectView}
+          onZoomToSawah={zoomToSawah}
+          onFlyToLocation={flyToLocation}
+          onOpenModal={setActiveModal}
+          user={user}
+          setUser={setUser}
+          supabase={supabase}
+          setShowAuth={setShowAuth}
+          isSidebarOpen={isSidebarOpen}
+        />
 
-          {/* Sawah polygons (Z-Index 450 - Always on top of admin boundaries) */}
-          <Pane name="sawah-pane" style={{ zIndex: 450 }}>
-            <SawahLayer
-              data={filteredSawah} showSawah={showSawah}
-              getStyle={getSawahStyle} onEachFeature={onEachSawah}
-              sawahStatus={sawahStatus} fillOpacity={fillOpacity} />
-          </Pane>
+        {/* ── Right Dashboard Cards (Active on Dashboard View as shown in Mockup) ── */}
+        {activeView === 'dashboard' && (
+          <>
+            {isDashboardPanelOpen ? (
+              <aside className="sp-right-dashboard" aria-label="Dashboard Metrik">
+                <Dashboard
+                  filteredSawah={filteredSawah}
+                  sawahStatus={sawahStatus}
+                  kolamBudidaya={kolamBudidaya}
+                  budidayaList={budidayaList}
+                  nelayanTangkap={nelayanTangkap}
+                  tangkapList={tangkapList}
+                  poktanKMZ={poktanKMZ}
+                  poktanList={poktanList}
+                  onOpenPanel={handleSelectView}
+                  onClosePanel={goBackToDashboard}
+                  onOpenModal={setActiveModal}
+                  onCollapseDashboard={() => setIsDashboardPanelOpen(false)}
+                />
+              </aside>
+            ) : (
+              <button
+                className="sp-dash-expand-trigger"
+                onClick={() => setIsDashboardPanelOpen(true)}
+                title="Buka Panel Ringkasan Metrik"
+                aria-label="Buka Panel Ringkasan Metrik"
+              >
+                <span className="sp-dash-expand-trigger__icon">🌾</span>
+                <span className="sp-dash-expand-trigger__text">Ringkasan Metrik</span>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+              </button>
+            )}
+          </>
+        )}
 
-          {/* KMZ Pins */}
-          <HortiPins data={hortiKMZ} show={showHortiPin} />
-          <PalawijaPins data={palawijaKMZ} show={showPalawijaPin} />
-          <PoktanPins data={poktanKMZ} showPoktan={showPoktanPin} showKWT={showKWTPin} showGapoktan={showGapoktanPin} />
-          <WarningPins data={warningKMZ} show={showWarningPin} />
-          <KolamPins data={kolamBudidaya} show={showKolam} />
-          <NelayanPins data={nelayanTangkap} show={showNelayan} />
+        {/* ── Submodule Slide Panel (Opens when clicking submenus/details) ── */}
+        {isSubmoduleOpen && (
+          <>
+            {!isPicking && <div className="sp-overlay" onClick={goBackToDashboard} />}
+            <div className="sp-panel is-open">
+              <PanelHeader
+                panelView={activeView}
+                onClose={goBackToDashboard}
+                onBack={goBackToDashboard}
+                user={user}
+                setUser={setUser}
+                supabase={supabase}
+                setShowAuth={setShowAuth}
+              />
+              <div className="sp-panel__body">{renderSubmoduleContent()}</div>
+            </div>
+          </>
+        )}
 
-          {/* DB Pins — dari Supabase */}
-          <KolamDBPins data={budidayaList} show={showKolam} />
-          <NelayanDBPins data={tangkapList} show={showNelayan} />
-          <PoktanDBPins data={poktanList} showPoktan={showPoktanPin} showKWT={showKWTPin} showGapoktan={showGapoktanPin} />
-          <HortiDBPins data={hortiList} show={showHortiPin} />
-          <PalawijaDBPins data={palawijaList} show={showPalawijaPin} />
-          <WarningDBPins data={warningList} show={showWarningPin} />
+        {/* ── Draw Toolbar ── */}
+        {showDrawBar && (
+          <DrawToolbar
+            drawMode={drawMode}
+            triggerDraw={triggerDraw}
+            triggerEdit={triggerEdit}
+            triggerDelete={triggerDelete}
+            finishDrawMode={finishDrawMode}
+            cancelDrawMode={cancelDrawMode}
+            onClose={() => setShowDrawBar(false)}
+          />
+        )}
 
-        </MapView>
-      </div>
+        {/* ── Leaflet Interactive Map ── */}
+        <div
+          style={{
+            height: '100%',
+            width: '100%',
+            '--pin-scale': Math.max(0.4, Math.min(1.5, (mapZoom - 11) * 0.16 + 0.6))
+          }}
+          className={!showKelNama ? 'sp-hide-kel-names' : ''}
+        >
+          <MapView
+            mapRef={mapRef}
+            featureGroupRef={featureGroupRef}
+            mapZoom={mapZoom}
+            setMapZoom={setMapZoom}
+            showDrawBar={showDrawBar}
+            onCreated={handleCreated}
+          >
+            {/* Admin boundaries */}
+            <Pane name="admin-pane" style={{ zIndex: 400 }}>
+              <KecamatanLayer data={filteredKec} onEachFeature={onEachKecamatan} />
+              <KelurahanLayer
+                data={filteredKel}
+                onEachFeature={onEachKelurahan}
+                activeIKPGLayer={activeIKPGLayer}
+                ikpgOpacity={ikpgOpacity}
+                fsvaData={fsvaData}
+                skpgData={skpgData}
+                activeKelNames={activeKelNames}
+              />
+            </Pane>
+
+            {/* Sawah polygons */}
+            <Pane name="sawah-pane" style={{ zIndex: 450 }}>
+              <SawahLayer
+                data={filteredSawah}
+                showSawah={showSawah}
+                getStyle={getSawahStyle}
+                onEachFeature={onEachSawah}
+                sawahStatus={sawahStatus}
+                fillOpacity={fillOpacity}
+              />
+            </Pane>
+
+            {/* KMZ Pins */}
+            <HortiPins data={hortiKMZ} show={showHortiPin} />
+            <PalawijaPins data={palawijaKMZ} show={showPalawijaPin} />
+            <PoktanPins data={poktanKMZ} showPoktan={showPoktanPin} showKWT={showKWTPin} showGapoktan={showGapoktanPin} />
+            <WarningPins data={warningKMZ} show={showWarningPin} />
+            <KolamPins data={kolamBudidaya} show={showKolam} />
+            <NelayanPins data={nelayanTangkap} show={showNelayan} />
+
+            {/* DB Pins */}
+            <KolamDBPins data={budidayaList} show={showKolam} />
+            <NelayanDBPins data={tangkapList} show={showNelayan} />
+            <PoktanDBPins data={poktanList} showPoktan={showPoktanPin} showKWT={showKWTPin} showGapoktan={showGapoktanPin} />
+            <HortiDBPins data={hortiList} show={showHortiPin} />
+            <PalawijaDBPins data={palawijaList} show={showPalawijaPin} />
+            <WarningDBPins data={warningList} show={showWarningPin} />
+          </MapView>
+        </div>
+      </main>
+
+      {/* ── MODALS (Panduan, Pengaturan, Unduh Data) ── */}
+      <PanduanModal
+        isOpen={activeModal === 'panduan'}
+        onClose={() => setActiveModal(null)}
+      />
+
+      <PengaturanModal
+        isOpen={activeModal === 'pengaturan'}
+        onClose={() => setActiveModal(null)}
+        fillOpacity={fillOpacity}
+        setFillOpacity={setFillOpacity}
+        ikpgOpacity={ikpgOpacity}
+        setIkpgOpacity={setIkpgOpacity}
+        showKelNama={showKelNama}
+        setShowKelNama={setShowKelNama}
+      />
+
+      <UnduhDataModal
+        isOpen={activeModal === 'unduh_data'}
+        onClose={() => setActiveModal(null)}
+        filteredSawah={filteredSawah}
+        budidayaList={budidayaList}
+        tangkapList={tangkapList}
+        poktanList={poktanList}
+      />
     </div>
   );
 }

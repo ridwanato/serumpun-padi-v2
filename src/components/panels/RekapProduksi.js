@@ -7,6 +7,7 @@ import ExportButtons from '../common/ExportButtons';
 function RekapProduksi({ filteredSawah, sawahStatus, user }) {
   const contentRef = useRef(null);
   let totalGKP = 0, totalGKG = 0, totalBeras = 0;
+  let totalOmsetGKP = 0, totalOmsetBeras = 0;
   const kecBulanMap = {};
 
   filteredSawah.forEach(f => {
@@ -16,9 +17,14 @@ function RekapProduksi({ filteredSawah, sawahStatus, user }) {
     const prod = hitungProduksi(luas, sd.hasilUbinan);
     if (!prod) return;
 
+    const pGKP = parseFloat(sd.hargaGKP || 6500);
+    const pBeras = parseFloat(sd.hargaBeras || 13500);
+
     totalGKP += prod.gkp;
     totalGKG += prod.gkg;
     totalBeras += prod.beras;
+    totalOmsetGKP += (prod.gkp * 1000 * pGKP);
+    totalOmsetBeras += (prod.beras * 1000 * pBeras);
 
     const kec = f.properties?.kecamatan || 'Tidak Diketahui';
     const varCfg = VARIETAS_CONFIG[sd.varietas] || VARIETAS_CONFIG.lainnya;
@@ -29,10 +35,12 @@ function RekapProduksi({ filteredSawah, sawahStatus, user }) {
       bulan = tglPanen.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' });
     }
     if (!kecBulanMap[kec]) kecBulanMap[kec] = {};
-    if (!kecBulanMap[kec][bulan]) kecBulanMap[kec][bulan] = { gkp: 0, gkg: 0, beras: 0 };
+    if (!kecBulanMap[kec][bulan]) kecBulanMap[kec][bulan] = { gkp: 0, gkg: 0, beras: 0, omsetGKP: 0, omsetBeras: 0 };
     kecBulanMap[kec][bulan].gkp += prod.gkp;
     kecBulanMap[kec][bulan].gkg += prod.gkg;
     kecBulanMap[kec][bulan].beras += prod.beras;
+    kecBulanMap[kec][bulan].omsetGKP += (prod.gkp * 1000 * pGKP);
+    kecBulanMap[kec][bulan].omsetBeras += (prod.beras * 1000 * pBeras);
   });
 
   const allBulan = [...new Set(Object.values(kecBulanMap).flatMap(b => Object.keys(b)))].sort((a, b) => {
@@ -79,7 +87,7 @@ function RekapProduksi({ filteredSawah, sawahStatus, user }) {
       </div>
 
       {/* 3 Kartu Total */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 12 }}>
+      <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
         {[
           { label: 'GKP', val: totalGKP, color: '#2d6a4f' },
           { label: 'GKG', val: totalGKG, color: '#40916c' },
@@ -100,6 +108,29 @@ function RekapProduksi({ filteredSawah, sawahStatus, user }) {
           </div>
         ))}
       </div>
+
+      {/* Kartu Estimasi Nilai Rupiah */}
+      {hasData && (totalOmsetGKP > 0 || totalOmsetBeras > 0) && (
+        <div style={{
+          background: 'linear-gradient(135deg, #15803d, #166534)',
+          color: '#fff',
+          borderRadius: 10,
+          padding: '10px 14px',
+          marginBottom: 12,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <div>
+            <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.85, fontWeight: 700 }}>Est. Nilai GKP</div>
+            <div style={{ fontSize: 13, fontWeight: 800 }}>Rp {Math.round(totalOmsetGKP).toLocaleString('id-ID')}</div>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.85, fontWeight: 700 }}>Est. Nilai Beras</div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: '#86efac' }}>Rp {Math.round(totalOmsetBeras).toLocaleString('id-ID')}</div>
+          </div>
+        </div>
+      )}
 
       {/* Tabel per kecamatan */}
       {!hasData ? (

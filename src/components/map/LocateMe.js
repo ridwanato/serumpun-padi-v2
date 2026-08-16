@@ -34,8 +34,8 @@ function LocateMe() {
   useEffect(() => {
     const LocateBtn = L.Control.extend({
       onAdd() {
-        const btn = L.DomUtil.create('button', 'sp-locate-btn leaflet-bar');
-        btn.title = 'Temukan lokasi saya';
+        const btn = L.DomUtil.create('button', 'sp-map-action-btn sp-locate-btn leaflet-bar');
+        btn.title = 'Temukan lokasi saya (GPS)';
         btn.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><circle cx="12" cy="12" r="8" stroke-dasharray="4 2" opacity="0.4"/></svg>`;
         L.DomEvent.disableClickPropagation(btn);
         L.DomEvent.on(btn, 'click', () => {
@@ -45,7 +45,7 @@ function LocateMe() {
         return btn;
       }
     });
-    const ctrl = new LocateBtn({ position: 'bottomleft' });
+    const ctrl = new LocateBtn({ position: 'topleft' });
     ctrl.addTo(map);
 
     const onLocate = (e) => {
@@ -91,7 +91,6 @@ function LocateMe() {
       window.removeEventListener('deviceorientation', onOrientation, true);
       if (markerRef.current) { markerRef.current.remove(); markerRef.current = null; }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map]);
 
   return null;

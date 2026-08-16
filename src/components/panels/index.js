@@ -13,3 +13,8 @@ export { default as PoktanKWT } from './PoktanKWT';
 export { default as PerikananTangkap } from './PerikananTangkap';
 export { default as PerikananBudidaya } from './PerikananBudidaya';
 export { default as IKPGAdmin } from './IKPGAdmin';
+export { default as Peternakan } from './Peternakan';
+export { default as PanduanModal } from './PanduanModal';
+export { default as PengaturanModal } from './PengaturanModal';
+export { default as UnduhDataModal } from './UnduhDataModal';
+export { default as LaporanGrafik } from './LaporanGrafik';

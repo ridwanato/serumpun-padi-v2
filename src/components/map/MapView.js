@@ -5,7 +5,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import 'leaflet.locatecontrol/dist/L.Control.Locate.min.css';
-import { MapRefSetter, MoveZoomControl, MapZoomTracker } from './MapHelpers';
+import { MapRefSetter, MoveZoomControl, MapZoomTracker, FitBoundsControl } from './MapHelpers';
 import LocateMe from './LocateMe';
 
 function LayerToggleControl({ setShowOsm }) {
@@ -13,16 +13,15 @@ function LayerToggleControl({ setShowOsm }) {
   useEffect(() => {
     const Ctrl = L.Control.extend({
       onAdd() {
-        const btn = L.DomUtil.create('button', 'sp-locate-btn leaflet-bar');
+        const btn = L.DomUtil.create('button', 'sp-map-action-btn sp-layer-toggle-btn leaflet-bar');
         btn.title = 'Tampilkan/Sembunyikan layer jalan & sungai';
-        btn.style.marginBottom = '5px'; // Jarak dengan locate me
         btn.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 12 12 17 22 12"/><polyline points="2 17 12 22 22 17"/></svg>`;
         L.DomEvent.disableClickPropagation(btn);
         L.DomEvent.on(btn, 'click', () => setShowOsm(p => !p));
         return btn;
       }
     });
-    const ctrl = new Ctrl({ position: 'bottomleft' });
+    const ctrl = new Ctrl({ position: 'topleft' });
     ctrl.addTo(map);
     return () => ctrl.remove();
   }, [map, setShowOsm]);
@@ -42,10 +41,9 @@ function MapView({
 
   return (
     <MapContainer
-      center={[-6.2, 106.8]}
-      zoom={13}
+      center={[-6.01, 106.02]}
+      zoom={12.5}
       style={{ height: '100%', width: '100%' }}
-      className={!showDrawBar ? 'sp-hide-draw' : ''}
       preferCanvas={true}
     >
       <TileLayer
@@ -59,9 +57,11 @@ function MapView({
           opacity={0.65}
         />
       )}
+
+      {/* Draw Polygon Controls in topleft under layer icon */}
       <FeatureGroup ref={featureGroupRef}>
         <EditControl
-          position="topright"
+          position="topleft"
           onCreated={onCreated}
           draw={{
             rectangle: false,
@@ -69,15 +69,30 @@ function MapView({
             circlemarker: false,
             marker: false,
             polyline: false,
-            polygon: true,
+            polygon: {
+              allowIntersection: false,
+              showArea: true,
+              shapeOptions: {
+                color: '#166534',
+                fillColor: '#22c55e',
+                fillOpacity: 0.45,
+                weight: 2.5,
+              },
+            },
+          }}
+          edit={{
+            featureGroup: featureGroupRef.current,
+            remove: true,
           }}
         />
       </FeatureGroup>
+
       <MapRefSetter mapRef={mapRef} />
       <MapZoomTracker setZoom={setMapZoom} />
       <MoveZoomControl />
-      <LayerToggleControl setShowOsm={setShowOsm} />
+      <FitBoundsControl />
       <LocateMe />
+      <LayerToggleControl setShowOsm={setShowOsm} />
       {children}
     </MapContainer>
   );

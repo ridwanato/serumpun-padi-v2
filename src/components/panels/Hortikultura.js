@@ -175,22 +175,114 @@ function Hortikultura({
           <input className="sp-input" placeholder="Opsional" value={form.catatan}
             onChange={e => setForm(p => ({ ...p, catatan: e.target.value }))} />
 
-          <button className="sp-btn sp-btn-secondary" style={{ width: '100%', marginTop: 10 }}
-            onClick={() => onPickLocation && onPickLocation((latlng) => setPendingPin(latlng))}>
-            📍 {pendingPin ? `✅ ${pendingPin.lat.toFixed(5)}, ${pendingPin.lng.toFixed(5)}` : 'Pilih Lokasi di Peta'}
-          </button>
-          
-          <div style={{display:'flex', gap:6, marginTop:8}}>
-            <input className="sp-input" placeholder="Atau masukkan koordinat GPS" value={gpsInput} onChange={e=>setGpsInput(e.target.value)} />
-            <button className="sp-btn" style={{background:'#e5e7eb', color:'#374151', padding:'0 12px'}} onClick={() => {
-              const coords = parseCoordinates(gpsInput);
-              if(coords) {
-                setPendingPin(coords);
-                onFlyToLocation && onFlyToLocation(coords.lat, coords.lng);
-              } else {
-                alert('Format koordinat tidak valid.');
-              }
-            }}>Cari</button>
+          {/* Lokasi Koordinat (Pilih di Peta atau Input Manual) */}
+          <div style={{
+            marginTop: 12,
+            padding: '12px',
+            background: '#f0fdf4',
+            border: '1px solid #bbf7d0',
+            borderRadius: '10px',
+            marginBottom: 10
+          }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#166534', marginBottom: 6, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span>📍 Lokasi Koordinat (GPS)</span>
+              {pendingPin && (
+                <span style={{ fontSize: 10, background: '#dcfce7', color: '#15803d', padding: '1px 6px', borderRadius: 4, fontWeight: 700 }}>
+                  ✓ {pendingPin.lat.toFixed(4)}, {pendingPin.lng.toFixed(4)}
+                </span>
+              )}
+            </div>
+
+            <button
+              type="button"
+              className="sp-btn"
+              style={{
+                width: '100%',
+                background: '#166534',
+                color: '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                fontWeight: 700,
+                padding: '9px',
+                borderRadius: '8px',
+                marginBottom: 8,
+                boxShadow: '0 2px 6px rgba(22, 101, 52, 0.25)',
+                cursor: 'pointer'
+              }}
+              onClick={() => {
+                if (onPickLocation) {
+                  onPickLocation((coords) => {
+                    setPendingPin(coords);
+                    if (onFlyToLocation) onFlyToLocation(coords.lat, coords.lng);
+                  });
+                }
+              }}
+            >
+              <span>📍</span> Pilih Lokasi di Peta
+            </button>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+              <div>
+                <label style={{ fontSize: 10, fontWeight: 600, color: '#4b5563', display: 'block' }}>Latitude</label>
+                <input
+                  type="number"
+                  step="any"
+                  className="sp-input"
+                  placeholder="-6.012345"
+                  style={{ marginTop: 2 }}
+                  value={pendingPin?.lat ?? ''}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    const currentLng = pendingPin?.lng ?? 106.05;
+                    setPendingPin({ lat: isNaN(val) ? 0 : val, lng: currentLng });
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: 10, fontWeight: 600, color: '#4b5563', display: 'block' }}>Longitude</label>
+                <input
+                  type="number"
+                  step="any"
+                  className="sp-input"
+                  placeholder="106.054321"
+                  style={{ marginTop: 2 }}
+                  value={pendingPin?.lng ?? ''}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    const currentLat = pendingPin?.lat ?? -6.01;
+                    setPendingPin({ lat: currentLat, lng: isNaN(val) ? 0 : val });
+                  }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 6 }}>
+              <input
+                className="sp-input"
+                style={{ marginTop: 0, fontSize: 11 }}
+                placeholder="Atau tempel: -6.0123, 106.0543"
+                value={gpsInput}
+                onChange={(e) => setGpsInput(e.target.value)}
+              />
+              <button
+                type="button"
+                className="sp-btn"
+                style={{ background: '#dcfce7', color: '#166534', fontWeight: 700, padding: '0 12px', border: '1px solid #86efac', flexShrink: 0, cursor: 'pointer' }}
+                onClick={() => {
+                  const coords = parseCoordinates(gpsInput);
+                  if (coords) {
+                    setPendingPin(coords);
+                    if (onFlyToLocation) onFlyToLocation(coords.lat, coords.lng);
+                  } else {
+                    alert('Format koordinat tidak valid. Contoh: -6.012345, 106.054321');
+                  }
+                }}
+              >
+                Terapkan
+              </button>
+            </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 12 }}>
