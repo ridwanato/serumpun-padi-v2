@@ -1,4 +1,3 @@
-import { exportBudidayaData } from '../../utils/excelExporter';
 import React, { useState, useMemo } from 'react';
 import { JENIS_IKAN_BUDIDAYA } from '../../config/komoditas';
 import { parseCoordinates } from '../../utils/parsers';

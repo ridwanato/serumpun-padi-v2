@@ -1,4 +1,3 @@
-import { exportKWTData } from '../../utils/excelExporter';
 import React, { useState, useEffect, useMemo } from 'react';
 import * as turf from '@turf/turf';
 import { parseCoordinates } from '../../utils/parsers';

@@ -185,9 +185,7 @@ function Dashboard({
 
     const list12 = generate12MonthsList(realCurrentYear, bulanMap);
 
-    const yearKg = list12.reduce((acc, m) => acc + (m.totalKg || 0), 0);
-    const yearOmset = list12.reduce((acc, m) => acc + (m.totalOmset || 0), 0);
-
+        
     return {
       kwtMonthly: list12,
       kwtTahunKg: yearKg,
@@ -200,7 +198,7 @@ function Dashboard({
   const kwtLuasHa = (kwtTotalLuasM2 / 10000);
 
   // ── Produksi Budidaya Aggregations (Mockup Data Mapping with 12 Month Nav) ──
-  const { prodB, totTahunB_Kg, totTahunB_Omset } = useMemo(() => {
+  const { prodB } = useMemo(() => {
     const map = {};
 
     (budidayaList || []).forEach(r => {
@@ -242,14 +240,10 @@ function Dashboard({
 
     const list12 = generate12MonthsList(realCurrentYear, map);
 
-    const yearKg = list12.reduce((acc, m) => acc + (m.totalKg || 0), 0);
-    const yearOmset = list12.reduce((acc, m) => acc + (m.totalOmset || 0), 0);
+    
+    
 
-    return {
-      prodB: list12,
-      totTahunB_Kg: yearKg,
-      totTahunB_Omset: yearOmset
-    };
+    return { prodB: list12 };
   }, [budidayaList, realCurrentYear]);
 
   const curB = prodB[budiBulanIdx] || prodB[0];
