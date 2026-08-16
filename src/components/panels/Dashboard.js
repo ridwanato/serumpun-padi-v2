@@ -200,7 +200,7 @@ function Dashboard({
   const kwtLuasHa = (kwtTotalLuasM2 / 10000);
 
   // ── Produksi Budidaya Aggregations (Mockup Data Mapping with 12 Month Nav) ──
-  const { prodB } = useMemo(() => {
+  const { prodB, totTahunB_Kg, totTahunB_Omset } = useMemo(() => {
     const map = {};
 
     (budidayaList || []).forEach(r => {
@@ -245,7 +245,9 @@ function Dashboard({
     
     
 
-    return { prodB: list12 };
+    const totTahunB_Kg = list12.reduce((acc, m) => acc + (m.totalKg || 0), 0);
+    const totTahunB_Omset = list12.reduce((acc, m) => acc + (m.totalOmset || 0), 0);
+    return { prodB: list12, totTahunB_Kg, totTahunB_Omset };
   }, [budidayaList, realCurrentYear]);
 
   const curB = prodB[budiBulanIdx] || prodB[0];
@@ -489,7 +491,7 @@ function Dashboard({
         {/* Control Bar */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px' }}>
           <button
-            onClick={(e) => { e.stopPropagation(); exportPertanianData(); }}
+            onClick={(e) => { e.stopPropagation(); exportPertanianData(filteredSawah, sawahStatus); }}
             style={{ background: '#ffffff', border: '1.5px solid #86efac', borderRadius: '8px', padding: '5px 12px', fontSize: '10px', fontWeight: 900, color: '#047857', cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }}
             title="Unduh Data Pertanian Format Excel (.xlsx)"
           >
@@ -544,7 +546,7 @@ function Dashboard({
               {curB.totalKg >= 1000 ? `${(curB.totalKg/1000).toFixed(1)} Ton` : `${curB.totalKg || 55} Ton`}
             </div>
             <div style={{ fontSize: '7.5px', color: '#64748b', marginTop: '1px', fontWeight: 700 }}>
-              Total: {curB.totTahunB_Kg >= 1000 ? `${(curB.totTahunB_Kg/1000).toFixed(1)} Ton` : `0.4 Ton`} ({realCurrentYear})
+              Total: {totTahunB_Kg >= 1000 ? `${(totTahunB_Kg/1000).toFixed(1)} Ton` : `${(totTahunB_Kg || 0).toFixed(1)} Ton`} ({realCurrentYear})
             </div>
           </div>
           <div style={{ background: '#ffffff', padding: '10px 6px', borderRadius: '12px', textAlign: 'center', boxShadow: '0 4px 10px rgba(0,0,0,0.08)' }}>
@@ -553,7 +555,7 @@ function Dashboard({
               Rp {(curB.totalOmset || 200000).toLocaleString('id-ID')}
             </div>
             <div style={{ fontSize: '7.5px', color: '#64748b', marginTop: '1px', fontWeight: 700 }}>
-              Total: Rp {(curB.totTahunB_Omset || 200000).toLocaleString('id-ID')} ({realCurrentYear})
+              Total: Rp {(totTahunB_Omset || 0).toLocaleString('id-ID')} ({realCurrentYear})
             </div>
           </div>
         </div>

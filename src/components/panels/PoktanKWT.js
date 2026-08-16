@@ -1023,7 +1023,7 @@ function PoktanKWT({
                           (Rp {val.omset.toLocaleString('id-ID')})
                         </span>
                       )}
-                      {user && (user.email === 'ketapangcilegon@gmail.com' || isSuperAdmin || !val.user_id || val.user_id === user.id) && (
+                      {user && (user.email === 'ketapangcilegon@gmail.com' || !val.user_id || val.user_id === user.id) && (
                         <button
                           type="button"
                           onClick={() => {

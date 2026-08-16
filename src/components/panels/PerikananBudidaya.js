@@ -543,7 +543,7 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
                 <div key={ik} style={{display:'flex',justifyContent:'space-between',padding:'2px 0',...S({})}}>
                   <span>{ik}</span><div style={{display:'flex',alignItems:'center',gap:6}}>
                     <span style={{fontWeight:700,color:'#0096c7'}}>{kg.toLocaleString('id-ID')} kg</span>
-                    {user && (user.email === 'ketapangcilegon@gmail.com' || true) && (
+                    {user && (
                       <button
                         type="button"
                         onClick={() => {
@@ -561,7 +561,7 @@ function PerikananBudidaya({ kolamBudidaya, budidayaList, showKolam, onToggleSho
                           if (onRefresh) onRefresh();
                         }}
                         style={{background:'#eff6ff',border:'1px solid #bfdbfe',borderRadius:4,padding:'1px 5px',fontSize:10,cursor:'pointer',color:'#1d4ed8',fontWeight:700}}
-                        title="Edit nilai produksi ini (Khusus Pemilik & Super Admin ketapangcilegon@gmail.com)"
+                        title="Edit nilai produksi ini"
                       >
                         ✏️
                       </button>
