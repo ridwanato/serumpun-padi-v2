@@ -395,19 +395,6 @@ function TopNavbar({
         )}
       </div>
 
-      {/* ── Mobile Centered Header Button: PANEL PRODUKSI (Capture 2) ── */}
-      {onToggleDashboardPanel && (
-        <div className="sp-mobile-header-center">
-          <button
-            className="sp-mobile-header-btn"
-            onClick={onToggleDashboardPanel}
-            title="Buka Panel Produksi"
-          >
-            <span>PANEL PRODUKSI</span>
-          </button>
-        </div>
-      )}
-
       {/* ── Status & Info Section (Date, Weather, User Profile) ── */}
       <div className="sp-topbar__right">
         {/* Date Display */}
