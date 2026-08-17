@@ -70,6 +70,7 @@ function Dashboard({
 
   const [kwtBulanIdx, setKwtBulanIdx] = useState(defaultMonthIdx);
   const [budiBulanIdx, setBudiBulanIdx] = useState(defaultMonthIdx);
+  const [tangkapBulanIdx, setTangkapBulanIdx] = useState(defaultMonthIdx);
 
   // ── Hitung total luas sawah (Preserved Calculation) ──
   const totalM2 = filteredSawah.reduce((s, f) => s + (turf.area(f) * 0.99342), 0);
@@ -118,9 +119,7 @@ function Dashboard({
   const totalPerahuMotor = semuaNelayan.reduce((s, r) => {
     try { return s + parseInt(JSON.parse(r.perahu || '{}')['Perahu motor tempel'] || 0, 10); } catch (e) { return s; }
   }, 0) || 410;
-  const totalTanpaMotor = semuaNelayan.reduce((s, r) => {
-    try { return s + parseInt(JSON.parse(r.perahu || '{}')['Perahu tanpa motor'] || 0, 10); } catch (e) { return s; }
-  }, 0);
+
 
   // ── Kelompok Wanita Tani (KWT) Calculations ──
   const kwtList = useMemo(() => (poktanList || []).filter(p => p.jenis === 'KWT'), [poktanList]);
@@ -269,7 +268,7 @@ function Dashboard({
     });
     return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0])).map(([k, v]) => ({ key: k, ...v }));
   }, [tangkapList]);
-  const curT = prodT[0] || null;
+  const curT = prodT[tangkapBulanIdx] || prodT[0] || null;
   const totTahunT = prodT.reduce((s, b) => s + b.total, 0);
 
   // ── Peternakan (Computed from peternakanList) ──
@@ -356,14 +355,14 @@ function Dashboard({
           {/* 2 Highlight Cards (SOLID WHITE) */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
             <div style={{ background: '#ffffff', borderRadius: '12px', padding: '10px 12px', textAlign: 'center', boxShadow: '0 4px 10px rgba(0,0,0,0.08)' }}>
-              <div style={{ fontSize: '9px', fontWeight: 900, textTransform: 'uppercase', color: '#581c87' }}>PRODUKSI</div>
-              <div style={{ fontSize: '18px', fontWeight: 900, lineHeight: 1.2, marginTop: '2px', color: '#6b21a8' }}>
+              <div style={{ fontSize: '8.5px', fontWeight: 900, textTransform: 'uppercase', color: '#581c87' }}>PRODUKSI BULANAN</div>
+              <div style={{ fontSize: '14px', fontWeight: 800, lineHeight: 1.2, marginTop: '2px', color: '#6b21a8' }}>
                 {curKWT.totalKg >= 1000 ? `${(curKWT.totalKg / 1000).toFixed(2)} Ton` : `${(curKWT.totalKg || 0).toLocaleString('id-ID')} Kg`}
               </div>
             </div>
             <div style={{ background: '#ffffff', borderRadius: '12px', padding: '10px 12px', textAlign: 'center', boxShadow: '0 4px 10px rgba(0,0,0,0.08)' }}>
-              <div style={{ fontSize: '9px', fontWeight: 900, textTransform: 'uppercase', color: '#581c87' }}>OMSET</div>
-              <div style={{ fontSize: '17px', fontWeight: 900, lineHeight: 1.2, marginTop: '2px', color: '#16a34a' }}>
+              <div style={{ fontSize: '8.5px', fontWeight: 900, textTransform: 'uppercase', color: '#581c87' }}>OMSET BULANAN</div>
+              <div style={{ fontSize: '14px', fontWeight: 800, lineHeight: 1.2, marginTop: '2px', color: '#16a34a' }}>
                 Rp {(curKWT.totalOmset || 0).toLocaleString('id-ID')}
               </div>
             </div>
@@ -374,13 +373,13 @@ function Dashboard({
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', textAlign: 'center' }}>
             <div>
               <div style={{ fontSize: '8px', fontWeight: 800, textTransform: 'uppercase', color: '#f3e8ff' }}>PRODUKSI TOTAL ({realCurrentYear})</div>
-              <div style={{ fontSize: '14px', fontWeight: 900, color: '#ffffff', marginTop: '1px' }}>
+              <div style={{ fontSize: '19px', fontWeight: 900, color: '#ffffff', marginTop: '2px', lineHeight: 1.1 }}>
                 {kwtTahunKg >= 1000 ? `${(kwtTahunKg / 1000).toFixed(2)} Ton` : `${(kwtTahunKg || 0).toLocaleString('id-ID')} Kg`}
               </div>
             </div>
             <div style={{ borderLeft: '1px solid rgba(255, 255, 255, 0.25)', paddingLeft: '6px' }}>
               <div style={{ fontSize: '8px', fontWeight: 800, textTransform: 'uppercase', color: '#f3e8ff' }}>OMSET TOTAL ({realCurrentYear})</div>
-              <div style={{ fontSize: '14px', fontWeight: 900, color: '#fef08a', marginTop: '1px' }}>
+              <div style={{ fontSize: '19px', fontWeight: 900, color: '#fef08a', marginTop: '2px', lineHeight: 1.1 }}>
                 Rp {(kwtTahunOmset || 0).toLocaleString('id-ID')}
               </div>
             </div>
@@ -522,7 +521,7 @@ function Dashboard({
         </div>
       </div>
 
-      {/* ── CARD 3: PERIKANAN BUDIDAYA - OCEAN BLUE GRADIENT (CAPTURE 4 MOCKUP) ── */}
+      {/* ── CARD 3: PERIKANAN BUDIDAYA - OCEAN BLUE GRADIENT (KWT UI/UX MIRROR) ── */}
       <div 
         style={{
           background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 50%, #0369a1 100%)',
@@ -554,30 +553,61 @@ function Dashboard({
           </div>
         </div>
 
-        {/* 3 Top Cards (SOLID WHITE) */}
+        {/* Highlight Container (KWT Mirror Style) */}
+        <div style={{ background: 'rgba(255, 255, 255, 0.15)', borderRadius: '16px', padding: '12px', border: '1px solid rgba(255, 255, 255, 0.25)', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+            <span style={{ fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', color: '#ffffff', letterSpacing: '0.5px' }}>📈 PRODUKSI & OMSET BULANAN</span>
+            <span style={{ background: 'rgba(255, 255, 255, 0.25)', padding: '2px 8px', borderRadius: '10px', fontSize: '9.5px', fontWeight: 800, color: '#ffffff' }}>📅 {curB.label}</span>
+          </div>
+
+          {/* 2 Monthly Highlight Cards (SOLID WHITE) */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+            <div style={{ background: '#ffffff', borderRadius: '12px', padding: '8px 10px', textAlign: 'center', boxShadow: '0 4px 10px rgba(0,0,0,0.08)' }}>
+              <div style={{ fontSize: '8.5px', fontWeight: 900, textTransform: 'uppercase', color: '#0c4a6e' }}>PRODUKSI BULANAN</div>
+              <div style={{ fontSize: '14px', fontWeight: 800, lineHeight: 1.2, marginTop: '2px', color: '#0284c7' }}>
+                {curB.totalKg > 0 ? (curB.totalKg >= 1000 ? `${(curB.totalKg/1000).toFixed(1)} Ton` : `${curB.totalKg} kg`) : '-'}
+              </div>
+            </div>
+            <div style={{ background: '#ffffff', borderRadius: '12px', padding: '8px 10px', textAlign: 'center', boxShadow: '0 4px 10px rgba(0,0,0,0.08)' }}>
+              <div style={{ fontSize: '8.5px', fontWeight: 900, textTransform: 'uppercase', color: '#0c4a6e' }}>OMSET BULANAN</div>
+              <div style={{ fontSize: '14px', fontWeight: 800, lineHeight: 1.2, marginTop: '2px', color: '#16a34a' }}>
+                {curB.totalOmset > 0 ? `Rp ${curB.totalOmset.toLocaleString('id-ID')}` : '-'}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ borderTop: '1px dashed rgba(255, 255, 255, 0.3)', margin: '8px 0' }} />
+
+          {/* Total Year Row (Bigger Font than Monthly) */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', textAlign: 'center' }}>
+            <div>
+              <div style={{ fontSize: '8px', fontWeight: 800, textTransform: 'uppercase', color: '#e0f2fe' }}>PRODUKSI TOTAL ({realCurrentYear})</div>
+              <div style={{ fontSize: '19px', fontWeight: 900, color: '#ffffff', marginTop: '2px', lineHeight: 1.1 }}>
+                {totTahunB_Kg >= 1000 ? `${(totTahunB_Kg/1000).toFixed(1)} Ton` : `${(totTahunB_Kg || 0).toLocaleString('id-ID')} Kg`}
+              </div>
+            </div>
+            <div style={{ borderLeft: '1px solid rgba(255, 255, 255, 0.25)', paddingLeft: '6px' }}>
+              <div style={{ fontSize: '8px', fontWeight: 800, textTransform: 'uppercase', color: '#e0f2fe' }}>OMSET TOTAL ({realCurrentYear})</div>
+              <div style={{ fontSize: '19px', fontWeight: 900, color: '#fef08a', marginTop: '2px', lineHeight: 1.1 }}>
+                {totTahunB_Omset > 0 ? `Rp ${totTahunB_Omset.toLocaleString('id-ID')}` : '-'}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 3 Metric Pills Strip (SOLID WHITE) */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '12px' }}>
-          <div style={{ background: '#ffffff', padding: '10px 6px', borderRadius: '12px', textAlign: 'center', boxShadow: '0 4px 10px rgba(0,0,0,0.08)' }}>
-            <div style={{ fontSize: '8px', fontWeight: 900, textTransform: 'uppercase', color: '#0c4a6e' }}>JUMLAH UNIT</div>
-            <div style={{ fontSize: '15px', fontWeight: 900, color: '#0284c7', marginTop: '2px' }}>{jumlahKolam > 0 ? jumlahKolam + ' Unit' : '-'}</div>
-            <div style={{ fontSize: '7.5px', color: '#64748b', marginTop: '1px', fontWeight: 700 }}>{luasKolamTotal} m² • {aktifKolam > 0 ? aktifKolam + ' aktif' : '-'}</div>
+          <div style={{ background: '#ffffff', padding: '8px 6px', borderRadius: '12px', textAlign: 'center', boxShadow: '0 2px 6px rgba(0,0,0,0.06)' }}>
+            <div style={{ fontSize: '8px', fontWeight: 900, textTransform: 'uppercase', color: '#0c4a6e' }}>JUMLAH PEMBUDIDAYA</div>
+            <div style={{ fontSize: '12px', fontWeight: 900, color: '#0284c7', marginTop: '2px' }}>{jumlahKolam > 0 ? jumlahKolam + ' Unit' : '-'}</div>
           </div>
-          <div style={{ background: '#ffffff', padding: '10px 6px', borderRadius: '12px', textAlign: 'center', boxShadow: '0 4px 10px rgba(0,0,0,0.08)' }}>
-            <div style={{ fontSize: '8px', fontWeight: 900, textTransform: 'uppercase', color: '#0c4a6e' }}>PRODUKSI IKAN</div>
-            <div style={{ fontSize: '15px', fontWeight: 900, color: '#0284c7', marginTop: '2px' }}>
-              {curB.totalKg > 0 ? (curB.totalKg >= 1000 ? `${(curB.totalKg/1000).toFixed(1)} Ton` : `${curB.totalKg} kg`) : '-'}
-            </div>
-            <div style={{ fontSize: '7.5px', color: '#64748b', marginTop: '1px', fontWeight: 700 }}>
-              Total: {totTahunB_Kg >= 1000 ? `${(totTahunB_Kg/1000).toFixed(1)} Ton` : `${(totTahunB_Kg || 0).toFixed(1)} Ton`} ({realCurrentYear})
-            </div>
+          <div style={{ background: '#ffffff', padding: '8px 6px', borderRadius: '12px', textAlign: 'center', boxShadow: '0 2px 6px rgba(0,0,0,0.06)' }}>
+            <div style={{ fontSize: '8px', fontWeight: 900, textTransform: 'uppercase', color: '#0c4a6e' }}>LUAS TOTAL KOLAM</div>
+            <div style={{ fontSize: '12px', fontWeight: 900, color: '#0284c7', marginTop: '2px' }}>{luasKolamTotal ? luasKolamTotal + ' m²' : '-'}</div>
           </div>
-          <div style={{ background: '#ffffff', padding: '10px 6px', borderRadius: '12px', textAlign: 'center', boxShadow: '0 4px 10px rgba(0,0,0,0.08)' }}>
-            <div style={{ fontSize: '8px', fontWeight: 900, textTransform: 'uppercase', color: '#0c4a6e' }}>NILAI PRODUKSI</div>
-            <div style={{ fontSize: '15px', fontWeight: 900, color: '#16a34a', marginTop: '2px' }}>
-              {curB.totalOmset > 0 ? `Rp ${curB.totalOmset.toLocaleString('id-ID')}` : '-'}
-            </div>
-            <div style={{ fontSize: '7.5px', color: '#64748b', marginTop: '1px', fontWeight: 700 }}>
-              Total: {totTahunB_Omset > 0 ? `Rp ${totTahunB_Omset.toLocaleString('id-ID')}` : '-'} ({realCurrentYear})
-            </div>
+          <div style={{ background: '#ffffff', padding: '8px 6px', borderRadius: '12px', textAlign: 'center', boxShadow: '0 2px 6px rgba(0,0,0,0.06)' }}>
+            <div style={{ fontSize: '8px', fontWeight: 900, textTransform: 'uppercase', color: '#0c4a6e' }}>PEMBUDIDAYA AKTIF</div>
+            <div style={{ fontSize: '12px', fontWeight: 900, color: '#0284c7', marginTop: '2px' }}>{aktifKolam > 0 ? aktifKolam + ' Unit' : '-'}</div>
           </div>
         </div>
 
@@ -610,7 +640,7 @@ function Dashboard({
         </div>
       </div>
 
-      {/* ── CARD 4: PERIKANAN TANGKAP - DEEP TEAL GRADIENT (CAPTURE 4 MOCKUP) ── */}
+      {/* ── CARD 4: PERIKANAN TANGKAP - DEEP TEAL GRADIENT (KWT UI/UX MIRROR) ── */}
       <div 
         style={{
           background: 'linear-gradient(135deg, #14b8a6 0%, #0d9488 50%, #0f766e 100%)',
@@ -623,7 +653,10 @@ function Dashboard({
           position: 'relative',
           overflow: 'hidden'
         }}
-        onClick={() => onOpenPanel('perikanan_tangkap')}
+        onClick={(e) => {
+          if (e.target.closest('.tangkap-dash-ctrl')) return;
+          onOpenPanel('perikanan_tangkap');
+        }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
           <div>
@@ -635,67 +668,94 @@ function Dashboard({
             </div>
           </div>
           <div style={{ background: '#ffffff', color: '#0f766e', borderRadius: '12px', padding: '4px 10px', fontSize: '10px', fontWeight: 900, boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }}>
-            📅 {new Date().toLocaleDateString('id-ID', {month:'long', year:'numeric'})}
+            📅 {curT?.label || 'Agustus 2026'}
           </div>
         </div>
 
-        {/* Hero Middle Summary Box (SOLID WHITE) */}
-        <div style={{ background: '#ffffff', borderRadius: '16px', padding: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', marginBottom: '12px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '8px' }}>
-            <div style={{ background: '#f0fdf4', borderRadius: '10px', padding: '8px 10px', textAlign: 'center' }}>
-              <div style={{ fontSize: '8.5px', fontWeight: 900, textTransform: 'uppercase', color: '#134e4a' }}>PRODUKSI TANGKAP</div>
-              <div style={{ fontSize: '17px', fontWeight: 900, lineHeight: 1.2, marginTop: '2px', color: '#0f766e' }}>
+        {/* Highlight Container (KWT Mirror Style) */}
+        <div style={{ background: 'rgba(255, 255, 255, 0.15)', borderRadius: '16px', padding: '12px', border: '1px solid rgba(255, 255, 255, 0.25)', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+            <span style={{ fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', color: '#ffffff', letterSpacing: '0.5px' }}>📈 PRODUKSI & OMSET BULANAN</span>
+            <span style={{ background: 'rgba(255, 255, 255, 0.25)', padding: '2px 8px', borderRadius: '10px', fontSize: '9.5px', fontWeight: 800, color: '#ffffff' }}>📅 {curT?.label || 'Agustus 2026'}</span>
+          </div>
+
+          {/* 2 Monthly Highlight Cards (SOLID WHITE) */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+            <div style={{ background: '#ffffff', borderRadius: '12px', padding: '8px 10px', textAlign: 'center', boxShadow: '0 4px 10px rgba(0,0,0,0.08)' }}>
+              <div style={{ fontSize: '8.5px', fontWeight: 900, textTransform: 'uppercase', color: '#134e4a' }}>PRODUKSI BULANAN</div>
+              <div style={{ fontSize: '14px', fontWeight: 800, lineHeight: 1.2, marginTop: '2px', color: '#0f766e' }}>
                 {curT && curT.total > 0 ? (curT.total >= 1000 ? (curT.total/1000).toFixed(1) + ' Ton' : curT.total + ' Kg') : '-'}
               </div>
             </div>
-            <div style={{ background: '#f0fdf4', borderRadius: '10px', padding: '8px 10px', textAlign: 'center' }}>
-              <div style={{ fontSize: '8.5px', fontWeight: 900, textTransform: 'uppercase', color: '#134e4a' }}>ESTIMASI OMSET</div>
-              <div style={{ fontSize: '16px', fontWeight: 900, lineHeight: 1.2, marginTop: '2px', color: '#16a34a' }}>
+            <div style={{ background: '#ffffff', borderRadius: '12px', padding: '8px 10px', textAlign: 'center', boxShadow: '0 4px 10px rgba(0,0,0,0.08)' }}>
+              <div style={{ fontSize: '8.5px', fontWeight: 900, textTransform: 'uppercase', color: '#134e4a' }}>OMSET BULANAN</div>
+              <div style={{ fontSize: '14px', fontWeight: 800, lineHeight: 1.2, marginTop: '2px', color: '#16a34a' }}>
+                {curT && curT.total > 0 ? `Rp ${(curT.total * 35000).toLocaleString('id-ID')}` : '-'}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ borderTop: '1px dashed rgba(255, 255, 255, 0.3)', margin: '8px 0' }} />
+
+          {/* Total Year Row (Replacing Capture 3 - Bigger Font than Monthly) */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', textAlign: 'center' }}>
+            <div>
+              <div style={{ fontSize: '8px', fontWeight: 800, textTransform: 'uppercase', color: '#ccfbf1' }}>PRODUKSI TOTAL ({realCurrentYear})</div>
+              <div style={{ fontSize: '19px', fontWeight: 900, color: '#ffffff', marginTop: '2px', lineHeight: 1.1 }}>
+                {totTahunT > 0 ? (totTahunT >= 1000 ? (totTahunT/1000).toFixed(1) + ' Ton' : totTahunT + ' Kg') : '-'}
+              </div>
+            </div>
+            <div style={{ borderLeft: '1px solid rgba(255, 255, 255, 0.25)', paddingLeft: '6px' }}>
+              <div style={{ fontSize: '8px', fontWeight: 800, textTransform: 'uppercase', color: '#ccfbf1' }}>OMSET TOTAL ({realCurrentYear})</div>
+              <div style={{ fontSize: '19px', fontWeight: 900, color: '#fef08a', marginTop: '2px', lineHeight: 1.1 }}>
                 {totTahunT > 0 ? `Rp ${(totTahunT * 35000).toLocaleString('id-ID')}` : '-'}
               </div>
             </div>
           </div>
-
-          <div style={{ borderTop: '1px dashed #cbd5e1', margin: '8px 0' }} />
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', textAlign: 'center' }}>
-            <div>
-              <div style={{ fontSize: '8px', fontWeight: 800, textTransform: 'uppercase', color: '#64748b' }}>TOTAL NELAYAN</div>
-              <div style={{ fontSize: '14px', fontWeight: 900, color: '#0f766e', marginTop: '1px' }}>{jumlahNelayan > 0 ? jumlahNelayan + ' Orang' : '-'}</div>
-            </div>
-            <div style={{ borderLeft: '1px solid #e2e8f0', paddingLeft: '6px' }}>
-              <div style={{ fontSize: '8px', fontWeight: 800, textTransform: 'uppercase', color: '#64748b' }}>PANGKALAN / TPI</div>
-              <div style={{ fontSize: '14px', fontWeight: 900, color: '#0f766e', marginTop: '1px' }}>{jumlahPangkalan > 0 ? jumlahPangkalan + ' Pangkalan' : '-'}</div>
-            </div>
-          </div>
         </div>
 
-        {/* 3 Bottom Metric Pills (SOLID WHITE) */}
+        {/* 3 Metric Pills Strip (SOLID WHITE) */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '12px' }}>
           <div style={{ background: '#ffffff', padding: '8px 6px', borderRadius: '12px', textAlign: 'center', boxShadow: '0 2px 6px rgba(0,0,0,0.06)' }}>
-            <div style={{ fontSize: '8px', fontWeight: 900, textTransform: 'uppercase', color: '#134e4a' }}>NELAYAN</div>
+            <div style={{ fontSize: '8px', fontWeight: 900, textTransform: 'uppercase', color: '#134e4a' }}>JUMLAH NELAYAN</div>
             <div style={{ fontSize: '12px', fontWeight: 900, color: '#0f766e', marginTop: '2px' }}>{jumlahNelayan > 0 ? jumlahNelayan + ' Org' : '-'}</div>
           </div>
           <div style={{ background: '#ffffff', padding: '8px 6px', borderRadius: '12px', textAlign: 'center', boxShadow: '0 2px 6px rgba(0,0,0,0.06)' }}>
-            <div style={{ fontSize: '8px', fontWeight: 900, textTransform: 'uppercase', color: '#134e4a' }}>PERAHU MOTOR</div>
-            <div style={{ fontSize: '12px', fontWeight: 900, color: '#0f766e', marginTop: '2px' }}>{totalPerahuMotor > 0 ? totalPerahuMotor + ' Unit' : '-'}</div>
+            <div style={{ fontSize: '8px', fontWeight: 900, textTransform: 'uppercase', color: '#134e4a' }}>PANGKALAN / TPI</div>
+            <div style={{ fontSize: '12px', fontWeight: 900, color: '#0f766e', marginTop: '2px' }}>{jumlahPangkalan > 0 ? jumlahPangkalan + ' Pangkalan' : '-'}</div>
           </div>
           <div style={{ background: '#ffffff', padding: '8px 6px', borderRadius: '12px', textAlign: 'center', boxShadow: '0 2px 6px rgba(0,0,0,0.06)' }}>
-            <div style={{ fontSize: '8px', fontWeight: 900, textTransform: 'uppercase', color: '#134e4a' }}>TANPA MOTOR</div>
-            <div style={{ fontSize: '12px', fontWeight: 900, color: '#0f766e', marginTop: '2px' }}>{totalTanpaMotor > 0 ? totalTanpaMotor + ' Unit' : '-'}</div>
+            <div style={{ fontSize: '8px', fontWeight: 900, textTransform: 'uppercase', color: '#134e4a' }}>KAPAL MOTOR</div>
+            <div style={{ fontSize: '12px', fontWeight: 900, color: '#0f766e', marginTop: '2px' }}>{totalPerahuMotor > 0 ? totalPerahuMotor + ' Unit' : '-'}</div>
           </div>
         </div>
 
-        {/* Control Bar */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px' }}>
-          <button
-            onClick={(e) => { e.stopPropagation(); exportTangkapData(tangkapList); }}
-            style={{ background: '#ffffff', border: '1.5px solid #99f6e4', borderRadius: '8px', padding: '5px 12px', fontSize: '10px', fontWeight: 900, color: '#0f766e', cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }}
-            title="Unduh Data Tangkap Format Excel (.xlsx)"
-          >
-            📊 XLSX
-          </button>
-          <button type="button" onClick={(e) => { e.stopPropagation(); onOpenPanel('perikanan_tangkap'); }} style={{ background: '#0f766e', border: '1.5px solid #99f6e4', color: '#ffffff', borderRadius: '8px', padding: '5px 14px', fontSize: '10.5px', fontWeight: 900, cursor: 'pointer' }}>Lihat Detail ➔</button>
+        {/* Control Bar (With Prev / Next Period Buttons) */}
+        <div className="tangkap-dash-ctrl" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '6px' }}>
+            <button
+              onClick={() => setTangkapBulanIdx(v => Math.min(11, v + 1))}
+              style={{ background: 'rgba(255, 255, 255, 0.25)', border: '1px solid rgba(255, 255, 255, 0.4)', borderRadius: '8px', color: '#fff', fontSize: '10px', fontWeight: 800, padding: '4px 10px', cursor: 'pointer' }}
+            >
+              ◀ Prev
+            </button>
+            <button
+              onClick={() => setTangkapBulanIdx(v => Math.max(0, v - 1))}
+              style={{ background: 'rgba(255, 255, 255, 0.25)', border: '1px solid rgba(255, 255, 255, 0.4)', borderRadius: '8px', color: '#fff', fontSize: '10px', fontWeight: 800, padding: '4px 10px', cursor: 'pointer' }}
+            >
+              Next ▶
+            </button>
+          </div>
+          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+            <button
+              onClick={(e) => { e.stopPropagation(); exportTangkapData(tangkapList); }}
+              style={{ background: '#ffffff', border: '1.5px solid #99f6e4', borderRadius: '8px', padding: '4px 10px', fontSize: '10px', fontWeight: 900, color: '#0f766e', cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }}
+              title="Unduh Data Tangkap Format Excel (.xlsx)"
+            >
+              📊 XLSX
+            </button>
+            <button type="button" onClick={(e) => { e.stopPropagation(); onOpenPanel('perikanan_tangkap'); }} style={{ background: '#0f766e', border: '1.5px solid #99f6e4', color: '#ffffff', borderRadius: '8px', padding: '5px 14px', fontSize: '10.5px', fontWeight: 900, cursor: 'pointer' }}>Lihat Detail ➔</button>
+          </div>
         </div>
       </div>
 
@@ -738,9 +798,9 @@ function Dashboard({
               </div>
             </div>
             <div style={{ background: '#fff7ed', borderRadius: '10px', padding: '8px 10px', textAlign: 'center' }}>
-              <div style={{ fontSize: '8.5px', fontWeight: 900, textTransform: 'uppercase', color: '#7c2d12' }}>PETERNAK / UNIT</div>
+              <div style={{ fontSize: '8.5px', fontWeight: 900, textTransform: 'uppercase', color: '#7c2d12' }}>JUMLAH PETERNAK</div>
               <div style={{ fontSize: '17px', fontWeight: 900, lineHeight: 1.2, marginTop: '2px', color: '#c2410c' }}>
-                {jumlahPeternak > 0 ? `${jumlahPeternak} Unit` : '-'}
+                {jumlahPeternak > 0 ? `${jumlahPeternak} Kelompok` : '-'}
               </div>
             </div>
           </div>
