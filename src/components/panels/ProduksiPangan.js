@@ -281,49 +281,6 @@ function ProduksiPangan() {
         </div>
       </div>
 
-      {/* ── 1. KPI CARDS (MOBILE FIRST GRID) ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '10px', marginBottom: '16px' }}>
-        <div style={{ background: '#ffffff', borderRadius: '16px', padding: '14px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
-          <div style={{ fontSize: '9.5px', fontWeight: 900, textTransform: 'uppercase', color: '#64748b' }}>TOTAL PRODUKSI (2025)</div>
-          <div style={{ fontSize: '22px', fontWeight: 900, color: '#10b981', marginTop: '2px' }}>
-            {kpiData.totProd2025} <span style={{ fontSize: '11px', color: '#475569' }}>Ton</span>
-          </div>
-          <div style={{ fontSize: '10.5px', fontWeight: 700, color: parseFloat(kpiData.yoyChange) >= 0 ? '#10b981' : '#ef4444', marginTop: '2px' }}>
-            {parseFloat(kpiData.yoyChange) >= 0 ? '▲' : '▼'} {kpiData.yoyChange}% YoY vs 2024
-          </div>
-        </div>
-
-        <div style={{ background: '#ffffff', borderRadius: '16px', padding: '14px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
-          <div style={{ fontSize: '9.5px', fontWeight: 900, textTransform: 'uppercase', color: '#64748b' }}>KOMODITAS UTAMA (2025)</div>
-          <div style={{ fontSize: '18px', fontWeight: 900, color: '#0284c7', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {kpiData.topCommodity}
-          </div>
-          <div style={{ fontSize: '10.5px', color: '#64748b', marginTop: '2px', fontWeight: 600 }}>
-            Produksi: <strong>{kpiData.topCommodityVal} Ton</strong>
-          </div>
-        </div>
-
-        <div style={{ background: '#ffffff', borderRadius: '16px', padding: '14px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
-          <div style={{ fontSize: '9.5px', fontWeight: 900, textTransform: 'uppercase', color: '#64748b' }}>KECAMATAN TERINGGI (2025)</div>
-          <div style={{ fontSize: '18px', fontWeight: 900, color: '#8b5cf6', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            Kec. {kpiData.topKec}
-          </div>
-          <div style={{ fontSize: '10.5px', color: '#64748b', marginTop: '2px', fontWeight: 600 }}>
-            Produksi: <strong>{kpiData.topKecVal} Ton</strong>
-          </div>
-        </div>
-
-        <div style={{ background: '#ffffff', borderRadius: '16px', padding: '14px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
-          <div style={{ fontSize: '9.5px', fontWeight: 900, textTransform: 'uppercase', color: '#64748b' }}>PRODUKTIVITAS PADI SAWAH</div>
-          <div style={{ fontSize: '22px', fontWeight: 900, color: '#f59e0b', marginTop: '2px' }}>
-            {kpiData.padiSawahProd2025} <span style={{ fontSize: '11px', color: '#475569' }}>Ku/Ha</span>
-          </div>
-          <div style={{ fontSize: '10.5px', color: '#64748b', marginTop: '2px', fontWeight: 600 }}>
-            Rata-rata 5 Thn: <strong>{kpiData.avg5YrProd} Ku/Ha</strong>
-          </div>
-        </div>
-      </div>
-
       {/* ── 2. MAIN TIME SERIES CHART & SMOOTH LENGKUNGAN CURVES (SESUAI CAPTURE 3 MOCKUP) ── */}
       <div style={{ background: '#ffffff', borderRadius: '20px', padding: '18px 20px', border: '1px solid #e2e8f0', boxShadow: '0 4px 16px rgba(0,0,0,0.04)', marginBottom: '16px' }}>
         

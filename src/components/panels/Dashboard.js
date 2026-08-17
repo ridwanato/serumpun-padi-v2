@@ -308,7 +308,7 @@ function Dashboard({
         </button>
         <div className="sp-dash-panel-title" style={{ flex: 1 }}>
           <span className="sp-dash-panel-dot" />
-          <span style={{ fontWeight: 900, color: '#0f172a' }}>RINGKASAN METRIK</span>
+          <span style={{ fontWeight: 900, color: '#0f172a' }}>PANEL PRODUKSI</span>
         </div>
       </div>
 

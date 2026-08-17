@@ -751,7 +751,7 @@ function App() {
         {(activeView === 'dashboard' || activeView === 'produksi_pangan') && (
           <>
             {isDashboardPanelOpen ? (
-              <aside className="sp-right-dashboard" aria-label="Dashboard Metrik">
+              <aside className="sp-right-dashboard" aria-label="Panel Produksi">
                 <Dashboard
                   filteredSawah={filteredSawah}
                   sawahStatus={sawahStatus}
@@ -773,11 +773,11 @@ function App() {
                 <button
                   className="sp-dash-expand-trigger"
                   onClick={() => { setIsDashboardPanelOpen(true); if (isMobile) setIsMobileSidebarOpen(false); }}
-                  title="Buka Panel Ringkasan Metrik"
-                  aria-label="Buka Panel Ringkasan Metrik"
+                  title="Buka Panel Produksi"
+                  aria-label="Buka Panel Produksi"
                 >
                   <span className="sp-dash-expand-trigger__icon">🌾</span>
-                  <span className="sp-dash-expand-trigger__text">Ringkasan Metrik</span>
+                  <span className="sp-dash-expand-trigger__text">PANEL PRODUKSI</span>
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="15 18 9 12 15 6" />
                   </svg>

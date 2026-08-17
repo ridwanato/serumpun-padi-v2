@@ -1976,13 +1976,19 @@ body {
   }
 }
 
-/* ── Mobile Map Controls Hide on Grafik & Analisis Page ── */
+/* ── Mobile Map Controls Hide (Draw Polygon, Zoom, GPS, Fit Bounds, Layer Toggle) ── */
 @media (max-width: 768px) {
-  .sp-app.sp-view-produksi-pangan .leaflet-control-zoom,
-  .sp-app.sp-view-produksi-pangan .sp-locate-me-btn,
-  .sp-app.sp-view-produksi-pangan .leaflet-draw-toolbar,
-  .sp-app.sp-view-produksi-pangan .sp-draw-toolbar,
-  .sp-app.sp-view-produksi-pangan .leaflet-control-draw {
+  .leaflet-control-zoom,
+  .sp-locate-me-btn,
+  .sp-fit-bounds-btn,
+  .sp-layer-toggle-btn,
+  .leaflet-draw-toolbar,
+  .sp-draw-toolbar,
+  .leaflet-control-draw,
+  .leaflet-control-locate,
+  .leaflet-top.leaflet-left .leaflet-control-draw,
+  .leaflet-top.leaflet-right .leaflet-control,
+  .leaflet-bottom.leaflet-right .leaflet-control {
     display: none !important;
   }
 }
