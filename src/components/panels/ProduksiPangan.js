@@ -73,40 +73,6 @@ function ProduksiPangan() {
 
   const activeMetricSpec = METRIC_OPTIONS.find(m => m.key === selectedMetric) || METRIC_OPTIONS[0];
 
-  const kpiData = useMemo(() => {
-    const data2025 = realisasiPanganRaw.filter(r => r.tahun === 2025 && r.kecamatan === 'KOTA CILEGON');
-    const data2024 = realisasiPanganRaw.filter(r => r.tahun === 2024 && r.kecamatan === 'KOTA CILEGON');
-    const last5YearsData = realisasiPanganRaw.filter(r => r.tahun >= 2021 && r.tahun <= 2025 && r.kecamatan === 'KOTA CILEGON');
-
-    const totProd2025 = data2025.reduce((sum, r) => sum + (r.produksi_ton || 0), 0);
-    const totProd2024 = data2024.reduce((sum, r) => sum + (r.produksi_ton || 0), 0);
-    const yoyChange = totProd2024 > 0 ? (((totProd2025 - totProd2024) / totProd2024) * 100).toFixed(1) : 0;
-
-    const topCommodityObj = [...data2025].sort((a, b) => (b.produksi_ton || 0) - (a.produksi_ton || 0))[0];
-
-    const kec2025Data = realisasiPanganRaw.filter(r => r.tahun === 2025 && r.kecamatan !== 'KOTA CILEGON');
-    const kecTotals = {};
-    kec2025Data.forEach(r => {
-      kecTotals[r.kecamatan] = (kecTotals[r.kecamatan] || 0) + (r.produksi_ton || 0);
-    });
-    const topKecPair = Object.entries(kecTotals).sort((a, b) => b[1] - a[1])[0];
-
-    const padiSawah2025 = data2025.find(r => r.komoditas === 'Padi Sawah');
-    const padiSawah5Yr = last5YearsData.filter(r => r.komoditas === 'Padi Sawah');
-    const avg5YrProd = padiSawah5Yr.length > 0 ? (padiSawah5Yr.reduce((s, r) => s + (r.produktivitas_ku_ha || 0), 0) / padiSawah5Yr.length).toFixed(1) : 0;
-
-    return {
-      totProd2025: totProd2025.toLocaleString('id-ID', { maximumFractionDigits: 1 }),
-      yoyChange,
-      topCommodity: topCommodityObj ? topCommodityObj.komoditas : '-',
-      topCommodityVal: topCommodityObj ? (topCommodityObj.produksi_ton || 0).toLocaleString('id-ID', { maximumFractionDigits: 1 }) : '0',
-      topKec: topKecPair ? topKecPair[0] : '-',
-      topKecVal: topKecPair ? topKecPair[1].toLocaleString('id-ID', { maximumFractionDigits: 1 }) : '0',
-      padiSawahProd2025: padiSawah2025 ? (padiSawah2025.produktivitas_ku_ha || 0).toFixed(1) : '0',
-      avg5YrProd
-    };
-  }, []);
-
   const timeSeriesData = useMemo(() => {
     const list = YEARS.map(yr => {
       const row = { tahun: yr };
