@@ -7,22 +7,22 @@ const KECAMATAN_LIST = ['Ciwandan', 'Citangkil', 'Pulomerak', 'Purwakarta', 'Gro
 const COMMODITIES_LIST = ['Padi Sawah', 'Padi Ladang', 'Jagung', 'Kedelai', 'Kacang Tanah', 'Ubi Kayu', 'Ubi Jalar', 'Kacang Hijau', 'Talas', 'Sorgum', 'Porang'];
 
 const METRIC_OPTIONS = [
-  { key: 'produksi_ton', label: 'Produksi', unit: 'Ton', color: '#16a34a' },
+  { key: 'produksi_ton', label: 'Produksi', unit: 'Ton', color: '#10b981' },
   { key: 'tanam_ha', label: 'Luas Tanam', unit: 'Ha', color: '#0284c7' },
-  { key: 'panen_ha', label: 'Luas Panen', unit: 'Ha', color: '#eab308' },
-  { key: 'produktivitas_ku_ha', label: 'Produktivitas', unit: 'Ku/Ha', color: '#9333ea' }
+  { key: 'panen_ha', label: 'Luas Panen', unit: 'Ha', color: '#f59e0b' },
+  { key: 'produktivitas_ku_ha', label: 'Produktivitas', unit: 'Ku/Ha', color: '#8b5cf6' }
 ];
 
 const COMMODITY_COLORS = {
-  'Padi Sawah': '#16a34a',
+  'Padi Sawah': '#10b981',
   'Padi Ladang': '#84cc16',
-  'Jagung': '#eab308',
+  'Jagung': '#f59e0b',
   'Kedelai': '#f97316',
   'Kacang Tanah': '#d97706',
   'Ubi Kayu': '#854d0e',
   'Ubi Jalar': '#a16207',
-  'Kacang Hijau': '#10b981',
-  'Talas': '#06b6d4',
+  'Kacang Hijau': '#06b6d4',
+  'Talas': '#3b82f6',
   'Sorgum': '#6366f1',
   'Porang': '#8b5cf6'
 };
@@ -34,6 +34,29 @@ const GLOSSARY = {
   'Produktivitas': 'Rata-rata hasil produksi yang diperoleh dari setiap 1 hektar luas panen (satuan Kuintal per Hektar / Ku/Ha). 1 Ton = 10 Kuintal.',
   'Puso': 'Kondisi tanaman yang rusak atau tidak dapat dipanen sama sekali akibat bencana alam, kekeringan, banjir, atau serangan hama penyakit.'
 };
+
+// ── Cubic Bezier Smooth Curve Generator (Sesuai Capture Model Lengkungan Smooth) ──
+function getCurvedPath(points) {
+  if (!points || points.length === 0) return '';
+  if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
+  if (points.length === 2) return `M ${points[0].x} ${points[0].y} L ${points[1].x} ${points[1].y}`;
+
+  let d = `M ${points[0].x} ${points[0].y}`;
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[i === 0 ? i : i - 1];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = points[i + 2 < points.length ? i + 2 : i + 1];
+
+    const cp1x = p1.x + (p2.x - p0.x) / 6;
+    const cp1y = p1.y + (p2.y - p0.y) / 6;
+    const cp2x = p2.x - (p3.x - p1.x) / 6;
+    const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+    d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
+  }
+  return d;
+}
 
 function ProduksiPangan() {
   const [selectedMetric, setSelectedMetric] = useState('produksi_ton');
@@ -200,129 +223,143 @@ function ProduksiPangan() {
   };
 
   return (
-    <div style={{ padding: '16px', color: '#0f172a', fontFamily: 'Inter, system-ui, sans-serif' }}>
+    <div style={{ padding: '12px 16px', color: '#0f172a', fontFamily: 'Inter, system-ui, sans-serif' }}>
       
-      {/* ── HEADER BANNER ── */}
+      {/* ── HEADER BANNER (MOBILE FIRST RESPONSIVE) ── */}
       <div style={{
-        background: 'linear-gradient(135deg, #15803d 0%, #166534 50%, #14532d 100%)',
+        background: 'linear-gradient(135deg, #10b981 0%, #047857 60%, #064e3b 100%)',
         color: '#ffffff',
         borderRadius: '20px',
-        padding: '20px 24px',
-        marginBottom: '20px',
-        boxShadow: '0 10px 28px rgba(22, 101, 52, 0.25)',
+        padding: '18px 20px',
+        marginBottom: '16px',
+        boxShadow: '0 10px 28px rgba(16, 185, 129, 0.25)',
         border: '1px solid rgba(255, 255, 255, 0.2)',
         position: 'relative',
         overflow: 'hidden'
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
           <div>
-            <div style={{ fontSize: '11px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px', color: '#86efac' }}>
+            <div style={{ fontSize: '10.5px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px', color: '#a7f3d0' }}>
               📊 DASHBOARD STATISTIK & PROYEKSI PANGAN
             </div>
-            <h1 style={{ fontSize: '22px', fontWeight: 900, margin: '4px 0 0 0', color: '#ffffff', letterSpacing: '-0.3px' }}>
+            <h1 style={{ fontSize: '20px', fontWeight: 900, margin: '4px 0 0 0', color: '#ffffff', letterSpacing: '-0.3px' }}>
               Realisasi Produksi Padi & Palawija Kota Cilegon
             </h1>
-            <p style={{ fontSize: '12px', color: '#dcfce7', margin: '4px 0 0 0', fontWeight: 500 }}>
+            <p style={{ fontSize: '11.5px', color: '#d1fae5', margin: '4px 0 0 0', fontWeight: 500 }}>
               Data Time Series Resmi Dinas Ketahanan Pangan & Pertanian (2014 – 2025)
             </p>
           </div>
 
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '8px', width: '100%', maxWidth: '380px', flexWrap: 'wrap' }}>
             <button
               onClick={() => setShowGlossaryModal(true)}
               style={{
-                background: 'rgba(255, 255, 255, 0.2)',
-                border: '1px solid rgba(255, 255, 255, 0.4)',
+                flex: 1,
+                minWidth: '130px',
+                height: '42px',
+                background: 'rgba(255, 255, 255, 0.18)',
+                border: '1px solid rgba(255, 255, 255, 0.35)',
                 color: '#ffffff',
                 borderRadius: '10px',
-                padding: '8px 14px',
+                padding: '0 12px',
                 fontSize: '11px',
                 fontWeight: 800,
-                cursor: 'pointer'
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px'
               }}
             >
-              📖 Glosarium Istilah
+              <span>📖</span> Glosarium
             </button>
             <button
               onClick={() => exportCleanExcel('all')}
               style={{
+                flex: 1.3,
+                minWidth: '170px',
+                height: '42px',
                 background: '#ffffff',
                 border: 'none',
-                color: '#14532d',
+                color: '#047857',
                 borderRadius: '10px',
-                padding: '8px 16px',
+                padding: '0 14px',
                 fontSize: '11px',
                 fontWeight: 900,
                 cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px'
               }}
             >
-              📊 Unduh Excel Lengkap (.xlsx)
+              <span>📥</span> Unduh Excel (.xlsx)
             </button>
           </div>
         </div>
       </div>
 
-      {/* ── 1. KPI CARDS (SUMMARY METRICS) ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px', marginBottom: '20px' }}>
-        <div style={{ background: '#ffffff', borderRadius: '16px', padding: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
-          <div style={{ fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', color: '#64748b' }}>TOTAL PRODUKSI (2025)</div>
-          <div style={{ fontSize: '24px', fontWeight: 900, color: '#16a34a', marginTop: '4px' }}>
-            {kpiData.totProd2025} <span style={{ fontSize: '13px', color: '#475569' }}>Ton</span>
+      {/* ── 1. KPI CARDS (MOBILE FIRST GRID) ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '10px', marginBottom: '16px' }}>
+        <div style={{ background: '#ffffff', borderRadius: '16px', padding: '14px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+          <div style={{ fontSize: '9.5px', fontWeight: 900, textTransform: 'uppercase', color: '#64748b' }}>TOTAL PRODUKSI (2025)</div>
+          <div style={{ fontSize: '22px', fontWeight: 900, color: '#10b981', marginTop: '2px' }}>
+            {kpiData.totProd2025} <span style={{ fontSize: '11px', color: '#475569' }}>Ton</span>
           </div>
-          <div style={{ fontSize: '11px', fontWeight: 700, color: parseFloat(kpiData.yoyChange) >= 0 ? '#16a34a' : '#dc2626', marginTop: '4px' }}>
+          <div style={{ fontSize: '10.5px', fontWeight: 700, color: parseFloat(kpiData.yoyChange) >= 0 ? '#10b981' : '#ef4444', marginTop: '2px' }}>
             {parseFloat(kpiData.yoyChange) >= 0 ? '▲' : '▼'} {kpiData.yoyChange}% YoY vs 2024
           </div>
         </div>
 
-        <div style={{ background: '#ffffff', borderRadius: '16px', padding: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
-          <div style={{ fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', color: '#64748b' }}>KOMODITAS UTAMA (2025)</div>
-          <div style={{ fontSize: '20px', fontWeight: 900, color: '#0284c7', marginTop: '4px' }}>
+        <div style={{ background: '#ffffff', borderRadius: '16px', padding: '14px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+          <div style={{ fontSize: '9.5px', fontWeight: 900, textTransform: 'uppercase', color: '#64748b' }}>KOMODITAS UTAMA (2025)</div>
+          <div style={{ fontSize: '18px', fontWeight: 900, color: '#0284c7', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {kpiData.topCommodity}
           </div>
-          <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px', fontWeight: 600 }}>
+          <div style={{ fontSize: '10.5px', color: '#64748b', marginTop: '2px', fontWeight: 600 }}>
             Produksi: <strong>{kpiData.topCommodityVal} Ton</strong>
           </div>
         </div>
 
-        <div style={{ background: '#ffffff', borderRadius: '16px', padding: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
-          <div style={{ fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', color: '#64748b' }}>KECAMATAN TERINGGI (2025)</div>
-          <div style={{ fontSize: '20px', fontWeight: 900, color: '#9333ea', marginTop: '4px' }}>
+        <div style={{ background: '#ffffff', borderRadius: '16px', padding: '14px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+          <div style={{ fontSize: '9.5px', fontWeight: 900, textTransform: 'uppercase', color: '#64748b' }}>KECAMATAN TERINGGI (2025)</div>
+          <div style={{ fontSize: '18px', fontWeight: 900, color: '#8b5cf6', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             Kec. {kpiData.topKec}
           </div>
-          <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px', fontWeight: 600 }}>
+          <div style={{ fontSize: '10.5px', color: '#64748b', marginTop: '2px', fontWeight: 600 }}>
             Produksi: <strong>{kpiData.topKecVal} Ton</strong>
           </div>
         </div>
 
-        <div style={{ background: '#ffffff', borderRadius: '16px', padding: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
-          <div style={{ fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', color: '#64748b' }}>PRODUKTIVITAS PADI SAWAH</div>
-          <div style={{ fontSize: '24px', fontWeight: 900, color: '#eab308', marginTop: '4px' }}>
-            {kpiData.padiSawahProd2025} <span style={{ fontSize: '13px', color: '#475569' }}>Ku/Ha</span>
+        <div style={{ background: '#ffffff', borderRadius: '16px', padding: '14px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+          <div style={{ fontSize: '9.5px', fontWeight: 900, textTransform: 'uppercase', color: '#64748b' }}>PRODUKTIVITAS PADI SAWAH</div>
+          <div style={{ fontSize: '22px', fontWeight: 900, color: '#f59e0b', marginTop: '2px' }}>
+            {kpiData.padiSawahProd2025} <span style={{ fontSize: '11px', color: '#475569' }}>Ku/Ha</span>
           </div>
-          <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px', fontWeight: 600 }}>
+          <div style={{ fontSize: '10.5px', color: '#64748b', marginTop: '2px', fontWeight: 600 }}>
             Rata-rata 5 Thn: <strong>{kpiData.avg5YrProd} Ku/Ha</strong>
           </div>
         </div>
       </div>
 
-      {/* ── 2. MAIN TIME SERIES CHART & CONTROLS ── */}
-      <div style={{ background: '#ffffff', borderRadius: '20px', padding: '20px', border: '1px solid #e2e8f0', boxShadow: '0 4px 16px rgba(0,0,0,0.04)', marginBottom: '20px' }}>
+      {/* ── 2. MAIN TIME SERIES CHART & SMOOTH LENGKUNGAN CURVES (SESUAI CAPTURE) ── */}
+      <div style={{ background: '#ffffff', borderRadius: '20px', padding: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 16px rgba(0,0,0,0.04)', marginBottom: '16px' }}>
         
         {/* Chart Header Controls */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '14px' }}>
           <div>
-            <h3 style={{ fontSize: '16px', fontWeight: 900, margin: 0, color: '#0f172a' }}>
-              📈 Grafik Tren Historis & Proyeksi (2014 – 2027)
+            <h3 style={{ fontSize: '15px', fontWeight: 900, margin: 0, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span>📈</span> Grafik Tren Lintas Tahun (2014 – 2027)
             </h3>
             <p style={{ fontSize: '11px', color: '#64748b', margin: '2px 0 0 0' }}>
-              Pilih metrik, wilayah, dan komoditas untuk menganalisis perkembangan pangan Kota Cilegon
+              Gaya kurva smooth & area gradient (sesuai standar IKP nasional & provinsi)
             </p>
           </div>
 
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', width: '100%', maxWidth: '420px' }}>
             {/* Metric Selector Pills */}
-            <div style={{ background: '#f1f5f9', borderRadius: '10px', padding: '3px', display: 'flex', gap: '3px' }}>
+            <div style={{ background: '#f1f5f9', borderRadius: '10px', padding: '3px', display: 'flex', gap: '3px', flex: 1, overflowX: 'auto' }}>
               {METRIC_OPTIONS.map(m => (
                 <button
                   key={m.key}
@@ -332,11 +369,13 @@ function ProduksiPangan() {
                     color: selectedMetric === m.key ? m.color : '#64748b',
                     border: 'none',
                     borderRadius: '8px',
-                    padding: '6px 12px',
+                    padding: '6px 10px',
                     fontSize: '11px',
                     fontWeight: 900,
                     cursor: 'pointer',
-                    boxShadow: selectedMetric === m.key ? '0 2px 6px rgba(0,0,0,0.08)' : 'none'
+                    whiteSpace: 'nowrap',
+                    boxShadow: selectedMetric === m.key ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
+                    minHeight: '36px'
                   }}
                 >
                   {m.label}
@@ -352,14 +391,15 @@ function ProduksiPangan() {
                 background: '#f8fafc',
                 border: '1px solid #cbd5e1',
                 borderRadius: '10px',
-                padding: '6px 12px',
+                padding: '6px 10px',
                 fontSize: '11px',
                 fontWeight: 800,
                 color: '#0f172a',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                minHeight: '36px'
               }}
             >
-              <option value="KOTA CILEGON">🏛️ Total Kota Cilegon</option>
+              <option value="KOTA CILEGON">🏛️ Kota Cilegon</option>
               {KECAMATAN_LIST.map(k => (
                 <option key={k} value={k}>📍 Kec. {k}</option>
               ))}
@@ -373,23 +413,24 @@ function ProduksiPangan() {
                 border: showProjection ? '1.5px solid #f59e0b' : '1px solid #cbd5e1',
                 color: showProjection ? '#b45309' : '#64748b',
                 borderRadius: '10px',
-                padding: '6px 12px',
+                padding: '6px 10px',
                 fontSize: '11px',
                 fontWeight: 900,
-                cursor: 'pointer'
+                cursor: 'pointer',
+                minHeight: '36px'
               }}
             >
-              🔮 Proyeksi (2026-2027) {showProjection ? 'ON' : 'OFF'}
+              🔮 Proyeksi {showProjection ? 'ON' : 'OFF'}
             </button>
           </div>
         </div>
 
-        {/* Commodity Checkboxes Strip */}
-        <div style={{ background: '#f8fafc', borderRadius: '12px', padding: '10px 14px', border: '1px solid #e2e8f0', marginBottom: '16px' }}>
+        {/* Commodity Legend & Checkboxes Strip */}
+        <div style={{ background: '#f8fafc', borderRadius: '12px', padding: '10px', border: '1px solid #e2e8f0', marginBottom: '14px' }}>
           <div style={{ fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', color: '#64748b', marginBottom: '6px' }}>
-            FILTER KOMODITAS (MULTI-SELECT):
+            KOMODITAS DITAMPILKAN (MULTI-SELECT):
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
             {COMMODITIES_LIST.map(com => {
               const active = selectedCommodities.includes(com);
               const color = COMMODITY_COLORS[com] || '#64748b';
@@ -401,24 +442,29 @@ function ProduksiPangan() {
                     background: active ? color : '#ffffff',
                     color: active ? '#ffffff' : '#475569',
                     border: `1.5px solid ${active ? color : '#cbd5e1'}`,
-                    borderRadius: '8px',
-                    padding: '4px 10px',
+                    borderRadius: '20px',
+                    padding: '5px 12px',
                     fontSize: '10.5px',
                     fontWeight: 800,
                     cursor: 'pointer',
-                    transition: 'all 0.2s ease'
+                    transition: 'all 0.2s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    minHeight: '32px'
                   }}
                 >
-                  {active ? '✓ ' : '+ '}{com}
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: active ? '#ffffff' : color, display: 'inline-block' }}></span>
+                  {com}
                 </button>
               );
             })}
           </div>
         </div>
 
-        {/* Dynamic Chart Container */}
-        <div style={{ height: '320px', width: '100%', position: 'relative', marginTop: '10px' }}>
-          <ResponsiveChart
+        {/* Dynamic Curved Smooth Chart Container (SVG Bezier Spline + Gradient Area) */}
+        <div style={{ height: '300px', width: '100%', position: 'relative', marginTop: '10px' }}>
+          <ResponsiveSmoothChart
             data={timeSeriesData.combined}
             commodities={selectedCommodities}
             metricSpec={activeMetricSpec}
@@ -426,57 +472,57 @@ function ProduksiPangan() {
         </div>
 
         {/* Chart Disclaimer & Footnote */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '14px', fontSize: '10.5px', color: '#64748b' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginTop: '14px', fontSize: '10.5px', color: '#64748b' }}>
           <div>
-            * Garis putus-putus mewakili proyeksi tren moving average 3-tahun untuk 2026–2027.
+            * Lengkungan smooth dengan gradien area area murni (2014–2025). Garis putus-putus mewakili proyeksi 2026–2027.
           </div>
           <button
             onClick={() => exportCleanExcel('by_commodity')}
-            style={{ background: '#f0fdf4', border: '1px solid #86efac', color: '#15803d', borderRadius: '6px', padding: '3px 10px', fontWeight: 800, cursor: 'pointer' }}
+            style={{ background: '#ecfdf5', border: '1px solid #6ee7b7', color: '#047857', borderRadius: '6px', padding: '4px 10px', fontWeight: 800, cursor: 'pointer' }}
           >
-            📊 Unduh Data Grafik (.xlsx)
+            📥 Download xlsx
           </button>
         </div>
       </div>
 
       {/* ── 3. AUTOMATED NARRATIVE & GLOSSARY ── */}
-      <div style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)', borderRadius: '16px', padding: '16px 20px', border: '1px solid #bbf7d0', marginBottom: '20px' }}>
-        <div style={{ fontSize: '11px', fontWeight: 900, textTransform: 'uppercase', color: '#15803d', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+      <div style={{ background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)', borderRadius: '16px', padding: '14px 18px', border: '1px solid #a7f3d0', marginBottom: '16px' }}>
+        <div style={{ fontSize: '10.5px', fontWeight: 900, textTransform: 'uppercase', color: '#047857', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
           <span>💡 ANALISIS & INTERPRETASI OTOMATIS</span>
         </div>
-        <p style={{ fontSize: '13px', color: '#14532d', fontWeight: 600, lineHeight: 1.5, margin: 0 }}>
+        <p style={{ fontSize: '12.5px', color: '#064e3b', fontWeight: 600, lineHeight: 1.5, margin: 0 }}>
           "{narrativeText}"
         </p>
       </div>
 
-      {/* ── 4. INTERACTIVE RANKING / SORTING PANEL (FITUR SORTIR TOP) ── */}
-      <div style={{ background: '#ffffff', borderRadius: '20px', padding: '20px', border: '1px solid #e2e8f0', boxShadow: '0 4px 16px rgba(0,0,0,0.04)', marginBottom: '20px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+      {/* ── 4. INTERACTIVE RANKING / SORTING PANEL (FITUR SORTIR TOP - MOBILE RESPONSIVE) ── */}
+      <div style={{ background: '#ffffff', borderRadius: '20px', padding: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 16px rgba(0,0,0,0.04)', marginBottom: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '14px' }}>
           <div>
-            <h3 style={{ fontSize: '16px', fontWeight: 900, margin: 0, color: '#0f172a' }}>
+            <h3 style={{ fontSize: '15px', fontWeight: 900, margin: 0, color: '#0f172a' }}>
               🏆 Peringkat & Analisis Urutan ("Fitur Top")
             </h3>
             <p style={{ fontSize: '11px', color: '#64748b', margin: '2px 0 0 0' }}>
-              Urutkan kinerja produksi berdasarkan Kecamatan, Komoditas, atau Tahun secara dinamis
+              Urutkan kinerja produksi berdasarkan Kecamatan, Komoditas, atau Tahun
             </p>
           </div>
 
           {/* Ranking Controls */}
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', width: '100%', maxWidth: '520px' }}>
             <select
               value={rankDimension}
               onChange={e => setRankDimension(e.target.value)}
-              style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '6px 10px', fontSize: '11px', fontWeight: 800 }}
+              style={{ flex: 1, minWidth: '130px', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '6px 8px', fontSize: '11px', fontWeight: 800, minHeight: '36px' }}
             >
-              <option value="kecamatan">Urut Per Kecamatan</option>
-              <option value="komoditas">Urut Per Komoditas</option>
-              <option value="tahun">Urut Per Tahun (Time-Series)</option>
+              <option value="kecamatan">Per Kecamatan</option>
+              <option value="komoditas">Per Komoditas</option>
+              <option value="tahun">Per Tahun</option>
             </select>
 
             <select
               value={rankMetric}
               onChange={e => setRankMetric(e.target.value)}
-              style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '6px 10px', fontSize: '11px', fontWeight: 800 }}
+              style={{ flex: 1, minWidth: '120px', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '6px 8px', fontSize: '11px', fontWeight: 800, minHeight: '36px' }}
             >
               {METRIC_OPTIONS.map(m => (
                 <option key={m.key} value={m.key}>{m.label}</option>
@@ -487,7 +533,7 @@ function ProduksiPangan() {
               <select
                 value={rankYear}
                 onChange={e => setRankYear(parseInt(e.target.value))}
-                style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '6px 10px', fontSize: '11px', fontWeight: 800 }}
+                style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '6px 8px', fontSize: '11px', fontWeight: 800, minHeight: '36px' }}
               >
                 {YEARS.map(yr => (
                   <option key={yr} value={yr}>Tahun {yr}</option>
@@ -499,7 +545,7 @@ function ProduksiPangan() {
               <select
                 value={rankCommodityFilter}
                 onChange={e => setRankCommodityFilter(e.target.value)}
-                style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '6px 10px', fontSize: '11px', fontWeight: 800 }}
+                style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '6px 8px', fontSize: '11px', fontWeight: 800, minHeight: '36px' }}
               >
                 {COMMODITIES_LIST.map(c => (
                   <option key={c} value={c}>{c}</option>
@@ -509,27 +555,27 @@ function ProduksiPangan() {
 
             <button
               onClick={() => setRankOrder(rankOrder === 'desc' ? 'asc' : 'desc')}
-              style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '6px 10px', fontSize: '11px', fontWeight: 800, cursor: 'pointer' }}
+              style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '6px 10px', fontSize: '11px', fontWeight: 800, cursor: 'pointer', minHeight: '36px' }}
             >
-              {rankOrder === 'desc' ? '⬇️ Highest → Lowest' : '⬆️ Lowest → Highest'}
+              {rankOrder === 'desc' ? '⬇️ Tinggi → Rendah' : '⬆️ Rendah → Tinggi'}
             </button>
           </div>
         </div>
 
-        {/* Ranking Data Table */}
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
+        {/* Ranking Data Table with Responsive Horizontal Scroll */}
+        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <table style={{ width: '100%', minWidth: '600px', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
             <thead>
               <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0', color: '#475569', textTransform: 'uppercase', fontSize: '10px', letterSpacing: '0.5px' }}>
-                <th style={{ padding: '10px 12px', width: '50px' }}>Rank</th>
-                <th style={{ padding: '10px 12px' }}>
+                <th style={{ padding: '8px 10px', width: '50px' }}>Rank</th>
+                <th style={{ padding: '8px 10px' }}>
                   {rankDimension === 'kecamatan' ? 'Kecamatan' : rankDimension === 'komoditas' ? 'Komoditas' : 'Tahun'}
                 </th>
-                <th style={{ padding: '10px 12px' }}>Komoditas / Wilayah</th>
-                <th style={{ padding: '10px 12px', textAlign: 'right' }}>Luas Tanam (Ha)</th>
-                <th style={{ padding: '10px 12px', textAlign: 'right' }}>Luas Panen (Ha)</th>
-                <th style={{ padding: '10px 12px', textAlign: 'right' }}>Produksi (Ton)</th>
-                <th style={{ padding: '10px 12px', textAlign: 'right' }}>Produktivitas (Ku/Ha)</th>
+                <th style={{ padding: '8px 10px' }}>Komoditas / Wilayah</th>
+                <th style={{ padding: '8px 10px', textAlign: 'right' }}>Luas Tanam (Ha)</th>
+                <th style={{ padding: '8px 10px', textAlign: 'right' }}>Luas Panen (Ha)</th>
+                <th style={{ padding: '8px 10px', textAlign: 'right' }}>Produksi (Ton)</th>
+                <th style={{ padding: '8px 10px', textAlign: 'right' }}>Produktivitas (Ku/Ha)</th>
               </tr>
             </thead>
             <tbody>
@@ -547,26 +593,26 @@ function ProduksiPangan() {
                   const badge = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`;
 
                   return (
-                    <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9', background: isTop3 ? '#f0fdf4' : 'transparent' }}>
-                      <td style={{ padding: '10px 12px', fontWeight: 900, color: isTop3 ? '#15803d' : '#64748b' }}>
+                    <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9', background: isTop3 ? '#ecfdf5' : 'transparent' }}>
+                      <td style={{ padding: '8px 10px', fontWeight: 900, color: isTop3 ? '#047857' : '#64748b' }}>
                         {badge}
                       </td>
-                      <td style={{ padding: '10px 12px', fontWeight: 800, color: '#0f172a' }}>
+                      <td style={{ padding: '8px 10px', fontWeight: 800, color: '#0f172a' }}>
                         {label}
                       </td>
-                      <td style={{ padding: '10px 12px', color: '#64748b', fontWeight: 600 }}>
+                      <td style={{ padding: '8px 10px', color: '#64748b', fontWeight: 600 }}>
                         {subLabel}
                       </td>
-                      <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700 }}>
+                      <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700 }}>
                         {item.tanam_ha ? item.tanam_ha.toLocaleString('id-ID') : '-'}
                       </td>
-                      <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700 }}>
+                      <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700 }}>
                         {item.panen_ha ? item.panen_ha.toLocaleString('id-ID') : '-'}
                       </td>
-                      <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 900, color: '#16a34a' }}>
+                      <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 900, color: '#10b981' }}>
                         {item.produksi_ton ? item.produksi_ton.toLocaleString('id-ID') : '-'}
                       </td>
-                      <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 800, color: '#0284c7' }}>
+                      <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 800, color: '#0284c7' }}>
                         {item.produktivitas_ku_ha ? item.produktivitas_ku_ha.toFixed(2) : '-'}
                       </td>
                     </tr>
@@ -581,18 +627,18 @@ function ProduksiPangan() {
       {/* ── GLOSSARY MODAL ── */}
       {showGlossaryModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
-          <div style={{ background: '#ffffff', borderRadius: '20px', maxWidth: '520px', width: '100%', padding: '24px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 900, margin: 0, color: '#0f172a' }}>
+          <div style={{ background: '#ffffff', borderRadius: '20px', maxWidth: '520px', width: '100%', padding: '20px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: 900, margin: 0, color: '#0f172a' }}>
                 📖 Glosarium Istilah Statistik Pertanian
               </h3>
-              <button onClick={() => setShowGlossaryModal(false)} style={{ background: '#f1f5f9', border: 'none', borderRadius: '8px', padding: '4px 10px', cursor: 'pointer', fontWeight: 800 }}>✕</button>
+              <button onClick={() => setShowGlossaryModal(false)} style={{ background: '#f1f5f9', border: 'none', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', fontWeight: 800 }}>✕</button>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {Object.entries(GLOSSARY).map(([term, desc]) => (
-                <div key={term} style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-                  <div style={{ fontSize: '12px', fontWeight: 900, color: '#166534', marginBottom: '2px' }}>{term}</div>
-                  <div style={{ fontSize: '11.5px', color: '#475569', lineHeight: 1.4 }}>{desc}</div>
+                <div key={term} style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                  <div style={{ fontSize: '11.5px', fontWeight: 900, color: '#047857', marginBottom: '2px' }}>{term}</div>
+                  <div style={{ fontSize: '11px', color: '#475569', lineHeight: 1.4 }}>{desc}</div>
                 </div>
               ))}
             </div>
@@ -604,13 +650,13 @@ function ProduksiPangan() {
   );
 }
 
-// ── CUSTOM SVG RESPONSIVE TIME SERIES CHART ──
-function ResponsiveChart({ data, commodities }) {
+// ── CUSTOM SVG RESPONSIVE SMOOTH CHART (BEZIER CURVE & GRADIENT FILL SESUAI CAPTURE) ──
+function ResponsiveSmoothChart({ data, commodities }) {
   if (!data || data.length === 0) return null;
 
   const width = 800;
   const height = 300;
-  const padding = { top: 20, right: 30, bottom: 40, left: 60 };
+  const padding = { top: 25, right: 30, bottom: 40, left: 60 };
 
   const chartW = width - padding.left - padding.right;
   const chartH = height - padding.top - padding.bottom;
@@ -631,19 +677,35 @@ function ResponsiveChart({ data, commodities }) {
 
   return (
     <svg viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: '100%', overflow: 'visible' }}>
+      <defs>
+        {/* Generate Gradient Fills for each commodity (Gradient smooth fading down) */}
+        {commodities.map((com) => {
+          const color = COMMODITY_COLORS[com] || '#64748b';
+          const gradId = `grad_${com.replace(/[^a-zA-Z0-9]/g, '_')}`;
+          return (
+            <linearGradient key={gradId} id={gradId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity="0.35" />
+              <stop offset="100%" stopColor={color} stopOpacity="0.0" />
+            </linearGradient>
+          );
+        })}
+      </defs>
+
+      {/* Gridlines & Y Labels */}
       {[0, 0.25, 0.5, 0.75, 1].map((pct, i) => {
         const val = Math.round(maxVal * pct);
         const y = yScale(val);
         return (
           <g key={i}>
-            <line x1={padding.left} y1={y} x2={width - padding.right} y2={y} stroke="#f1f5f9" strokeWidth="1" strokeDasharray={i === 0 ? '0' : '4 4'} />
-            <text x={padding.left - 8} y={y + 4} textAnchor="end" fontSize="10" fill="#94a3b8" fontWeight="600">
+            <line x1={padding.left} y1={y} x2={width - padding.right} y2={y} stroke="#f1f5f9" strokeWidth="1.5" strokeDasharray={i === 0 ? '0' : '4 4'} />
+            <text x={padding.left - 10} y={y + 4} textAnchor="end" fontSize="10" fill="#94a3b8" fontWeight="600">
               {val.toLocaleString('id-ID')}
             </text>
           </g>
         );
       })}
 
+      {/* X Labels (Years) */}
       {data.map((d, i) => {
         const x = xScale(i);
         return (
@@ -655,12 +717,15 @@ function ResponsiveChart({ data, commodities }) {
         );
       })}
 
-      {commodities.map(com => {
+      {/* Render Curves & Area Fills for each commodity */}
+      {commodities.map((com) => {
         const strokeColor = COMMODITY_COLORS[com] || '#64748b';
+        const gradId = `grad_${com.replace(/[^a-zA-Z0-9]/g, '_')}`;
+        
         const points = data.map((d, i) => {
           const val = d[com];
           if (val === null || isNaN(val)) return null;
-          return { x: xScale(i), y: yScale(val), val, isProj: d.isProjection };
+          return { x: xScale(i), y: yScale(val), val, isProj: d.isProjection, tahun: d.tahun };
         }).filter(p => p !== null);
 
         if (points.length === 0) return null;
@@ -668,31 +733,66 @@ function ResponsiveChart({ data, commodities }) {
         const histPoints = points.filter(p => !p.isProj);
         const projPoints = points.filter(p => p.isProj || points[points.indexOf(p) - 1]?.isProj === false);
 
-        const histPath = histPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
-        const projPath = projPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+        // Compute Cubic Bezier Smooth Path String
+        const histCurvedPath = getCurvedPath(histPoints);
+        const projCurvedPath = getCurvedPath(projPoints);
+
+        // Area Fill Path for Historical Portion
+        let areaPath = '';
+        if (histPoints.length > 1) {
+          const firstP = histPoints[0];
+          const lastP = histPoints[histPoints.length - 1];
+          const bottomY = yScale(0);
+          areaPath = `${histCurvedPath} L ${lastP.x} ${bottomY} L ${firstP.x} ${bottomY} Z`;
+        }
 
         return (
           <g key={com}>
-            {histPath && <path d={histPath} fill="none" stroke={strokeColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />}
-            {projPath && <path d={projPath} fill="none" stroke={strokeColor} strokeWidth="2.5" strokeDasharray="5 5" opacity="0.8" />}
+            {/* Translucent Area Gradient Fill Under Curve */}
+            {areaPath && <path d={areaPath} fill={`url(#${gradId})`} opacity="0.9" />}
 
+            {/* Historical Smooth Curve Line */}
+            {histCurvedPath && (
+              <path
+                d={histCurvedPath}
+                fill="none"
+                stroke={strokeColor}
+                strokeWidth="3.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            )}
+
+            {/* Projected Smooth Curve Line (Dashed) */}
+            {projCurvedPath && (
+              <path
+                d={projCurvedPath}
+                fill="none"
+                stroke={strokeColor}
+                strokeWidth="3"
+                strokeDasharray="6 6"
+                opacity="0.85"
+              />
+            )}
+
+            {/* Node Markers & Value Labels (Sesuai Capture Model Dot Berwarna + Teks Nilai) */}
             {points.map((p, i) => (
               <g key={i}>
                 <circle
                   cx={p.x}
                   cy={p.y}
-                  r={p.isProj ? "4" : "4.5"}
-                  fill={p.isProj ? "#ffffff" : strokeColor}
+                  r="5"
+                  fill="#ffffff"
                   stroke={strokeColor}
-                  strokeWidth="2.5"
+                  strokeWidth="3"
                 />
                 <text
                   x={p.x}
-                  y={p.y - 8}
+                  y={p.y - 10}
                   textAnchor="middle"
-                  fontSize="8.5"
+                  fontSize="9.5"
                   fontWeight="900"
-                  fill={p.isProj ? '#b45309' : '#1e293b'}
+                  fill={strokeColor}
                 >
                   {p.val.toLocaleString('id-ID')}
                 </text>
