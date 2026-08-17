@@ -159,16 +159,36 @@ function Peternakan({ onOpenPanel, user, supabase, onRefresh, onPickLocation, on
   };
 
   const handleDeletePeternakan = async (id, ownerId) => {
-    if (!user) return alert('Silakan login terlebih dahulu.');
-    if (!isSuperAdmin && ownerId && ownerId !== user.id) {
+    if (!user) return alert('Silakan login terlebih dahulu untuk menghapus data.');
+
+    // Permission check
+    const canDelete = isSuperAdmin || !ownerId || ownerId === user.id;
+    if (!canDelete) {
       return alert('Anda tidak memiliki izin menghapus data ini.');
     }
-    if (!window.confirm('Hapus data peternakan ini dari database?')) return;
+
+    const confirmed = window.confirm('Hapus data peternak ini dari database?');
+    if (!confirmed) return;
+
+    // Immediately filter out from local UI state
+    setDataTernak(prev => prev.filter(d => d.id !== id));
 
     if (supabase) {
-      const { error } = await supabase.from('peternakan').delete().eq('id', id);
-      if (error) return alert('Gagal hapus: ' + error.message);
+      try {
+        const { error } = await supabase
+          .from('peternakan')
+          .delete()
+          .eq('id', id);
+
+        if (error) {
+          console.error('[Delete Peternakan] Supabase error:', error);
+          alert('Peringatan: Gagal menghapus dari Supabase database: ' + (error.message || error.code));
+        }
+      } catch (err) {
+        console.error('[Delete Peternakan] Exception:', err);
+      }
     }
+
     await loadDataPeternakan();
     if (onRefresh) onRefresh();
   };
@@ -349,8 +369,9 @@ function Peternakan({ onOpenPanel, user, supabase, onRefresh, onPickLocation, on
                       {user && (isSuperAdmin || !d.user_id || d.user_id === user.id) && (
                         <button
                           onClick={() => handleDeletePeternakan(d.id, d.user_id)}
-                          style={{ background: '#fee2e2', border: 'none', borderRadius: 4, padding: '2px 6px', fontSize: 10, color: '#b91c1c', cursor: 'pointer' }}
-                          title="Hapus data"
+                          style={{ background: '#fee2e2', border: '1px solid #fca5a5', borderRadius: 6, padding: '4px 8px', fontSize: 13, color: '#b91c1c', cursor: 'pointer', lineHeight: 1 }}
+                          title="Hapus data peternak ini"
+                          aria-label="Hapus"
                         >
                           🗑️
                         </button>
@@ -390,44 +411,44 @@ function Peternakan({ onOpenPanel, user, supabase, onRefresh, onPickLocation, on
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
               <span style={{ fontSize: 11, flex: 1.2, fontWeight: 600 }}>🐂 Sapi</span>
               <input type="number" min="0" placeholder="0" style={{ width: 55, fontSize: 11, padding: '2px 4px', border: '1px solid #d1d5db', borderRadius: 4 }}
-                value={formInput.sapi} onChange={e => setFormInput({ ...formInput, sapi: e.target.value })} />
+                value={formInput.sapi === 0 ? '' : formInput.sapi} onFocus={e => e.target.select()} onChange={e => setFormInput({ ...formInput, sapi: e.target.value.replace(/^0+(?=\d)/, '') })}  />
               <span style={{ fontSize: 10, color: '#999', width: 28 }}>ekor</span>
               <span style={{ fontSize: 10, color: '#666' }}>Rp/ekor</span>
               <input type="number" min="0" placeholder="20000000" style={{ width: 85, fontSize: 11, padding: '2px 4px', border: '1px solid #d1d5db', borderRadius: 4 }}
-                value={formInput.harga_sapi} onChange={e => setFormInput({ ...formInput, harga_sapi: e.target.value })} />
+                value={formInput.harga_sapi === 0 ? '' : formInput.harga_sapi} onFocus={e => e.target.select()} onChange={e => setFormInput({ ...formInput, harga_sapi: e.target.value.replace(/^0+(?=\d)/, '') })}  />
             </div>
 
             {/* Kambing */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
               <span style={{ fontSize: 11, flex: 1.2, fontWeight: 600 }}>🐐 Kambing</span>
               <input type="number" min="0" placeholder="0" style={{ width: 55, fontSize: 11, padding: '2px 4px', border: '1px solid #d1d5db', borderRadius: 4 }}
-                value={formInput.kambing} onChange={e => setFormInput({ ...formInput, kambing: e.target.value })} />
+                value={formInput.kambing === 0 ? '' : formInput.kambing} onFocus={e => e.target.select()} onChange={e => setFormInput({ ...formInput, kambing: e.target.value.replace(/^0+(?=\d)/, '') })}  />
               <span style={{ fontSize: 10, color: '#999', width: 28 }}>ekor</span>
               <span style={{ fontSize: 10, color: '#666' }}>Rp/ekor</span>
               <input type="number" min="0" placeholder="2500000" style={{ width: 85, fontSize: 11, padding: '2px 4px', border: '1px solid #d1d5db', borderRadius: 4 }}
-                value={formInput.harga_kambing} onChange={e => setFormInput({ ...formInput, harga_kambing: e.target.value })} />
+                value={formInput.harga_kambing === 0 ? '' : formInput.harga_kambing} onFocus={e => e.target.select()} onChange={e => setFormInput({ ...formInput, harga_kambing: e.target.value.replace(/^0+(?=\d)/, '') })}  />
             </div>
 
             {/* Ayam */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
               <span style={{ fontSize: 11, flex: 1.2, fontWeight: 600 }}>🐓 Ayam</span>
               <input type="number" min="0" placeholder="0" style={{ width: 55, fontSize: 11, padding: '2px 4px', border: '1px solid #d1d5db', borderRadius: 4 }}
-                value={formInput.ayam} onChange={e => setFormInput({ ...formInput, ayam: e.target.value })} />
+                value={formInput.ayam === 0 ? '' : formInput.ayam} onFocus={e => e.target.select()} onChange={e => setFormInput({ ...formInput, ayam: e.target.value.replace(/^0+(?=\d)/, '') })}  />
               <span style={{ fontSize: 10, color: '#999', width: 28 }}>ekor</span>
               <span style={{ fontSize: 10, color: '#666' }}>Rp/ekor</span>
               <input type="number" min="0" placeholder="40000" style={{ width: 85, fontSize: 11, padding: '2px 4px', border: '1px solid #d1d5db', borderRadius: 4 }}
-                value={formInput.harga_ayam} onChange={e => setFormInput({ ...formInput, harga_ayam: e.target.value })} />
+                value={formInput.harga_ayam === 0 ? '' : formInput.harga_ayam} onFocus={e => e.target.select()} onChange={e => setFormInput({ ...formInput, harga_ayam: e.target.value.replace(/^0+(?=\d)/, '') })}  />
             </div>
 
             {/* Itik */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
               <span style={{ fontSize: 11, flex: 1.2, fontWeight: 600 }}>🦆 Itik</span>
               <input type="number" min="0" placeholder="0" style={{ width: 55, fontSize: 11, padding: '2px 4px', border: '1px solid #d1d5db', borderRadius: 4 }}
-                value={formInput.itik} onChange={e => setFormInput({ ...formInput, itik: e.target.value })} />
+                value={formInput.itik === 0 ? '' : formInput.itik} onFocus={e => e.target.select()} onChange={e => setFormInput({ ...formInput, itik: e.target.value.replace(/^0+(?=\d)/, '') })}  />
               <span style={{ fontSize: 10, color: '#999', width: 28 }}>ekor</span>
               <span style={{ fontSize: 10, color: '#666' }}>Rp/ekor</span>
               <input type="number" min="0" placeholder="50000" style={{ width: 85, fontSize: 11, padding: '2px 4px', border: '1px solid #d1d5db', borderRadius: 4 }}
-                value={formInput.harga_itik} onChange={e => setFormInput({ ...formInput, harga_itik: e.target.value })} />
+                value={formInput.harga_itik === 0 ? '' : formInput.harga_itik} onFocus={e => e.target.select()} onChange={e => setFormInput({ ...formInput, harga_itik: e.target.value.replace(/^0+(?=\d)/, '') })}  />
             </div>
           </div>
 

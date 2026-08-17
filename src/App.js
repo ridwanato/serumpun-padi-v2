@@ -45,13 +45,18 @@ function App() {
 
   /* ── UI state ── */
   const [mapZoom, setMapZoom] = useState(12.5);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 768);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
-  // Auto-collapse sidebar on mobile screens (< 768px)
+  // Detect mobile screen and auto-collapse sidebar
   useEffect(() => {
     const handleCheckMobile = () => {
-      if (window.innerWidth < 768) {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (mobile) {
         setIsSidebarOpen(false);
+        setIsMobileSidebarOpen(false);
       }
     };
     handleCheckMobile();
@@ -108,6 +113,7 @@ function App() {
   const [hortiList, setHortiList] = useState([]);
   const [palawijaList, setPalawijaList] = useState([]);
   const [warningList, setWarningList] = useState([]);
+  const [peternakanList, setPeternakanList] = useState([]);
 
   /* ── Auto-load on mount ── */
   useEffect(() => { loadFromURL(); }, []); // eslint-disable-line
@@ -154,7 +160,8 @@ function App() {
       supabase.from('sawah_status').select('*'),
       supabase.from('warning_opt').select('*'),
       supabase.from('komoditas_palawija').select('*'),
-    ]).then(([bd, nl, fv, sk, pk, ht, sw, wo, pl]) => {
+      supabase.from('peternakan').select('*'),
+    ]).then(([bd, nl, fv, sk, pk, ht, sw, wo, pl, pt]) => {
       if (!bd.error) setBudidayaList(bd.data || []);
       if (!nl.error) setTangkapList(nl.data || []);
       if (!fv.error) setFsvaData(fv.data || []);
@@ -163,6 +170,7 @@ function App() {
       if (!ht.error) setHortiList(ht.data || []);
       if (!wo.error) setWarningList(wo.data || []);
       if (!pl.error) setPalawijaList(pl.data || []);
+      if (!pt.error) setPeternakanList(pt.data || []);
       if (!sw.error && sw.data?.length) {
         const map = {};
         sw.data.forEach(r => {
@@ -208,6 +216,15 @@ function App() {
     setActiveView('dashboard');
     setShowDrawBar(false);
     setActiveSawahId(null);
+  }, []);
+
+  // Mobile: toggle sidebar open/closed; sidebar and dashboard are mutually exclusive
+  const handleMobileSidebarToggle = useCallback(() => {
+    setIsMobileSidebarOpen(prev => {
+      const opening = !prev;
+      if (opening) setIsDashboardPanelOpen(false);
+      return opening;
+    });
   }, []);
 
   /* ── Toggle Layer Checkbox from Sidebar ── */
@@ -430,7 +447,7 @@ function App() {
   }, []);
 
   const refreshSupabase = useCallback(async () => {
-    const [bd, nl, fv, sk, pk, ht, wo, pl] = await Promise.all([
+    const [bd, nl, fv, sk, pk, ht, wo, pl, pt] = await Promise.all([
       supabase.from('kolam_budidaya').select('*'),
       supabase.from('nelayan_tangkap').select('*'),
       supabase.from('fsva_kelurahan').select('*'),
@@ -439,6 +456,7 @@ function App() {
       supabase.from('komoditas_hortikultura').select('*'),
       supabase.from('warning_opt').select('*'),
       supabase.from('komoditas_palawija').select('*'),
+      supabase.from('peternakan').select('*'),
     ]);
     if (!bd.error) setBudidayaList(bd.data || []);
     if (!nl.error) setTangkapList(nl.data || []);
@@ -448,6 +466,7 @@ function App() {
     if (!ht.error) setHortiList(ht.data || []);
     if (!wo.error) setWarningList(wo.data || []);
     if (!pl.error) setPalawijaList(pl.data || []);
+    if (!pt.error) setPeternakanList(pt.data || []);
   }, []);
 
   /* ── Panel router for Submodule views ── */
@@ -557,7 +576,10 @@ function App() {
   const isSubmoduleOpen = activeView !== 'dashboard';
 
   return (
-    <div className={`sp-app ${!isSidebarOpen ? 'is-sidebar-collapsed' : ''}`} data-drawmode={drawMode || ''}>
+    <div
+      className={`sp-app ${!isSidebarOpen ? 'is-sidebar-collapsed' : ''} ${isMobile && isMobileSidebarOpen ? 'is-mobile-sidebar-open' : ''}`}
+      data-drawmode={drawMode || ''}
+    >
       {/* ── Auth Modal ── */}
       {showAuth && <Auth onLogin={() => setShowAuth(false)} initialMode={authInitialMode} />}
 
@@ -569,21 +591,60 @@ function App() {
         </div>
       )}
 
-      {/* ── 1. LEFT ICON RAIL ── */}
+      {/* ── MOBILE ONLY: Floating expand/collapse sidebar button (Capture 2 Mockup Icon) ── */}
+      {isMobile && !isPicking && (
+        <>
+          <button
+            className="sp-mobile-sidebar-toggle"
+            onClick={handleMobileSidebarToggle}
+            title={isMobileSidebarOpen ? 'Tutup sidebar' : 'Buka sidebar'}
+            aria-label={isMobileSidebarOpen ? 'Tutup sidebar' : 'Buka sidebar'}
+          >
+            <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+              {/* Outer panel outline */}
+              <rect x="2" y="2" width="28" height="28" rx="7" stroke="#22c55e" strokeWidth="2.5" fill="none" />
+              {/* Vertical divider line separating left rail and main panel */}
+              <line x1="20" y1="2" x2="20" y2="30" stroke="#22c55e" strokeWidth="2.5" />
+              {/* Chevron arrow: points right when closed (>), points left when open (<) */}
+              {isMobileSidebarOpen ? (
+                <polyline points="14 10 9 16 14 22" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+              ) : (
+                <polyline points="9 10 14 16 9 22" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+              )}
+            </svg>
+          </button>
+          {/* Backdrop overlay: click outside to close mobile sidebar */}
+          {isMobileSidebarOpen && (
+            <div
+              className="sp-mobile-sidebar-overlay"
+              onClick={handleMobileSidebarToggle}
+              aria-hidden="true"
+            />
+          )}
+        </>
+      )}
+
+      {/* ── 1. LEFT ICON RAIL (on mobile, hidden by CSS; shown when .is-mobile-sidebar-open) ── */}
       <LeftIconRail
         activeView={activeView}
-        onSelectView={handleSelectView}
-        onToggleSidebar={() => setIsSidebarOpen(v => !v)}
-        isSidebarOpen={isSidebarOpen}
+        onSelectView={(v) => {
+          handleSelectView(v);
+          if (isMobile) { setIsMobileSidebarOpen(false); setIsDashboardPanelOpen(false); }
+        }}
+        onToggleSidebar={() => isMobile ? handleMobileSidebarToggle() : setIsSidebarOpen(v => !v)}
+        isSidebarOpen={isMobile ? isMobileSidebarOpen : isSidebarOpen}
         onOpenModal={setActiveModal}
       />
 
       {/* ── 2. COLLAPSIBLE LEFT SIDEBAR (DKPP.INFO) ── */}
       <SidebarMenu
-        isOpen={isSidebarOpen}
-        onToggleSidebar={() => setIsSidebarOpen(v => !v)}
+        isOpen={isMobile ? isMobileSidebarOpen : isSidebarOpen}
+        onToggleSidebar={() => isMobile ? handleMobileSidebarToggle() : setIsSidebarOpen(v => !v)}
         activeView={activeView}
-        onSelectView={handleSelectView}
+        onSelectView={(v) => {
+          handleSelectView(v);
+          if (isMobile) { setIsMobileSidebarOpen(false); setIsDashboardPanelOpen(false); }
+        }}
         layerStates={{
           showSawah,
           showKolam,
@@ -640,6 +701,7 @@ function App() {
                   tangkapList={tangkapList}
                   poktanKMZ={poktanKMZ}
                   poktanList={poktanList}
+                  peternakanList={peternakanList}
                   onOpenPanel={handleSelectView}
                   onClosePanel={goBackToDashboard}
                   onOpenModal={setActiveModal}
@@ -649,7 +711,7 @@ function App() {
             ) : (
               <button
                 className="sp-dash-expand-trigger"
-                onClick={() => setIsDashboardPanelOpen(true)}
+                onClick={() => { setIsDashboardPanelOpen(true); if (isMobile) setIsMobileSidebarOpen(false); }}
                 title="Buka Panel Ringkasan Metrik"
                 aria-label="Buka Panel Ringkasan Metrik"
               >

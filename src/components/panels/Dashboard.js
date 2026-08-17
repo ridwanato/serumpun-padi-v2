@@ -56,6 +56,7 @@ function Dashboard({
   tangkapList,
   poktanKMZ,
   poktanList,
+  peternakanList,
   onOpenPanel,
   onClosePanel,
   onOpenModal,
@@ -271,6 +272,25 @@ function Dashboard({
   const curT = prodT[0] || null;
   const totTahunT = prodT.reduce((s, b) => s + b.total, 0);
 
+  // ── Peternakan (Computed from peternakanList) ──
+  const pList = peternakanList || [];
+  const totalSapiAll = pList.reduce((s, d) => s + (parseInt(d.sapi) || 0), 0);
+  const totalKambingAll = pList.reduce((s, d) => s + (parseInt(d.kambing) || 0), 0);
+  const totalAyamAll = pList.reduce((s, d) => s + (parseInt(d.ayam) || 0), 0);
+  const totalItikAll = pList.reduce((s, d) => s + (parseInt(d.itik) || 0), 0);
+  const totalTernakAll = totalSapiAll + totalKambingAll + totalAyamAll + totalItikAll;
+
+  const totalNilaiTernakAll = pList.reduce((s, d) => {
+    let detail = {};
+    try { if (typeof d.catatan === 'string' && d.catatan.startsWith('{')) detail = JSON.parse(d.catatan); } catch (e) {}
+    const hSapi = parseFloat(detail.harga_sapi || d.harga_sapi || 20000000);
+    const hKambing = parseFloat(detail.harga_kambing || d.harga_kambing || 2500000);
+    const hAyam = parseFloat(detail.harga_ayam || d.harga_ayam || 40000);
+    const hItik = parseFloat(detail.harga_itik || d.harga_itik || 50000);
+    return s + (parseInt(d.sapi||0)*hSapi) + (parseInt(d.kambing||0)*hKambing) + (parseInt(d.ayam||0)*hAyam) + (parseInt(d.itik||0)*hItik);
+  }, 0);
+  const jumlahPeternak = pList.length;
+
   return (
     <div className="sp-dashboard-stack">
       {/* ── Top Header Row with Close Button on Left ── */}
@@ -313,8 +333,9 @@ function Dashboard({
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
           <div>
-            <div style={{ fontSize: '14px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.4px', lineHeight: 1.2, color: '#ffffff' }}>
-              KELOMPOK WANITA TANI (KWT)
+            <div style={{ lineHeight: 1.2, color: '#ffffff' }}>
+              <div style={{ fontSize: '16px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.4px' }}>KWT</div>
+              <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'none', letterSpacing: '0', opacity: 0.9 }}>(Kelompok Wanita Tani)</div>
             </div>
             <div style={{ fontSize: '10.5px', color: '#f3e8ff', marginTop: '2px', fontWeight: 600 }}>
               Data per <span style={{ color: '#fef08a', fontWeight: 800 }}>{curKWT.label}</span>
@@ -370,11 +391,11 @@ function Dashboard({
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '12px' }}>
           <div style={{ background: '#ffffff', padding: '8px 6px', borderRadius: '12px', textAlign: 'center', boxShadow: '0 2px 6px rgba(0,0,0,0.06)' }}>
             <div style={{ fontSize: '8px', fontWeight: 900, textTransform: 'uppercase', color: '#581c87' }}>JUMLAH KWT</div>
-            <div style={{ fontSize: '13px', fontWeight: 900, color: '#1e1b4b', marginTop: '2px' }}>{totalKWTCount || 2} Kel</div>
+            <div style={{ fontSize: '13px', fontWeight: 900, color: '#1e1b4b', marginTop: '2px' }}>{totalKWTCount > 0 ? totalKWTCount + ' Kel' : '-'}</div>
           </div>
           <div style={{ background: '#ffffff', padding: '8px 6px', borderRadius: '12px', textAlign: 'center', boxShadow: '0 2px 6px rgba(0,0,0,0.06)' }}>
             <div style={{ fontSize: '8px', fontWeight: 900, textTransform: 'uppercase', color: '#581c87' }}>ANGGOTA</div>
-            <div style={{ fontSize: '13px', fontWeight: 900, color: '#1e1b4b', marginTop: '2px' }}>{totalKWTMembers || 46} Org</div>
+            <div style={{ fontSize: '13px', fontWeight: 900, color: '#1e1b4b', marginTop: '2px' }}>{totalKWTMembers > 0 ? totalKWTMembers + ' Org' : '-'}</div>
           </div>
           <div style={{ background: '#ffffff', padding: '8px 6px', borderRadius: '12px', textAlign: 'center', boxShadow: '0 2px 6px rgba(0,0,0,0.06)' }}>
             <div style={{ fontSize: '8px', fontWeight: 900, textTransform: 'uppercase', color: '#581c87' }}>LUAS LAHAN</div>
@@ -436,7 +457,7 @@ function Dashboard({
             </div>
           </div>
           <div style={{ background: '#ffffff', color: '#047857', borderRadius: '12px', padding: '4px 10px', fontSize: '10px', fontWeight: 900, boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }}>
-            📅 Agustus 2026
+            📅 {new Date().toLocaleDateString('id-ID', {month:'long', year:'numeric'})}
           </div>
         </div>
 
@@ -480,7 +501,7 @@ function Dashboard({
           </div>
           <div style={{ background: '#ffffff', padding: '8px 6px', borderRadius: '12px', textAlign: 'center', boxShadow: '0 2px 6px rgba(0,0,0,0.06)' }}>
             <div style={{ fontSize: '8px', fontWeight: 900, textTransform: 'uppercase', color: '#065f46' }}>POLIGON</div>
-            <div style={{ fontSize: '12px', fontWeight: 900, color: '#047857', marginTop: '2px' }}>{filteredSawah.length || 407} Petak</div>
+            <div style={{ fontSize: '12px', fontWeight: 900, color: '#047857', marginTop: '2px' }}>{filteredSawah.length > 0 ? filteredSawah.length + ' Petak' : '-'}</div>
           </div>
           <div style={{ background: '#ffffff', padding: '8px 6px', borderRadius: '12px', textAlign: 'center', boxShadow: '0 2px 6px rgba(0,0,0,0.06)' }}>
             <div style={{ fontSize: '8px', fontWeight: 900, textTransform: 'uppercase', color: '#065f46' }}>SIAP PANEN</div>
@@ -537,13 +558,13 @@ function Dashboard({
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '12px' }}>
           <div style={{ background: '#ffffff', padding: '10px 6px', borderRadius: '12px', textAlign: 'center', boxShadow: '0 4px 10px rgba(0,0,0,0.08)' }}>
             <div style={{ fontSize: '8px', fontWeight: 900, textTransform: 'uppercase', color: '#0c4a6e' }}>JUMLAH UNIT</div>
-            <div style={{ fontSize: '15px', fontWeight: 900, color: '#0284c7', marginTop: '2px' }}>{jumlahKolam} Unit</div>
-            <div style={{ fontSize: '7.5px', color: '#64748b', marginTop: '1px', fontWeight: 700 }}>{luasKolamTotal} m² • {aktifKolam} aktif</div>
+            <div style={{ fontSize: '15px', fontWeight: 900, color: '#0284c7', marginTop: '2px' }}>{jumlahKolam > 0 ? jumlahKolam + ' Unit' : '-'}</div>
+            <div style={{ fontSize: '7.5px', color: '#64748b', marginTop: '1px', fontWeight: 700 }}>{luasKolamTotal} m² • {aktifKolam > 0 ? aktifKolam + ' aktif' : '-'}</div>
           </div>
           <div style={{ background: '#ffffff', padding: '10px 6px', borderRadius: '12px', textAlign: 'center', boxShadow: '0 4px 10px rgba(0,0,0,0.08)' }}>
             <div style={{ fontSize: '8px', fontWeight: 900, textTransform: 'uppercase', color: '#0c4a6e' }}>PRODUKSI IKAN</div>
             <div style={{ fontSize: '15px', fontWeight: 900, color: '#0284c7', marginTop: '2px' }}>
-              {curB.totalKg >= 1000 ? `${(curB.totalKg/1000).toFixed(1)} Ton` : `${curB.totalKg || 55} Ton`}
+              {curB.totalKg > 0 ? (curB.totalKg >= 1000 ? `${(curB.totalKg/1000).toFixed(1)} Ton` : `${curB.totalKg} kg`) : '-'}
             </div>
             <div style={{ fontSize: '7.5px', color: '#64748b', marginTop: '1px', fontWeight: 700 }}>
               Total: {totTahunB_Kg >= 1000 ? `${(totTahunB_Kg/1000).toFixed(1)} Ton` : `${(totTahunB_Kg || 0).toFixed(1)} Ton`} ({realCurrentYear})
@@ -552,10 +573,10 @@ function Dashboard({
           <div style={{ background: '#ffffff', padding: '10px 6px', borderRadius: '12px', textAlign: 'center', boxShadow: '0 4px 10px rgba(0,0,0,0.08)' }}>
             <div style={{ fontSize: '8px', fontWeight: 900, textTransform: 'uppercase', color: '#0c4a6e' }}>NILAI PRODUKSI</div>
             <div style={{ fontSize: '15px', fontWeight: 900, color: '#16a34a', marginTop: '2px' }}>
-              Rp {(curB.totalOmset || 200000).toLocaleString('id-ID')}
+              {curB.totalOmset > 0 ? `Rp ${curB.totalOmset.toLocaleString('id-ID')}` : '-'}
             </div>
             <div style={{ fontSize: '7.5px', color: '#64748b', marginTop: '1px', fontWeight: 700 }}>
-              Total: Rp {(totTahunB_Omset || 0).toLocaleString('id-ID')} ({realCurrentYear})
+              Total: {totTahunB_Omset > 0 ? `Rp ${totTahunB_Omset.toLocaleString('id-ID')}` : '-'} ({realCurrentYear})
             </div>
           </div>
         </div>
@@ -610,11 +631,11 @@ function Dashboard({
               PERIKANAN TANGKAP
             </div>
             <div style={{ fontSize: '10.5px', color: '#ccfbf1', marginTop: '2px', fontWeight: 600 }}>
-              Pesisir & TPI Kota Cilegon
+              Kota Cilegon
             </div>
           </div>
           <div style={{ background: '#ffffff', color: '#0f766e', borderRadius: '12px', padding: '4px 10px', fontSize: '10px', fontWeight: 900, boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }}>
-            📅 Agustus 2026
+            📅 {new Date().toLocaleDateString('id-ID', {month:'long', year:'numeric'})}
           </div>
         </div>
 
@@ -624,13 +645,13 @@ function Dashboard({
             <div style={{ background: '#f0fdf4', borderRadius: '10px', padding: '8px 10px', textAlign: 'center' }}>
               <div style={{ fontSize: '8.5px', fontWeight: 900, textTransform: 'uppercase', color: '#134e4a' }}>PRODUKSI TANGKAP</div>
               <div style={{ fontSize: '17px', fontWeight: 900, lineHeight: 1.2, marginTop: '2px', color: '#0f766e' }}>
-                {curT ? (curT.total >= 1000 ? (curT.total/1000).toFixed(1) + ' Ton' : curT.total + ' Kg') : '50 Kg'}
+                {curT && curT.total > 0 ? (curT.total >= 1000 ? (curT.total/1000).toFixed(1) + ' Ton' : curT.total + ' Kg') : '-'}
               </div>
             </div>
             <div style={{ background: '#f0fdf4', borderRadius: '10px', padding: '8px 10px', textAlign: 'center' }}>
               <div style={{ fontSize: '8.5px', fontWeight: 900, textTransform: 'uppercase', color: '#134e4a' }}>ESTIMASI OMSET</div>
               <div style={{ fontSize: '16px', fontWeight: 900, lineHeight: 1.2, marginTop: '2px', color: '#16a34a' }}>
-                Rp {(totTahunT > 0 ? totTahunT * 35000 : 1750000).toLocaleString('id-ID')}
+                {totTahunT > 0 ? `Rp ${(totTahunT * 35000).toLocaleString('id-ID')}` : '-'}
               </div>
             </div>
           </div>
@@ -640,11 +661,11 @@ function Dashboard({
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', textAlign: 'center' }}>
             <div>
               <div style={{ fontSize: '8px', fontWeight: 800, textTransform: 'uppercase', color: '#64748b' }}>TOTAL NELAYAN</div>
-              <div style={{ fontSize: '14px', fontWeight: 900, color: '#0f766e', marginTop: '1px' }}>{jumlahNelayan || 715} Orang</div>
+              <div style={{ fontSize: '14px', fontWeight: 900, color: '#0f766e', marginTop: '1px' }}>{jumlahNelayan > 0 ? jumlahNelayan + ' Orang' : '-'}</div>
             </div>
             <div style={{ borderLeft: '1px solid #e2e8f0', paddingLeft: '6px' }}>
               <div style={{ fontSize: '8px', fontWeight: 800, textTransform: 'uppercase', color: '#64748b' }}>PANGKALAN / TPI</div>
-              <div style={{ fontSize: '14px', fontWeight: 900, color: '#0f766e', marginTop: '1px' }}>{jumlahPangkalan || 9} Pangkalan</div>
+              <div style={{ fontSize: '14px', fontWeight: 900, color: '#0f766e', marginTop: '1px' }}>{jumlahPangkalan > 0 ? jumlahPangkalan + ' Pangkalan' : '-'}</div>
             </div>
           </div>
         </div>
@@ -653,15 +674,15 @@ function Dashboard({
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '12px' }}>
           <div style={{ background: '#ffffff', padding: '8px 6px', borderRadius: '12px', textAlign: 'center', boxShadow: '0 2px 6px rgba(0,0,0,0.06)' }}>
             <div style={{ fontSize: '8px', fontWeight: 900, textTransform: 'uppercase', color: '#134e4a' }}>NELAYAN</div>
-            <div style={{ fontSize: '12px', fontWeight: 900, color: '#0f766e', marginTop: '2px' }}>{jumlahNelayan || 715} Org</div>
+            <div style={{ fontSize: '12px', fontWeight: 900, color: '#0f766e', marginTop: '2px' }}>{jumlahNelayan > 0 ? jumlahNelayan + ' Org' : '-'}</div>
           </div>
           <div style={{ background: '#ffffff', padding: '8px 6px', borderRadius: '12px', textAlign: 'center', boxShadow: '0 2px 6px rgba(0,0,0,0.06)' }}>
             <div style={{ fontSize: '8px', fontWeight: 900, textTransform: 'uppercase', color: '#134e4a' }}>PERAHU MOTOR</div>
-            <div style={{ fontSize: '12px', fontWeight: 900, color: '#0f766e', marginTop: '2px' }}>{totalPerahuMotor || 410} Unit</div>
+            <div style={{ fontSize: '12px', fontWeight: 900, color: '#0f766e', marginTop: '2px' }}>{totalPerahuMotor > 0 ? totalPerahuMotor + ' Unit' : '-'}</div>
           </div>
           <div style={{ background: '#ffffff', padding: '8px 6px', borderRadius: '12px', textAlign: 'center', boxShadow: '0 2px 6px rgba(0,0,0,0.06)' }}>
             <div style={{ fontSize: '8px', fontWeight: 900, textTransform: 'uppercase', color: '#134e4a' }}>TANPA MOTOR</div>
-            <div style={{ fontSize: '12px', fontWeight: 900, color: '#0f766e', marginTop: '2px' }}>{totalTanpaMotor || 0} Unit</div>
+            <div style={{ fontSize: '12px', fontWeight: 900, color: '#0f766e', marginTop: '2px' }}>{totalTanpaMotor > 0 ? totalTanpaMotor + ' Unit' : '-'}</div>
           </div>
         </div>
 
@@ -703,7 +724,7 @@ function Dashboard({
             </div>
           </div>
           <div style={{ background: '#ffffff', color: '#ea580c', borderRadius: '12px', padding: '4px 10px', fontSize: '10px', fontWeight: 900, boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }}>
-            📅 Agustus 2026
+            📅 {new Date().toLocaleDateString('id-ID', {month:'long', year:'numeric'})}
           </div>
         </div>
 
@@ -713,13 +734,13 @@ function Dashboard({
             <div style={{ background: '#fff7ed', borderRadius: '10px', padding: '8px 10px', textAlign: 'center' }}>
               <div style={{ fontSize: '8.5px', fontWeight: 900, textTransform: 'uppercase', color: '#7c2d12' }}>POPULASI TERNAK</div>
               <div style={{ fontSize: '17px', fontWeight: 900, lineHeight: 1.2, marginTop: '2px', color: '#c2410c' }}>
-                8.450 Ekor
+                {totalTernakAll > 0 ? `${totalTernakAll.toLocaleString('id-ID')} Ekor` : '-'}
               </div>
             </div>
             <div style={{ background: '#fff7ed', borderRadius: '10px', padding: '8px 10px', textAlign: 'center' }}>
-              <div style={{ fontSize: '8.5px', fontWeight: 900, textTransform: 'uppercase', color: '#7c2d12' }}>PRODUKSI DAGING</div>
+              <div style={{ fontSize: '8.5px', fontWeight: 900, textTransform: 'uppercase', color: '#7c2d12' }}>PETERNAK / UNIT</div>
               <div style={{ fontSize: '17px', fontWeight: 900, lineHeight: 1.2, marginTop: '2px', color: '#c2410c' }}>
-                45,2 Ton
+                {jumlahPeternak > 0 ? `${jumlahPeternak} Unit` : '-'}
               </div>
             </div>
           </div>
@@ -729,11 +750,11 @@ function Dashboard({
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', textAlign: 'center' }}>
             <div>
               <div style={{ fontSize: '8px', fontWeight: 800, textTransform: 'uppercase', color: '#9a3412' }}>TOTAL POPULASI</div>
-              <div style={{ fontSize: '14px', fontWeight: 900, color: '#c2410c', marginTop: '1px' }}>8.450 Ekor</div>
+              <div style={{ fontSize: '14px', fontWeight: 900, color: '#c2410c', marginTop: '1px' }}>{totalTernakAll > 0 ? `${totalTernakAll.toLocaleString('id-ID')} Ekor` : '-'}</div>
             </div>
             <div style={{ borderLeft: '1px solid #fed7aa', paddingLeft: '6px' }}>
               <div style={{ fontSize: '8px', fontWeight: 800, textTransform: 'uppercase', color: '#9a3412' }}>ESTIMASI NILAI</div>
-              <div style={{ fontSize: '14px', fontWeight: 900, color: '#16a34a', marginTop: '1px' }}>Rp 1,2 Miliar</div>
+              <div style={{ fontSize: '14px', fontWeight: 900, color: '#16a34a', marginTop: '1px' }}>{totalNilaiTernakAll > 0 ? `Rp ${totalNilaiTernakAll.toLocaleString('id-ID')}` : '-'}</div>
             </div>
           </div>
         </div>
@@ -742,15 +763,15 @@ function Dashboard({
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '12px' }}>
           <div style={{ background: '#ffffff', padding: '8px 6px', borderRadius: '12px', textAlign: 'center', boxShadow: '0 2px 6px rgba(0,0,0,0.06)' }}>
             <div style={{ fontSize: '8px', fontWeight: 900, textTransform: 'uppercase', color: '#7c2d12' }}>SAPI / KERBAU</div>
-            <div style={{ fontSize: '12px', fontWeight: 900, color: '#c2410c', marginTop: '2px' }}>1.250 Ekor</div>
+            <div style={{ fontSize: '12px', fontWeight: 900, color: '#c2410c', marginTop: '2px' }}>{totalSapiAll > 0 ? `${totalSapiAll.toLocaleString('id-ID')} Ekor` : '-'}</div>
           </div>
           <div style={{ background: '#ffffff', padding: '8px 6px', borderRadius: '12px', textAlign: 'center', boxShadow: '0 2px 6px rgba(0,0,0,0.06)' }}>
             <div style={{ fontSize: '8px', fontWeight: 900, textTransform: 'uppercase', color: '#7c2d12' }}>KAMBING / DOMBA</div>
-            <div style={{ fontSize: '12px', fontWeight: 900, color: '#c2410c', marginTop: '2px' }}>4.800 Ekor</div>
+            <div style={{ fontSize: '12px', fontWeight: 900, color: '#c2410c', marginTop: '2px' }}>{totalKambingAll > 0 ? `${totalKambingAll.toLocaleString('id-ID')} Ekor` : '-'}</div>
           </div>
           <div style={{ background: '#ffffff', padding: '8px 6px', borderRadius: '12px', textAlign: 'center', boxShadow: '0 2px 6px rgba(0,0,0,0.06)' }}>
             <div style={{ fontSize: '8px', fontWeight: 900, textTransform: 'uppercase', color: '#7c2d12' }}>UNGGAS</div>
-            <div style={{ fontSize: '12px', fontWeight: 900, color: '#c2410c', marginTop: '2px' }}>2.400 Ekor</div>
+            <div style={{ fontSize: '12px', fontWeight: 900, color: '#c2410c', marginTop: '2px' }}>{(totalAyamAll + totalItikAll) > 0 ? `${(totalAyamAll + totalItikAll).toLocaleString('id-ID')} Ekor` : '-'}</div>
           </div>
         </div>
 
@@ -767,35 +788,6 @@ function Dashboard({
         </div>
       </div>
 
-      {/* ── CARD 6: KETAHANAN PANGAN - LAPISAN KEENAM ── */}
-      <div 
-        className="sp-dash-card sp-dash-card--pangan"
-        style={{ borderRadius: '20px', padding: '16px' }}
-        onClick={() => onOpenPanel('ikpg_admin')}
-      >
-        <div className="sp-dash-card__body">
-          <div className="sp-dash-card__left">
-            <div className="sp-dash-card__header-label">
-              KETAHANAN PANGAN (FSVA / SKPG)
-            </div>
-            <div className="sp-dash-card__hero-value">
-              87.4 (Tahan)
-            </div>
-            <div className="sp-dash-card__bullets">
-              <div>• Indeks Ketahanan Pangan (IKP)</div>
-              <div>• 43 Kelurahan Terpetakan</div>
-            </div>
-          </div>
-          <div className="sp-dash-card__right">
-            <div className="sp-dash-card__badge-pill">
-              Peta Kerawanan
-            </div>
-            <div className="sp-dash-card__badge-pill">
-              Data SKPG 2026
-            </div>
-          </div>
-        </div>
-      </div>
 
     </div>
   );

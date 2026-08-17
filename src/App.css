@@ -1553,7 +1553,7 @@ body {
 
 /* ── Mobile Screen Breakpoint (< 768px) ── */
 @media (max-width: 768px) {
-  /* 1. Header Bar: Hide background, search, weather, date on mobile */
+  /* 1. Header Bar: Fully hidden on mobile */
   .sp-topbar {
     background: transparent !important;
     border-bottom: none !important;
@@ -1610,11 +1610,70 @@ body {
     height: 22px !important;
   }
 
-  /* 3. Dashboard Ringkasan Metrik: Responsive 70% width limit on mobile */
+  /* ── MOBILE: Hide the entire permanent icon rail by default ── */
+  .sp-icon-rail {
+    display: none !important;
+  }
+
+  /* Show icon rail only when sidebar is open (controlled via parent class) */
+  .sp-app.is-mobile-sidebar-open .sp-icon-rail {
+    display: flex !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    height: 100vh !important;
+    z-index: 1200 !important;
+  }
+
+  /* Hide sidebar when not open on mobile */
+  .sp-sidebar {
+    display: none !important;
+  }
+
+  .sp-app.is-mobile-sidebar-open .sp-sidebar {
+    display: flex !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 52px !important;
+    height: 100vh !important;
+    z-index: 1150 !important;
+    width: 240px !important;
+  }
+
+  /* ── Mobile expand sidebar button: left-center floating ── */
+  /* Mobile Sidebar Toggle Button matching Capture 2 Mockup */
+  .sp-mobile-sidebar-toggle {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: fixed !important;
+    left: 8px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    z-index: 2400 !important;
+    width: 44px !important;
+    height: 44px !important;
+    background: #ffffff !important;
+    border: 2.5px solid #22c55e !important;
+    border-radius: 12px !important;
+    cursor: pointer !important;
+    box-shadow: 0 4px 16px rgba(34, 197, 94, 0.45) !important;
+    padding: 0 !important;
+    transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+    animation: sp-subtle-bounce 2.2s infinite ease-in-out !important;
+  }
+
+  .sp-mobile-sidebar-toggle:hover {
+    transform: translateY(-50%) scale(1.08) !important;
+    box-shadow: 0 6px 20px rgba(34, 197, 94, 0.6) !important;
+  }
+
+  /* 3. Dashboard Ringkasan Metrik: 90% width on mobile */
   .sp-right-dashboard {
-    width: 70vw !important;
-    max-width: 70vw !important;
-    right: 8px !important;
+    width: 90vw !important;
+    max-width: 90vw !important;
+    right: 5vw !important;
+    left: 5vw !important;
     top: 10px !important;
     max-height: calc(100vh - 20px) !important;
     padding: 8px 10px !important;
@@ -1628,32 +1687,73 @@ body {
     border: 1.5px solid rgba(134, 239, 172, 0.6) !important;
   }
 
+  /* Hide dashboard when mobile sidebar is open */
+  .sp-app.is-mobile-sidebar-open .sp-right-dashboard {
+    display: none !important;
+  }
+
+  /* ── Mobile Dashboard Card: no text overflow ── */
   .sp-dash-card {
     padding: 8px 10px !important;
     border-radius: 10px !important;
+    overflow: hidden !important;
   }
 
   .sp-dash-card__hero-value {
-    font-size: 14px !important;
+    font-size: clamp(11px, 3.5vw, 16px) !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
   }
 
   .sp-dash-card__header-label {
-    font-size: 11px !important;
+    font-size: clamp(9px, 2.8vw, 12px) !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
   }
 
   .sp-dash-card__bullets {
-    font-size: 9.5px !important;
+    font-size: 9px !important;
+    overflow: hidden !important;
   }
 
   .sp-dash-card__badge-pill {
-    font-size: 8.5px !important;
-    padding: 2px 6px !important;
+    font-size: 8px !important;
+    padding: 2px 5px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  /* Inline dashboard cards: clamp all text sizes */
+  .sp-right-dashboard [style*="fontSize: '14px'"],
+  .sp-right-dashboard [style*="fontSize: '15px'"],
+  .sp-right-dashboard [style*="fontSize: '16px'"],
+  .sp-right-dashboard [style*="fontSize: '17px'"],
+  .sp-right-dashboard [style*="fontSize: '18px'"] {
+    font-size: clamp(11px, 3.2vw, 16px) !important;
+  }
+
+  /* Prevent any text from overflowing card boundaries */
+  .sp-right-dashboard div[style] {
+    overflow-wrap: break-word !important;
+    word-break: break-word !important;
+  }
+
+  /* Hide the dashboard when sidebar overlay is open (backdrop click to close) */
+  .sp-mobile-sidebar-overlay {
+    display: block !important;
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+    z-index: 1100 !important;
   }
 
   /* Adjust Leaflet map controls position on mobile */
   .leaflet-top.leaflet-left {
     top: 12px !important;
-    left: 56px !important;
+    left: 10px !important;
   }
 }
 
