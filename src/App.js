@@ -551,7 +551,7 @@ function App() {
       case 'peternakan':
         return <Peternakan
           onOpenPanel={handleSelectView} user={user}
-          supabase={supabase} onRefresh={refreshSupabase}
+          supabase={supabase} peternakanList={peternakanList} onRefresh={refreshSupabase}
           onPickLocation={startPickLocation} onFlyToLocation={flyToLocation}
           kelurahanBoundaries={layers.kelurahan} kecamatanBoundaries={layers.kecamatan} />;
       case 'laporan_grafik':

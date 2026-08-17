@@ -17,17 +17,13 @@ const findBoundaryForCoords = (lat, lng, boundaries) => {
   return '';
 };
 
-function Peternakan({ onOpenPanel, user, supabase, onRefresh, onPickLocation, onFlyToLocation, kelurahanBoundaries, kecamatanBoundaries }) {
+function Peternakan({ onOpenPanel, user, supabase, peternakanList, onRefresh, onPickLocation, onFlyToLocation, kelurahanBoundaries, kecamatanBoundaries }) {
   const isSuperAdmin = user?.email === 'ketapangcilegon@gmail.com';
   const [activeTab, setActiveTab] = useState('ringkasan');
   const [pendingPin, setPendingPin] = useState(null);
   const [gpsInput, setGpsInput] = useState('');
   const [saving, setSaving] = useState(false);
-  const [dataTernak, setDataTernak] = useState([
-    { id: 1, pemilik: 'Kelompok Ternak Berkah Jaya', kecamatan: 'Cibeber', kelurahan: 'Kedaleman', sapi: 12, kambing: 25, ayam: 150, lat: -6.0331, lng: 106.0696 },
-    { id: 2, pemilik: 'Peternakan Unggas Mandiri', kecamatan: 'Jombang', kelurahan: 'Masigit', sapi: 0, kambing: 8, ayam: 400, lat: -6.0125, lng: 106.0543 },
-    { id: 3, pemilik: 'Kandang Sapi Barokah', kecamatan: 'Citangkil', kelurahan: 'Warnasari', sapi: 18, kambing: 15, ayam: 0, lat: -6.0198, lng: 106.0287 },
-  ]);
+  const [dataTernak, setDataTernak] = useState(peternakanList || []);
 
   const [formInput, setFormInput] = useState({
     pemilik: '',
@@ -45,13 +41,19 @@ function Peternakan({ onOpenPanel, user, supabase, onRefresh, onPickLocation, on
     if (!supabase) return;
     try {
       const { data, error } = await supabase.from('peternakan').select('*').order('id', { ascending: false });
-      if (!error && data && data.length > 0) {
+      if (!error && data) {
         setDataTernak(data);
       }
     } catch (e) {
       console.error('Error fetching peternakan:', e);
     }
   }, [supabase]);
+
+  useEffect(() => {
+    if (peternakanList) {
+      setDataTernak(peternakanList);
+    }
+  }, [peternakanList]);
 
   useEffect(() => {
     loadDataPeternakan();
