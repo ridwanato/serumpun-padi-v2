@@ -150,12 +150,33 @@ function Peternakan({ onOpenPanel, user, supabase, peternakanList, onRefresh, on
     };
 
     if (supabase) {
-      const { error } = await supabase.from('peternakan').insert(payload);
+      const { data, error } = await supabase
+        .from('peternakan')
+        .insert([payload])
+        .select();
+
+      console.log('[Insert Peternakan] payload:', payload, 'data:', data, 'error:', error);
+
       if (error) {
-        alert('Gagal simpan ke Supabase: ' + error.message);
+        console.error('[Insert Peternakan] Supabase error:', error);
+        alert(
+          '❌ Gagal Simpan ke Supabase Database!\n\n' +
+          'Error: ' + (error.message || error.code || JSON.stringify(error)) + '\n\n' +
+          'Penyebab:\n' +
+          'Beberapa kolom (kambing, ayam, itik, catatan, lat, lng, user_id) atau RLS Policy belum diizinkan di Supabase.\n\n' +
+          'Jalankan skrip SQL supabase_setup_peternakan.sql di Supabase SQL Editor!'
+        );
         setSaving(false);
         return;
       }
+
+      if (data && data.length > 0) {
+        // Immediate local state update with newly inserted row
+        setDataTernak(prev => [data[0], ...prev.filter(d => d.id !== data[0].id)]);
+      }
+    } else {
+      const mockNew = { ...payload, id: Date.now() };
+      setDataTernak(prev => [mockNew, ...prev]);
     }
 
     await loadDataPeternakan();
