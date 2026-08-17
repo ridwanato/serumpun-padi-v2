@@ -1976,23 +1976,6 @@ body {
   }
 }
 
-/* ── Mobile Map Controls Hide (Draw Polygon, Zoom, GPS, Fit Bounds, Layer Toggle) ── */
-@media (max-width: 768px) {
-  .leaflet-control-zoom,
-  .sp-locate-me-btn,
-  .sp-fit-bounds-btn,
-  .sp-layer-toggle-btn,
-  .leaflet-draw-toolbar,
-  .sp-draw-toolbar,
-  .leaflet-control-draw,
-  .leaflet-control-locate,
-  .leaflet-top.leaflet-left .leaflet-control-draw,
-  .leaflet-top.leaflet-right .leaflet-control,
-  .leaflet-bottom.leaflet-right .leaflet-control {
-    display: none !important;
-  }
-}
-
 /* ── Dedicated Full-Page View (Produksi Pangan 2014-2025) Centered Layout ── */
 .sp-full-page-view {
   position: absolute;
