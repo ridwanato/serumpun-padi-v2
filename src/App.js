@@ -265,8 +265,49 @@ function App() {
     if (mapRef.current) {
       mapRef.current.getContainer().classList.add('is-picking-mode');
       const onMapClick = (e) => {
+        const lat = e.latlng.lat;
+        const lng = e.latlng.lng;
+
+        // Validation: Check if selected GPS point is inside Kota Cilegon
+        let isInsideCilegon = false;
+        const kelBoundaries = layers?.kelurahan || [];
+        const kecBoundaries = layers?.kecamatan || [];
+        const boundaries = (kelBoundaries.length > 0) ? kelBoundaries : kecBoundaries;
+
+        if (boundaries && Array.isArray(boundaries) && boundaries.length > 0) {
+          try {
+            const pt = turf.point([lng, lat]);
+            for (const feat of boundaries) {
+              if (
+                feat &&
+                feat.geometry &&
+                Array.isArray(feat.geometry.coordinates) &&
+                feat.geometry.coordinates.length > 0 &&
+                (feat.geometry.type === 'Polygon' || feat.geometry.type === 'MultiPolygon')
+              ) {
+                try {
+                  if (turf.booleanPointInPolygon(pt, feat)) {
+                    isInsideCilegon = true;
+                    break;
+                  }
+                } catch (err) {}
+              }
+            }
+          } catch (err) {}
+        } else {
+          // Bounding box approximation for Kota Cilegon
+          if (lat >= -6.08 && lat <= -5.88 && lng >= 105.95 && lng <= 106.12) {
+            isInsideCilegon = true;
+          }
+        }
+
+        if (!isInsideCilegon) {
+          alert('⚠️ Lokasi yang dipilih bukan wilayah Kota Cilegon, silakan coba lagi');
+          return; // Remain in picking mode until valid point inside Cilegon is clicked
+        }
+
         if (pickCallbackRef.current && pickCallbackRef.current.cb) {
-          pickCallbackRef.current.cb({ lat: e.latlng.lat, lng: e.latlng.lng });
+          pickCallbackRef.current.cb({ lat, lng });
         }
         setIsPicking(false);
         mapRef.current.getContainer().classList.remove('is-picking-mode');
@@ -276,7 +317,7 @@ function App() {
       pickCallbackRef.current = { cb: callback, onMapClick };
       mapRef.current.on('click', onMapClick);
     }
-  }, []);
+  }, [layers]);
 
   const cancelPick = useCallback(() => {
     setIsPicking(false);
