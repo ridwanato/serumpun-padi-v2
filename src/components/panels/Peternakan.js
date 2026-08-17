@@ -4,16 +4,29 @@ import { ALL_KEC } from '../../config/wilayah';
 import { parseCoordinates } from '../../utils/parsers';
 
 const findBoundaryForCoords = (lat, lng, boundaries) => {
-  if (!boundaries || boundaries.length === 0) return '';
-  const pt = turf.point([lng, lat]);
-  for (const feat of boundaries) {
-    if (feat.geometry) {
-      const isInside = turf.booleanPointInPolygon(pt, feat);
-      if (isInside) {
-        return feat.properties?.name || '';
+  if (!boundaries || !Array.isArray(boundaries) || boundaries.length === 0) return '';
+  const parsedLat = parseFloat(lat);
+  const parsedLng = parseFloat(lng);
+  if (isNaN(parsedLat) || isNaN(parsedLng)) return '';
+  try {
+    const pt = turf.point([parsedLng, parsedLat]);
+    for (const feat of boundaries) {
+      if (
+        feat &&
+        feat.geometry &&
+        Array.isArray(feat.geometry.coordinates) &&
+        feat.geometry.coordinates.length > 0 &&
+        (feat.geometry.type === 'Polygon' || feat.geometry.type === 'MultiPolygon')
+      ) {
+        try {
+          const isInside = turf.booleanPointInPolygon(pt, feat);
+          if (isInside) {
+            return feat.properties?.name || feat.properties?.WADMKD || feat.properties?.WADMKC || '';
+          }
+        } catch (e) {}
       }
     }
-  }
+  } catch (e) {}
   return '';
 };
 

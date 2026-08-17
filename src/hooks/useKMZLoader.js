@@ -23,7 +23,7 @@ const findLocation = (feature, kelList, kecList) => {
     const center = turf.centroid(feature);
     let namaKelurahan = '-', namaKecamatan = '-';
     for (const kel of kelList) {
-      if (kel.geometry && turf.booleanPointInPolygon(center, kel)) {
+      if (kel?.geometry?.coordinates?.length > 0 && (kel.geometry.type === 'Polygon' || kel.geometry.type === 'MultiPolygon') && (() => { try { return turf.booleanPointInPolygon(center, kel); } catch(e){ return false; } })()) {
         namaKelurahan = kel.properties?.name || kel.properties?.Name || '-';
         break;
       }
@@ -32,7 +32,7 @@ const findLocation = (feature, kelList, kecList) => {
       namaKecamatan = KEL_TO_KEC[namaKelurahan] || '-';
     } else {
       for (const kec of kecList) {
-        if (kec.geometry && turf.booleanPointInPolygon(center, kec)) {
+        if (kec?.geometry?.coordinates?.length > 0 && (kec.geometry.type === 'Polygon' || kec.geometry.type === 'MultiPolygon') && (() => { try { return turf.booleanPointInPolygon(center, kec); } catch(e){ return false; } })()) {
           namaKecamatan = kec.properties?.name || kec.properties?.Name || '-';
           break;
         }
