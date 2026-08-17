@@ -312,36 +312,6 @@ function Dashboard({
         </div>
       </div>
 
-      {/* ── BANNER ANNOUNCEMENT: DASHBOARD PRODUKSI PANGAN 2014-2025 ── */}
-      <div 
-        onClick={() => onOpenPanel && onOpenPanel('produksi_pangan')} 
-        style={{ 
-          background: 'linear-gradient(135deg, #15803d 0%, #166534 50%, #14532d 100%)', 
-          color: '#ffffff', 
-          padding: '12px 18px', 
-          borderRadius: '16px', 
-          marginBottom: '16px', 
-          cursor: 'pointer', 
-          display: 'flex', 
-          justify: 'space-between', 
-          alignItems: 'center', 
-          boxShadow: '0 6px 18px rgba(22, 101, 52, 0.25)',
-          border: '1px solid rgba(255, 255, 255, 0.2)'
-        }}
-      >
-        <div>
-          <div style={{ fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#86efac' }}>
-            🌾 FITUR BARU · TIME SERIES 2014–2025
-          </div>
-          <div style={{ fontSize: '14px', fontWeight: 900, marginTop: '2px' }}>
-            📊 Dashboard Realisasi & Proyeksi Padi & Palawija Kota Cilegon
-          </div>
-        </div>
-        <div style={{ background: '#ffffff', color: '#166534', fontWeight: 900, fontSize: '11px', padding: '6px 14px', borderRadius: '10px', whiteSpace: 'nowrap', boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }}>
-          Lihat Grafik & Proyeksi ➔
-        </div>
-      </div>
-
       {/* ── CARD 1: KELOMPOK WANITA TANI (KWT) - PURPLE GRADIENT (CAPTURE 3 MOCKUP) ── */}
       <div 
         style={{

@@ -103,6 +103,14 @@ function SidebarMenu({
       checked: layerStates.showWarningPin,
       key: 'showWarningPin',
     },
+    {
+      id: 'produksi_pangan',
+      label: 'Produksi Pangan (2014-2025)',
+      icon: '📊',
+      view: 'produksi_pangan',
+      checked: activeView === 'produksi_pangan',
+      key: 'showProduksiPangan',
+    },
   ];
 
   const handleUploadClick = () => {

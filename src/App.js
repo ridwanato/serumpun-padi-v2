@@ -76,6 +76,16 @@ function App() {
   const [fillOpacity, setFillOpacity] = useState(0.55);
   const [isPicking, setIsPicking] = useState(false); // overlay picking mode
 
+
+  // Auto-collapse sidebar & panel when entering dedicated Produksi Pangan page
+  useEffect(() => {
+    if (activeView === 'produksi_pangan') {
+      setIsSidebarOpen(false);
+      setIsMobileSidebarOpen(false);
+      setIsDashboardPanelOpen(false);
+    }
+  }, [activeView]);
+
   /* ── Layer toggles ── */
   const [showSawah, setShowSawah] = useState(true);
   const [showKolam, setShowKolam] = useState(true);
@@ -622,7 +632,7 @@ function App() {
     );
   }
 
-  const isSubmoduleOpen = activeView !== 'dashboard';
+  const isSubmoduleOpen = activeView !== 'dashboard' && activeView !== 'produksi_pangan';
 
   return (
     <div
@@ -772,6 +782,21 @@ function App() {
               </button>
             )}
           </>
+        )}
+
+        
+        {/* ── DEDICATED FULL-PAGE VIEW: PRODUKSI PANGAN 2014-2025 ── */}
+        {activeView === 'produksi_pangan' && (
+          <div className="sp-full-page-view">
+            <div className="sp-full-page-view__header">
+              <button className="sp-btn" onClick={goBackToDashboard} style={{ background: '#ffffff', color: '#166534', fontWeight: 800, border: '1px solid #bbf7d0', boxShadow: '0 2px 6px rgba(0,0,0,0.06)' }}>
+                ⬅️ Kembali ke Dashboard Utama
+              </button>
+            </div>
+            <div className="sp-full-page-view__content">
+              <ProduksiPangan />
+            </div>
+          </div>
         )}
 
         {/* ── Submodule Slide Panel (Opens when clicking submenus/details) ── */}

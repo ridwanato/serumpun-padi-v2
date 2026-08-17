@@ -9,7 +9,6 @@ function LeftIconRail({
 }) {
   const iconItems = [
     { id: 'status_sawah', icon: '🌾', label: 'Padi Sawah', type: 'view' },
-    { id: 'produksi_pangan', icon: '📊', label: 'Produksi Pangan (2014-2025)', type: 'view' },
     { id: 'perikanan_budidaya', icon: '🐟', label: 'Perikanan Budidaya', type: 'view' },
     { id: 'perikanan_tangkap', icon: '⛵', label: 'Perikanan Tangkap', type: 'view' },
     { id: 'hortikultura', icon: '🌶️', label: 'Hortikultura', type: 'view' },
@@ -19,6 +18,7 @@ function LeftIconRail({
     { id: 'gapoktan', icon: '🤝', label: 'Gapoktan', type: 'view' },
     { id: 'ketahanan_pangan', icon: '🥣', label: 'Ketahanan Pangan', type: 'view' },
     { id: 'warning', icon: '⚠️', label: 'Peringatan OPT', type: 'view' },
+    { id: 'produksi_pangan', icon: '📊', label: 'Produksi Pangan (2014-2025)', type: 'view' },
     { id: 'upload_kmz', icon: '📤', label: 'Upload KMZ / Shapefile', type: 'modal' },
     { id: 'fsva_skpg', icon: '📋', label: 'FSVA / SKPG', type: 'modal' },
     { id: 'analisis', icon: '🧮', label: 'Analisis & Perhitungan', type: 'modal' },

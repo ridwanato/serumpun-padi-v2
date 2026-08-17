@@ -1957,3 +1957,35 @@ body {
   flex-shrink: 0;
   pointer-events: none;
 }
+
+/* ── Dedicated Full-Page View (Produksi Pangan 2014-2025) ── */
+.sp-full-page-view {
+  position: absolute;
+  top: 56px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #f8fafc;
+  z-index: 850;
+  overflow-y: auto;
+  padding: 16px 20px 40px 20px;
+}
+
+.sp-full-page-view__header {
+  margin-bottom: 12px;
+  display: flex;
+  justify: flex-start;
+  align-items: center;
+}
+
+.sp-full-page-view__content {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .sp-full-page-view {
+    top: 50px;
+    padding: 12px 10px 40px 10px;
+  }
+}
