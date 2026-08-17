@@ -285,63 +285,40 @@ function ProduksiPangan() {
           </select>
         </div>
 
-        {/* JENIS TIME SERIES Selection Section (Capture 3 Desktop / Capture 2 Mobile) */}
-        <div style={{ textAlign: 'center', marginBottom: '16px', padding: '12px 14px', background: '#f8fafc', borderRadius: '14px', border: '1px solid #f1f5f9' }}>
-          <div style={{ fontSize: '11px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#0f172a', marginBottom: '8px' }}>
+        {/* JENIS TIME SERIES Selection Section (Matching Capture 3 Mockup) */}
+        <div style={{ textAlign: 'center', marginBottom: '14px', padding: '10px 12px', background: '#f8fafc', borderRadius: '14px', border: '1px solid #e2e8f0' }}>
+          <div style={{ fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#64748b', marginBottom: '8px' }}>
             JENIS TIME SERIES
           </div>
 
-          {/* Mobile View: Dropdown Menu (Capture 2 Style) */}
-          <div className="sp-mobile-only" style={{ maxWidth: '280px', margin: '0 auto' }}>
-            <select
-              value={selectedMetric}
-              onChange={e => setSelectedMetric(e.target.value)}
-              style={{
-                width: '100%',
-                background: '#0284c7',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '10px 14px',
-                fontSize: '13px',
-                fontWeight: 800,
-                cursor: 'pointer',
-                textAlign: 'center',
-                boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)'
-              }}
-            >
-              {METRIC_OPTIONS.map(m => (
-                <option key={m.key} value={m.key} style={{ background: '#ffffff', color: '#0f172a' }}>
-                  {m.label} ({m.unit})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Desktop View: Horizontal Single Select Inline Links (Capture 3 Style) */}
-          <div className="sp-desktop-only" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', gap: '8px', fontSize: '13px', fontWeight: 800 }}>
-            {METRIC_OPTIONS.map((m, idx) => (
-              <React.Fragment key={m.key}>
-                {idx > 0 && <span style={{ color: '#94a3b8', fontWeight: 400 }}>-</span>}
-                <button
-                  onClick={() => setSelectedMetric(m.key)}
-                  style={{
-                    background: selectedMetric === m.key ? '#0f172a' : 'transparent',
-                    color: selectedMetric === m.key ? '#ffffff' : '#475569',
-                    border: selectedMetric === m.key ? 'none' : '1px solid transparent',
-                    borderRadius: '20px',
-                    padding: '4px 14px',
-                    fontSize: '12px',
-                    fontWeight: 900,
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                    boxShadow: selectedMetric === m.key ? '0 2px 8px rgba(15, 23, 42, 0.25)' : 'none'
-                  }}
-                >
-                  {m.label.toLowerCase()}
-                </button>
-              </React.Fragment>
-            ))}
+          {/* Unified Professional Pill Selector for Desktop & Mobile */}
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', gap: '6px', fontSize: '12px' }}>
+            {METRIC_OPTIONS.map((m, idx) => {
+              const active = selectedMetric === m.key;
+              return (
+                <React.Fragment key={m.key}>
+                  {idx > 0 && <span style={{ color: '#94a3b8', fontWeight: 500, userSelect: 'none' }}>-</span>}
+                  <button
+                    onClick={() => setSelectedMetric(m.key)}
+                    style={{
+                      background: active ? '#0f172a' : 'transparent',
+                      color: active ? '#ffffff' : '#334155',
+                      border: 'none',
+                      borderRadius: '20px',
+                      padding: active ? '5px 14px' : '4px 10px',
+                      fontSize: '12px',
+                      fontWeight: active ? 900 : 800,
+                      cursor: 'pointer',
+                      transition: 'all 0.18s ease',
+                      boxShadow: active ? '0 4px 12px rgba(15, 23, 42, 0.3)' : 'none',
+                      lineHeight: '1.2'
+                    }}
+                  >
+                    {m.label.toLowerCase()}
+                  </button>
+                </React.Fragment>
+              );
+            })}
           </div>
         </div>
 

@@ -395,7 +395,7 @@ function TopNavbar({
         )}
       </div>
 
-      {/* ── Mobile Centered Header Button: PANEL PRODUKSI (Requirement 1) ── */}
+      {/* ── Mobile Centered Header Button: PANEL PRODUKSI (Capture 2) ── */}
       {onToggleDashboardPanel && (
         <div className="sp-mobile-header-center">
           <button
@@ -403,7 +403,7 @@ function TopNavbar({
             onClick={onToggleDashboardPanel}
             title="Buka Panel Produksi"
           >
-            <span>🌾 PANEL PRODUKSI</span>
+            <span>PANEL PRODUKSI</span>
           </button>
         </div>
       )}
