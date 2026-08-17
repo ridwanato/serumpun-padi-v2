@@ -1899,3 +1899,61 @@ body {
   }
 }
 
+
+/* ==========================================================================
+   MAP PICK LOCATION MODE: HIDE PANELS & OVERLAYS SO MAP IS 100% VISIBLE
+   ========================================================================== */
+.sp-app.is-picking-location .sp-panel,
+.sp-app.is-picking-location .sp-overlay,
+.sp-app.is-picking-location .sp-right-dashboard,
+.sp-app.is-picking-location .sp-sidebar,
+.sp-app.is-picking-location .sp-icon-rail,
+.sp-app.is-picking-location .sp-mobile-sidebar-toggle {
+  display: none !important;
+}
+
+/* Floating Pick Location Banner at Top Center */
+.sp-pick-banner {
+  position: fixed !important;
+  top: 16px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 3500 !important;
+  background: linear-gradient(135deg, #15803d 0%, #166534 100%) !important;
+  color: #ffffff !important;
+  padding: 10px 20px !important;
+  border-radius: 30px !important;
+  border: 2px solid #86efac !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  animation: sp-subtle-bounce 2s infinite ease-in-out !important;
+}
+
+.sp-pick-banner button {
+  background: rgba(255, 255, 255, 0.25) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  color: #ffffff !important;
+  padding: 4px 12px !important;
+  border-radius: 14px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.sp-pick-banner button:hover {
+  background: #ef4444 !important;
+  border-color: #fca5a5 !important;
+}
+
+/* Ruang kosong di belakang tombol floating toggle sidebar agar tidak menutupi ikon rail */
+.sp-icon-rail__toggle-gap {
+  height: 56px;
+  width: 100%;
+  flex-shrink: 0;
+  pointer-events: none;
+}

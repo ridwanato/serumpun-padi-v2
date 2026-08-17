@@ -58,18 +58,23 @@ function LeftIconRail({
 
       {/* Main Action Icons */}
       <div className="sp-icon-rail__list">
-        {iconItems.map((item) => {
+        {iconItems.map((item, index) => {
           const isActive = activeView === item.id;
           return (
-            <button
-              key={item.id}
-              className={`sp-icon-rail__btn ${isActive ? 'is-active' : ''}`}
-              onClick={() => handleClick(item)}
-              title={item.label}
-              aria-label={item.label}
-            >
-              <span className="sp-icon-rail__symbol">{item.icon}</span>
-            </button>
+            <React.Fragment key={item.id}>
+              {/* Ruang kosong di belakang tombol toggle hide/show sidebar agar tidak menutupi ikon */}
+              {index === 5 && (
+                <div className="sp-icon-rail__toggle-gap" aria-hidden="true" />
+              )}
+              <button
+                className={`sp-icon-rail__btn ${isActive ? 'is-active' : ''}`}
+                onClick={() => handleClick(item)}
+                title={item.label}
+                aria-label={item.label}
+              >
+                <span className="sp-icon-rail__symbol">{item.icon}</span>
+              </button>
+            </React.Fragment>
           );
         })}
       </div>

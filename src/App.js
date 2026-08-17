@@ -120,7 +120,13 @@ function App() {
 
   /* ── Supabase listeners & Password Recovery ── */
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => { if (data?.user) setUser(data.user); });
+    // Restore cached session immediately from localStorage on startup
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser(session.user);
+      }
+    });
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       if (event === 'PASSWORD_RECOVERY') {
@@ -577,7 +583,7 @@ function App() {
 
   return (
     <div
-      className={`sp-app ${!isSidebarOpen ? 'is-sidebar-collapsed' : ''} ${isMobile && isMobileSidebarOpen ? 'is-mobile-sidebar-open' : ''}`}
+      className={`sp-app ${!isSidebarOpen ? 'is-sidebar-collapsed' : ''} ${isMobile && isMobileSidebarOpen ? 'is-mobile-sidebar-open' : ''} ${isPicking ? 'is-picking-location' : ''}`}
       data-drawmode={drawMode || ''}
     >
       {/* ── Auth Modal ── */}
