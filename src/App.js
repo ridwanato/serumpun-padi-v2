@@ -636,7 +636,7 @@ function App() {
 
   return (
     <div
-      className={`sp-app ${!isSidebarOpen ? 'is-sidebar-collapsed' : ''} ${isMobile && isMobileSidebarOpen ? 'is-mobile-sidebar-open' : ''} ${isPicking ? 'is-picking-location' : ''}`}
+      className={`sp-app sp-view-${activeView} ${!isSidebarOpen ? 'is-sidebar-collapsed' : ''} ${isMobile && isMobileSidebarOpen ? 'is-mobile-sidebar-open' : ''} ${isPicking ? 'is-picking-location' : ''}`}
       data-drawmode={drawMode || ''}
     >
       {/* ── Auth Modal ── */}
@@ -744,6 +744,7 @@ function App() {
           supabase={supabase}
           setShowAuth={setShowAuth}
           isSidebarOpen={isSidebarOpen}
+          onToggleDashboardPanel={() => { setIsDashboardPanelOpen(v => !v); if (isMobile) setIsMobileSidebarOpen(false); }}
         />
 
         {/* ── Right Dashboard Cards (Active on Dashboard & Produksi Pangan View as shown in Mockup) ── */}
@@ -768,18 +769,20 @@ function App() {
                 />
               </aside>
             ) : (
-              <button
-                className="sp-dash-expand-trigger"
-                onClick={() => { setIsDashboardPanelOpen(true); if (isMobile) setIsMobileSidebarOpen(false); }}
-                title="Buka Panel Ringkasan Metrik"
-                aria-label="Buka Panel Ringkasan Metrik"
-              >
-                <span className="sp-dash-expand-trigger__icon">🌾</span>
-                <span className="sp-dash-expand-trigger__text">Ringkasan Metrik</span>
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="15 18 9 12 15 6" />
-                </svg>
-              </button>
+              activeView === 'dashboard' && (
+                <button
+                  className="sp-dash-expand-trigger"
+                  onClick={() => { setIsDashboardPanelOpen(true); if (isMobile) setIsMobileSidebarOpen(false); }}
+                  title="Buka Panel Ringkasan Metrik"
+                  aria-label="Buka Panel Ringkasan Metrik"
+                >
+                  <span className="sp-dash-expand-trigger__icon">🌾</span>
+                  <span className="sp-dash-expand-trigger__text">Ringkasan Metrik</span>
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="15 18 9 12 15 6" />
+                  </svg>
+                </button>
+              )
             )}
           </>
         )}

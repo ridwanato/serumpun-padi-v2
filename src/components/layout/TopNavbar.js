@@ -21,6 +21,8 @@ function TopNavbar({
   setUser,
   supabase,
   setShowAuth,
+  isSidebarOpen,
+  onToggleDashboardPanel,
 }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -392,6 +394,19 @@ function TopNavbar({
           </div>
         )}
       </div>
+
+      {/* ── Mobile Centered Header Button: Ringkasan Metrik (Requirement A) ── */}
+      {onToggleDashboardPanel && (
+        <div className="sp-mobile-header-center">
+          <button
+            className="sp-mobile-header-btn"
+            onClick={onToggleDashboardPanel}
+            title="Buka Ringkasan Metrik"
+          >
+            <span>🌾 Ringkasan Metrik</span>
+          </button>
+        </div>
+      )}
 
       {/* ── Status & Info Section (Date, Weather, User Profile) ── */}
       <div className="sp-topbar__right">

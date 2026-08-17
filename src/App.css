@@ -1958,34 +1958,160 @@ body {
   pointer-events: none;
 }
 
-/* ── Dedicated Full-Page View (Produksi Pangan 2014-2025) ── */
+/* ── Desktop/Mobile Display Helper Classes ── */
+@media (max-width: 768px) {
+  .sp-desktop-only {
+    display: none !important;
+  }
+  .sp-mobile-only {
+    display: block !important;
+  }
+}
+@media (min-width: 769px) {
+  .sp-desktop-only {
+    display: flex !important;
+  }
+  .sp-mobile-only {
+    display: none !important;
+  }
+}
+
+/* ── Mobile Map Controls Hide on Grafik & Analisis Page ── */
+@media (max-width: 768px) {
+  .sp-app.sp-view-produksi-pangan .leaflet-control-zoom,
+  .sp-app.sp-view-produksi-pangan .sp-locate-me-btn,
+  .sp-app.sp-view-produksi-pangan .leaflet-draw-toolbar,
+  .sp-app.sp-view-produksi-pangan .sp-draw-toolbar,
+  .sp-app.sp-view-produksi-pangan .leaflet-control-draw {
+    display: none !important;
+  }
+}
+
+/* ── Dedicated Full-Page View (Produksi Pangan 2014-2025) Centered Layout ── */
 .sp-full-page-view {
   position: absolute;
   top: 56px;
-  left: 0;
+  left: 52px;
   right: 0;
   bottom: 0;
   background: #f8fafc;
-  z-index: 850;
+  z-index: 1000;
   overflow-y: auto;
-  padding: 16px 20px 40px 20px;
+  padding: 20px 24px 60px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
 }
 
 .sp-full-page-view__header {
-  margin-bottom: 12px;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto 12px auto;
   display: flex;
-  justify: flex-start;
+  justify-content: flex-start;
   align-items: center;
+  box-sizing: border-box;
 }
 
 .sp-full-page-view__content {
-  max-width: 1400px;
+  width: 100%;
+  max-width: 1280px;
   margin: 0 auto;
+  box-sizing: border-box;
 }
 
 @media (max-width: 768px) {
   .sp-full-page-view {
     top: 50px;
-    padding: 12px 10px 40px 10px;
+    left: 0 !important;
+    padding: 12px 10px 60px 10px;
+  }
+  
+  .sp-full-page-view__header,
+  .sp-full-page-view__content {
+    max-width: 100%;
+    padding: 0;
   }
 }
+
+/* Mobile Dashboard Drawer Bottom Scroll Fix (Req E - Capture 4) */
+@media (max-width: 768px) {
+  .sp-right-dashboard {
+    width: 92vw !important;
+    max-width: 92vw !important;
+    right: 4vw !important;
+    left: 4vw !important;
+    top: 10px !important;
+    max-height: calc(100vh - 20px) !important;
+    padding: 10px 12px 100px 12px !important;
+    gap: 10px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    border-radius: 16px !important;
+    background: rgba(20, 83, 45, 0.92) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border: 1.5px solid rgba(134, 239, 172, 0.6) !important;
+  }
+
+  .sp-dashboard-stack {
+    padding-bottom: 80px !important;
+  }
+}
+
+/* ── Commodity Pill Selector Compact Styling ── */
+.sp-commodity-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.sp-commodity-pill {
+  border-radius: 14px;
+  padding: 4px 10px;
+  font-size: 10.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 27px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.sp-commodity-pill__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .sp-commodity-box {
+    padding: 8px 10px !important;
+    margin-bottom: 10px !important;
+  }
+
+  .sp-commodity-container {
+    gap: 4px !important;
+  }
+
+  .sp-commodity-pill {
+    padding: 3px 8px !important;
+    font-size: 9.5px !important;
+    min-height: 24px !important;
+    border-radius: 10px !important;
+    gap: 4px !important;
+  }
+
+  .sp-commodity-pill__dot {
+    width: 5px !important;
+    height: 5px !important;
+  }
+}
+
+

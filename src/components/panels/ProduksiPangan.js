@@ -10,7 +10,8 @@ const METRIC_OPTIONS = [
   { key: 'produksi_ton', label: 'Produksi', unit: 'Ton', color: '#10b981' },
   { key: 'tanam_ha', label: 'Luas Tanam', unit: 'Ha', color: '#0284c7' },
   { key: 'panen_ha', label: 'Luas Panen', unit: 'Ha', color: '#f59e0b' },
-  { key: 'produktivitas_ku_ha', label: 'Produktivitas', unit: 'Ku/Ha', color: '#8b5cf6' }
+  { key: 'produktivitas_ku_ha', label: 'Produktivitas', unit: 'Ku/Ha', color: '#8b5cf6' },
+  { key: 'puso_ha', label: 'Puso', unit: 'Ha', color: '#ef4444' }
 ];
 
 const COMMODITY_COLORS = {
@@ -61,8 +62,7 @@ function getCurvedPath(points) {
 function ProduksiPangan() {
   const [selectedMetric, setSelectedMetric] = useState('produksi_ton');
   const [selectedKec, setSelectedKec] = useState('KOTA CILEGON');
-  const [selectedCommodities, setSelectedCommodities] = useState(['Padi Sawah', 'Jagung', 'Ubi Kayu']);
-  const [showProjection, setShowProjection] = useState(true);
+  const [selectedCommodities, setSelectedCommodities] = useState(['Padi Sawah']);
   const [showGlossaryModal, setShowGlossaryModal] = useState(false);
 
   const [rankMetric, setRankMetric] = useState('produksi_ton');
@@ -117,26 +117,8 @@ function ProduksiPangan() {
       return row;
     });
 
-    const projectedRows = [];
-    if (showProjection) {
-      const projYears = [2026, 2027];
-      projYears.forEach((pYr) => {
-        const row = { tahun: pYr, isProjection: true };
-        selectedCommodities.forEach(com => {
-          const last3 = list.slice(-3).map(r => r[com]).filter(v => v !== null && !isNaN(v));
-          if (last3.length > 0) {
-            const avg = last3.reduce((a, b) => a + b, 0) / last3.length;
-            row[com] = parseFloat(avg.toFixed(1));
-          } else {
-            row[com] = null;
-          }
-        });
-        projectedRows.push(row);
-      });
-    }
-
-    return { historical: list, projected: projectedRows, combined: [...list, ...projectedRows] };
-  }, [selectedMetric, selectedKec, selectedCommodities, showProjection]);
+    return { historical: list, combined: list };
+  }, [selectedMetric, selectedKec, selectedCommodities]);
 
   const narrativeText = useMemo(() => {
     const primaryCom = selectedCommodities[0] || 'Padi Sawah';
@@ -215,7 +197,6 @@ function ProduksiPangan() {
 
   const toggleCommodity = (com) => {
     if (selectedCommodities.includes(com)) {
-      if (selectedCommodities.length === 1) return alert('Pilih minimal 1 komoditas.');
       setSelectedCommodities(selectedCommodities.filter(c => c !== com));
     } else {
       setSelectedCommodities([...selectedCommodities, com]);
@@ -240,7 +221,7 @@ function ProduksiPangan() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
           <div>
             <div style={{ fontSize: '10.5px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px', color: '#a7f3d0' }}>
-              📊 DASHBOARD STATISTIK & PROYEKSI PANGAN
+              📊 DASHBOARD STATISTIK PANGAN
             </div>
             <h1 style={{ fontSize: '20px', fontWeight: 900, margin: '4px 0 0 0', color: '#ffffff', letterSpacing: '-0.3px' }}>
               Realisasi Produksi Padi & Palawija Kota Cilegon
@@ -343,118 +324,129 @@ function ProduksiPangan() {
         </div>
       </div>
 
-      {/* ── 2. MAIN TIME SERIES CHART & SMOOTH LENGKUNGAN CURVES (SESUAI CAPTURE) ── */}
-      <div style={{ background: '#ffffff', borderRadius: '20px', padding: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 16px rgba(0,0,0,0.04)', marginBottom: '16px' }}>
+      {/* ── 2. MAIN TIME SERIES CHART & SMOOTH LENGKUNGAN CURVES (SESUAI CAPTURE 3 MOCKUP) ── */}
+      <div style={{ background: '#ffffff', borderRadius: '20px', padding: '18px 20px', border: '1px solid #e2e8f0', boxShadow: '0 4px 16px rgba(0,0,0,0.04)', marginBottom: '16px' }}>
         
-        {/* Chart Header Controls */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '14px' }}>
+        {/* Chart Header Controls matching Capture 3 */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
           <div>
-            <h3 style={{ fontSize: '15px', fontWeight: 900, margin: 0, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span>📈</span> Grafik Tren Lintas Tahun (2014 – 2027)
+            <h3 style={{ fontSize: '16px', fontWeight: 900, margin: 0, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>📈</span> Grafik Tren Lintas Tahun (2014 – 2025)
             </h3>
-            <p style={{ fontSize: '11px', color: '#64748b', margin: '2px 0 0 0' }}>
+            <p style={{ fontSize: '11px', color: '#64748b', margin: '3px 0 0 0' }}>
               Gaya kurva smooth & area gradient (sesuai standar IKP nasional & provinsi)
             </p>
           </div>
 
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', width: '100%', maxWidth: '420px' }}>
-            {/* Metric Selector Pills */}
-            <div style={{ background: '#f1f5f9', borderRadius: '10px', padding: '3px', display: 'flex', gap: '3px', flex: 1, overflowX: 'auto' }}>
-              {METRIC_OPTIONS.map(m => (
-                <button
-                  key={m.key}
-                  onClick={() => setSelectedMetric(m.key)}
-                  style={{
-                    background: selectedMetric === m.key ? '#ffffff' : 'transparent',
-                    color: selectedMetric === m.key ? m.color : '#64748b',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '6px 10px',
-                    fontSize: '11px',
-                    fontWeight: 900,
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    boxShadow: selectedMetric === m.key ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
-                    minHeight: '36px'
-                  }}
-                >
-                  {m.label}
-                </button>
-              ))}
-            </div>
+          {/* Kecamatan Selector on Top Right */}
+          <select
+            value={selectedKec}
+            onChange={e => setSelectedKec(e.target.value)}
+            style={{
+              background: '#ffffff',
+              border: '1.5px solid #cbd5e1',
+              borderRadius: '12px',
+              padding: '8px 14px',
+              fontSize: '12px',
+              fontWeight: 800,
+              color: '#0f172a',
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+              minHeight: '38px'
+            }}
+          >
+            <option value="KOTA CILEGON">🏛️ Kota Cilegon</option>
+            {KECAMATAN_LIST.map(k => (
+              <option key={k} value={k}>📍 Kec. {k}</option>
+            ))}
+          </select>
+        </div>
 
-            {/* Kecamatan Selector */}
+        {/* JENIS TIME SERIES Selection Section (Capture 3 Desktop / Capture 2 Mobile) */}
+        <div style={{ textAlign: 'center', marginBottom: '16px', padding: '12px 14px', background: '#f8fafc', borderRadius: '14px', border: '1px solid #f1f5f9' }}>
+          <div style={{ fontSize: '11px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#0f172a', marginBottom: '8px' }}>
+            JENIS TIME SERIES
+          </div>
+
+          {/* Mobile View: Dropdown Menu (Capture 2 Style) */}
+          <div className="sp-mobile-only" style={{ maxWidth: '280px', margin: '0 auto' }}>
             <select
-              value={selectedKec}
-              onChange={e => setSelectedKec(e.target.value)}
+              value={selectedMetric}
+              onChange={e => setSelectedMetric(e.target.value)}
               style={{
-                background: '#f8fafc',
-                border: '1px solid #cbd5e1',
-                borderRadius: '10px',
-                padding: '6px 10px',
-                fontSize: '11px',
+                width: '100%',
+                background: '#0284c7',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '10px 14px',
+                fontSize: '13px',
                 fontWeight: 800,
-                color: '#0f172a',
                 cursor: 'pointer',
-                minHeight: '36px'
+                textAlign: 'center',
+                boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)'
               }}
             >
-              <option value="KOTA CILEGON">🏛️ Kota Cilegon</option>
-              {KECAMATAN_LIST.map(k => (
-                <option key={k} value={k}>📍 Kec. {k}</option>
+              {METRIC_OPTIONS.map(m => (
+                <option key={m.key} value={m.key} style={{ background: '#ffffff', color: '#0f172a' }}>
+                  {m.label} ({m.unit})
+                </option>
               ))}
             </select>
+          </div>
 
-            {/* Projection Toggle */}
-            <button
-              onClick={() => setShowProjection(!showProjection)}
-              style={{
-                background: showProjection ? '#fef3c7' : '#f1f5f9',
-                border: showProjection ? '1.5px solid #f59e0b' : '1px solid #cbd5e1',
-                color: showProjection ? '#b45309' : '#64748b',
-                borderRadius: '10px',
-                padding: '6px 10px',
-                fontSize: '11px',
-                fontWeight: 900,
-                cursor: 'pointer',
-                minHeight: '36px'
-              }}
-            >
-              🔮 Proyeksi {showProjection ? 'ON' : 'OFF'}
-            </button>
+          {/* Desktop View: Horizontal Single Select Inline Links (Capture 3 Style) */}
+          <div className="sp-desktop-only" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', gap: '8px', fontSize: '13px', fontWeight: 800 }}>
+            {METRIC_OPTIONS.map((m, idx) => (
+              <React.Fragment key={m.key}>
+                {idx > 0 && <span style={{ color: '#94a3b8', fontWeight: 400 }}>-</span>}
+                <button
+                  onClick={() => setSelectedMetric(m.key)}
+                  style={{
+                    background: selectedMetric === m.key ? '#0f172a' : 'transparent',
+                    color: selectedMetric === m.key ? '#ffffff' : '#475569',
+                    border: selectedMetric === m.key ? 'none' : '1px solid transparent',
+                    borderRadius: '20px',
+                    padding: '4px 14px',
+                    fontSize: '12px',
+                    fontWeight: 900,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                    boxShadow: selectedMetric === m.key ? '0 2px 8px rgba(15, 23, 42, 0.25)' : 'none'
+                  }}
+                >
+                  {m.label.toLowerCase()}
+                </button>
+              </React.Fragment>
+            ))}
           </div>
         </div>
 
-        {/* Commodity Legend & Checkboxes Strip */}
-        <div style={{ background: '#f8fafc', borderRadius: '12px', padding: '10px', border: '1px solid #e2e8f0', marginBottom: '14px' }}>
-          <div style={{ fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', color: '#64748b', marginBottom: '6px' }}>
+        {/* Commodity Legend & Checkboxes Strip (Multi-Select) */}
+        <div className="sp-commodity-box" style={{ background: '#f8fafc', borderRadius: '12px', padding: '10px 12px', border: '1px solid #e2e8f0', marginBottom: '12px' }}>
+          <div style={{ fontSize: '9.5px', fontWeight: 900, textTransform: 'uppercase', color: '#64748b', marginBottom: '6px', letterSpacing: '0.5px' }}>
             KOMODITAS DITAMPILKAN (MULTI-SELECT):
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+          <div className="sp-commodity-container">
             {COMMODITIES_LIST.map(com => {
               const active = selectedCommodities.includes(com);
               const color = COMMODITY_COLORS[com] || '#64748b';
               return (
                 <button
                   key={com}
+                  className="sp-commodity-pill"
                   onClick={() => toggleCommodity(com)}
                   style={{
                     background: active ? color : '#ffffff',
-                    color: active ? '#ffffff' : '#475569',
+                    color: active ? '#ffffff' : '#334155',
                     border: `1.5px solid ${active ? color : '#cbd5e1'}`,
-                    borderRadius: '20px',
-                    padding: '5px 12px',
-                    fontSize: '10.5px',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '5px',
-                    minHeight: '32px'
+                    boxShadow: active ? `0 2px 6px ${color}40` : 'none',
                   }}
                 >
-                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: active ? '#ffffff' : color, display: 'inline-block' }}></span>
+                  <span
+                    className="sp-commodity-pill__dot"
+                    style={{ background: active ? '#ffffff' : color }}
+                  />
                   {com}
                 </button>
               );
@@ -474,7 +466,7 @@ function ProduksiPangan() {
         {/* Chart Disclaimer & Footnote */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginTop: '14px', fontSize: '10.5px', color: '#64748b' }}>
           <div>
-            * Lengkungan smooth dengan gradien area area murni (2014–2025). Garis putus-putus mewakili proyeksi 2026–2027.
+            * Lengkungan smooth dengan gradien area murni (2014–2025).
           </div>
           <button
             onClick={() => exportCleanExcel('by_commodity')}
@@ -650,7 +642,7 @@ function ProduksiPangan() {
   );
 }
 
-// ── CUSTOM SVG RESPONSIVE SMOOTH CHART (BEZIER CURVE & GRADIENT FILL SESUAI CAPTURE) ──
+// ── CUSTOM SVG RESPONSIVE SMOOTH CHART (BEZIER CURVE & GRADIENT FILL) ──
 function ResponsiveSmoothChart({ data, commodities }) {
   if (!data || data.length === 0) return null;
 
@@ -672,13 +664,13 @@ function ResponsiveSmoothChart({ data, commodities }) {
   if (maxVal === 0) maxVal = 100;
   maxVal = Math.ceil(maxVal * 1.15);
 
-  const xScale = (idx) => padding.left + (idx / (data.length - 1)) * chartW;
+  const xScale = (idx) => padding.left + (idx / Math.max(1, data.length - 1)) * chartW;
   const yScale = (val) => padding.top + chartH - (val / maxVal) * chartH;
 
   return (
     <svg viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: '100%', overflow: 'visible' }}>
       <defs>
-        {/* Generate Gradient Fills for each commodity (Gradient smooth fading down) */}
+        {/* Generate Gradient Fills for each commodity */}
         {commodities.map((com) => {
           const color = COMMODITY_COLORS[com] || '#64748b';
           const gradId = `grad_${com.replace(/[^a-zA-Z0-9]/g, '_')}`;
@@ -710,8 +702,8 @@ function ResponsiveSmoothChart({ data, commodities }) {
         const x = xScale(i);
         return (
           <g key={i}>
-            <text x={x} y={height - 10} textAnchor="middle" fontSize="10" fill={d.isProjection ? '#f59e0b' : '#64748b'} fontWeight={d.isProjection ? '900' : '700'}>
-              {d.tahun}{d.isProjection ? '*' : ''}
+            <text x={x} y={height - 10} textAnchor="middle" fontSize="10" fill="#64748b" fontWeight="700">
+              {d.tahun}
             </text>
           </g>
         );
@@ -725,25 +717,21 @@ function ResponsiveSmoothChart({ data, commodities }) {
         const points = data.map((d, i) => {
           const val = d[com];
           if (val === null || isNaN(val)) return null;
-          return { x: xScale(i), y: yScale(val), val, isProj: d.isProjection, tahun: d.tahun };
+          return { x: xScale(i), y: yScale(val), val, tahun: d.tahun };
         }).filter(p => p !== null);
 
         if (points.length === 0) return null;
 
-        const histPoints = points.filter(p => !p.isProj);
-        const projPoints = points.filter(p => p.isProj || points[points.indexOf(p) - 1]?.isProj === false);
-
         // Compute Cubic Bezier Smooth Path String
-        const histCurvedPath = getCurvedPath(histPoints);
-        const projCurvedPath = getCurvedPath(projPoints);
+        const curvedPath = getCurvedPath(points);
 
-        // Area Fill Path for Historical Portion
+        // Area Fill Path
         let areaPath = '';
-        if (histPoints.length > 1) {
-          const firstP = histPoints[0];
-          const lastP = histPoints[histPoints.length - 1];
+        if (points.length > 1) {
+          const firstP = points[0];
+          const lastP = points[points.length - 1];
           const bottomY = yScale(0);
-          areaPath = `${histCurvedPath} L ${lastP.x} ${bottomY} L ${firstP.x} ${bottomY} Z`;
+          areaPath = `${curvedPath} L ${lastP.x} ${bottomY} L ${firstP.x} ${bottomY} Z`;
         }
 
         return (
@@ -751,10 +739,10 @@ function ResponsiveSmoothChart({ data, commodities }) {
             {/* Translucent Area Gradient Fill Under Curve */}
             {areaPath && <path d={areaPath} fill={`url(#${gradId})`} opacity="0.9" />}
 
-            {/* Historical Smooth Curve Line */}
-            {histCurvedPath && (
+            {/* Smooth Curve Line */}
+            {curvedPath && (
               <path
-                d={histCurvedPath}
+                d={curvedPath}
                 fill="none"
                 stroke={strokeColor}
                 strokeWidth="3.5"
@@ -763,19 +751,7 @@ function ResponsiveSmoothChart({ data, commodities }) {
               />
             )}
 
-            {/* Projected Smooth Curve Line (Dashed) */}
-            {projCurvedPath && (
-              <path
-                d={projCurvedPath}
-                fill="none"
-                stroke={strokeColor}
-                strokeWidth="3"
-                strokeDasharray="6 6"
-                opacity="0.85"
-              />
-            )}
-
-            {/* Node Markers & Value Labels (Sesuai Capture Model Dot Berwarna + Teks Nilai) */}
+            {/* Node Markers & Value Labels */}
             {points.map((p, i) => (
               <g key={i}>
                 <circle
@@ -806,3 +782,4 @@ function ResponsiveSmoothChart({ data, commodities }) {
 }
 
 export default ProduksiPangan;
+
