@@ -17,7 +17,7 @@ import {
   RekapLuas, RekapProduksi, Dashboard,
   Hortikultura, Palawija, WarningOPT, PoktanKWT,
   PerikananBudidaya, PerikananTangkap, IKPGAdmin,
-  Peternakan, LaporanGrafik,
+  Peternakan, LaporanGrafik, ProduksiPangan,
   PanduanModal, PengaturanModal, UnduhDataModal,
 } from './components/panels';
 import LeftIconRail from './components/layout/LeftIconRail';
@@ -539,6 +539,8 @@ function App() {
           activeSawah={activeSawah} sawahStatus={sawahStatus} fillOpacity={fillOpacity}
           onFillOpacityChange={setFillOpacity} onUpdateStatus={updateStatus}
           onSave={(activeSawah, st) => saveSawahStatus(activeSawah, st)} />;
+      case 'produksi_pangan':
+        return <ProduksiPangan />;
       case 'status_sawah':
         return <StatusSawah
           filteredSawah={filteredSawah} sawahStatus={sawahStatus}

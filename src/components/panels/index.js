@@ -18,3 +18,4 @@ export { default as PanduanModal } from './PanduanModal';
 export { default as PengaturanModal } from './PengaturanModal';
 export { default as UnduhDataModal } from './UnduhDataModal';
 export { default as LaporanGrafik } from './LaporanGrafik';
+export { default as ProduksiPangan } from './ProduksiPangan';

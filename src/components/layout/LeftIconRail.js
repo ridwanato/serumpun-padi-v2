@@ -9,6 +9,7 @@ function LeftIconRail({
 }) {
   const iconItems = [
     { id: 'status_sawah', icon: '🌾', label: 'Padi Sawah', type: 'view' },
+    { id: 'produksi_pangan', icon: '📊', label: 'Produksi Pangan (2014-2025)', type: 'view' },
     { id: 'perikanan_budidaya', icon: '🐟', label: 'Perikanan Budidaya', type: 'view' },
     { id: 'perikanan_tangkap', icon: '⛵', label: 'Perikanan Tangkap', type: 'view' },
     { id: 'hortikultura', icon: '🌶️', label: 'Hortikultura', type: 'view' },
