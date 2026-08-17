@@ -746,8 +746,8 @@ function App() {
           isSidebarOpen={isSidebarOpen}
         />
 
-        {/* ── Right Dashboard Cards (Active on Dashboard View as shown in Mockup) ── */}
-        {activeView === 'dashboard' && (
+        {/* ── Right Dashboard Cards (Active on Dashboard & Produksi Pangan View as shown in Mockup) ── */}
+        {(activeView === 'dashboard' || activeView === 'produksi_pangan') && (
           <>
             {isDashboardPanelOpen ? (
               <aside className="sp-right-dashboard" aria-label="Dashboard Metrik">

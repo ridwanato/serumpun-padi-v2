@@ -103,14 +103,6 @@ function SidebarMenu({
       checked: layerStates.showWarningPin,
       key: 'showWarningPin',
     },
-    {
-      id: 'produksi_pangan',
-      label: 'Produksi Pangan (2014-2025)',
-      icon: '📊',
-      view: 'produksi_pangan',
-      checked: activeView === 'produksi_pangan',
-      key: 'showProduksiPangan',
-    },
   ];
 
   const handleUploadClick = () => {
@@ -184,6 +176,22 @@ function SidebarMenu({
                 </div>
               );
             })}
+          </div>
+        </div>
+
+        {/* Section: GRAFIK ANALISIS */}
+        <div className="sp-sidebar__section">
+          <div className="sp-sidebar__section-title">GRAFIK ANALISIS</div>
+          <div className="sp-sidebar__layer-list">
+            <div
+              className={`sp-sidebar__item ${activeView === 'produksi_pangan' ? 'is-highlighted' : ''}`}
+              onClick={() => onSelectView('produksi_pangan')}
+            >
+              <div className="sp-sidebar__item-left">
+                <span className="sp-sidebar__item-icon">📊</span>
+                <span className="sp-sidebar__item-label">Produksi Pangan (2014-2025)</span>
+              </div>
+            </div>
           </div>
         </div>
 
