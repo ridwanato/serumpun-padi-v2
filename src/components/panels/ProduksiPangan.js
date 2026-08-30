@@ -1,7 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import realisasiPanganRaw from '../../data/realisasiPanganData.json';
+import { supabase } from '../../supabase';
 
+// Data Realisasi Produksi Pangan Kota Cilegon
 const YEARS = [2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
 const KECAMATAN_LIST = ['Ciwandan', 'Citangkil', 'Pulomerak', 'Purwakarta', 'Grogol', 'Cilegon', 'Jombang', 'Cibeber'];
 const COMMODITIES_LIST = ['Padi Sawah', 'Padi Ladang', 'Jagung', 'Kedelai', 'Kacang Tanah', 'Ubi Kayu', 'Ubi Jalar', 'Kacang Hijau', 'Talas', 'Sorgum', 'Porang'];
@@ -60,6 +62,8 @@ function getCurvedPath(points) {
 }
 
 function ProduksiPangan() {
+  const [panganData, setPanganData] = useState(realisasiPanganRaw);
+  const [isFromSupabase, setIsFromSupabase] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState('produksi_ton');
   const [selectedKec, setSelectedKec] = useState('KOTA CILEGON');
   const [selectedCommodities, setSelectedCommodities] = useState(['Padi Sawah']);
@@ -71,25 +75,48 @@ function ProduksiPangan() {
   const [rankYear, setRankYear] = useState(2025);
   const [rankCommodityFilter, setRankCommodityFilter] = useState('Padi Sawah');
 
+  // Load from Supabase with fallback to local JSON
+  useEffect(() => {
+    let isMounted = true;
+    async function loadData() {
+      try {
+        const { data, error } = await supabase
+          .from('produksi_pangan')
+          .select('*')
+          .order('tahun', { ascending: true })
+          .limit(5000);
+
+        if (!error && data && data.length > 0 && isMounted) {
+          setPanganData(data);
+          setIsFromSupabase(true);
+        }
+      } catch (err) {
+        console.warn('Menggunakan data pangan lokal:', err);
+      }
+    }
+    loadData();
+    return () => { isMounted = false; };
+  }, []);
+
   const activeMetricSpec = METRIC_OPTIONS.find(m => m.key === selectedMetric) || METRIC_OPTIONS[0];
 
   const timeSeriesData = useMemo(() => {
     const list = YEARS.map(yr => {
       const row = { tahun: yr };
       selectedCommodities.forEach(com => {
-        const item = realisasiPanganRaw.find(r => r.tahun === yr && r.kecamatan === selectedKec && r.komoditas === com);
+        const item = panganData.find(r => r.tahun === yr && r.kecamatan === selectedKec && r.komoditas === com);
         row[com] = item ? (item[selectedMetric] || 0) : null;
       });
       return row;
     });
 
     return { historical: list, combined: list };
-  }, [selectedMetric, selectedKec, selectedCommodities]);
+  }, [selectedMetric, selectedKec, selectedCommodities, panganData]);
 
   const narrativeText = useMemo(() => {
     const primaryCom = selectedCommodities[0] || 'Padi Sawah';
-    const h2025 = realisasiPanganRaw.find(r => r.tahun === 2025 && r.kecamatan === selectedKec && r.komoditas === primaryCom);
-    const h2024 = realisasiPanganRaw.find(r => r.tahun === 2024 && r.kecamatan === selectedKec && r.komoditas === primaryCom);
+    const h2025 = panganData.find(r => r.tahun === 2025 && r.kecamatan === selectedKec && r.komoditas === primaryCom);
+    const h2024 = panganData.find(r => r.tahun === 2024 && r.kecamatan === selectedKec && r.komoditas === primaryCom);
 
     const val2025 = h2025 ? (h2025[selectedMetric] || 0) : 0;
     const val2024 = h2024 ? (h2024[selectedMetric] || 0) : 0;
@@ -97,7 +124,7 @@ function ProduksiPangan() {
     const pct = val2024 > 0 ? ((diff / val2024) * 100).toFixed(1) : '0';
     const statusWord = diff >= 0 ? 'mengalami peningkatan' : 'mengalami penurunan';
 
-    const kecList2025 = realisasiPanganRaw.filter(r => r.tahun === 2025 && r.komoditas === primaryCom && r.kecamatan !== 'KOTA CILEGON');
+    const kecList2025 = panganData.filter(r => r.tahun === 2025 && r.komoditas === primaryCom && r.kecamatan !== 'KOTA CILEGON');
     const topKec = [...kecList2025].sort((a, b) => (b[selectedMetric] || 0) - (a[selectedMetric] || 0))[0];
 
     return (
@@ -105,16 +132,16 @@ function ProduksiPangan() {
       `Angka ini ${statusWord} sebesar ${Math.abs(pct)}% dibandingkan tahun 2024 (${val2024.toLocaleString('id-ID')} ${activeMetricSpec.unit}). ` +
       (topKec ? `Kecamatan ${topKec.kecamatan} tercatat sebagai kontributor terbesar untuk ${primaryCom} di Kota Cilegon pada tahun 2025.` : '')
     );
-  }, [selectedMetric, selectedKec, selectedCommodities, activeMetricSpec]);
+  }, [selectedMetric, selectedKec, selectedCommodities, activeMetricSpec, panganData]);
 
   const rankingList = useMemo(() => {
     let raw = [];
     if (rankDimension === 'kecamatan') {
-      raw = realisasiPanganRaw.filter(r => r.tahun === rankYear && r.komoditas === rankCommodityFilter && r.kecamatan !== 'KOTA CILEGON');
+      raw = panganData.filter(r => r.tahun === rankYear && r.komoditas === rankCommodityFilter && r.kecamatan !== 'KOTA CILEGON');
     } else if (rankDimension === 'komoditas') {
-      raw = realisasiPanganRaw.filter(r => r.tahun === rankYear && r.kecamatan === 'KOTA CILEGON');
+      raw = panganData.filter(r => r.tahun === rankYear && r.kecamatan === 'KOTA CILEGON');
     } else if (rankDimension === 'tahun') {
-      raw = realisasiPanganRaw.filter(r => r.komoditas === rankCommodityFilter && r.kecamatan === 'KOTA CILEGON');
+      raw = panganData.filter(r => r.komoditas === rankCommodityFilter && r.kecamatan === 'KOTA CILEGON');
     }
 
     const sorted = [...raw].sort((a, b) => {
@@ -124,14 +151,14 @@ function ProduksiPangan() {
     });
 
     return sorted;
-  }, [rankMetric, rankDimension, rankOrder, rankYear, rankCommodityFilter]);
+  }, [rankMetric, rankDimension, rankOrder, rankYear, rankCommodityFilter, panganData]);
 
   const exportCleanExcel = (exportType) => {
     let exportData = [];
     let fileName = 'Realisasi_Pangan_Kota_Cilegon';
 
     if (exportType === 'all') {
-      exportData = realisasiPanganRaw.map(r => ({
+      exportData = panganData.map(r => ({
         'Tahun': r.tahun,
         'Kecamatan': r.kecamatan,
         'Komoditas': r.komoditas,
@@ -143,7 +170,7 @@ function ProduksiPangan() {
       fileName = 'Dataset_Lengkap_Padi_Palawija_Cilegon_2014_2025.xlsx';
     } else if (exportType === 'by_commodity') {
       const com = selectedCommodities[0] || 'Padi Sawah';
-      exportData = realisasiPanganRaw.filter(r => r.komoditas === com).map(r => ({
+      exportData = panganData.filter(r => r.komoditas === com).map(r => ({
         'Tahun': r.tahun,
         'Kecamatan': r.kecamatan,
         'Komoditas': r.komoditas,
@@ -186,8 +213,19 @@ function ProduksiPangan() {
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
           <div>
-            <div style={{ fontSize: '10.5px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px', color: '#a7f3d0' }}>
-              📊 DASHBOARD STATISTIK PANGAN
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10.5px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px', color: '#a7f3d0' }}>
+              <span>📊 DASHBOARD STATISTIK PANGAN</span>
+              <span style={{
+                background: isFromSupabase ? 'rgba(16, 185, 129, 0.4)' : 'rgba(255, 255, 255, 0.2)',
+                color: '#ffffff',
+                padding: '2px 8px',
+                borderRadius: '999px',
+                fontSize: '9.5px',
+                fontWeight: 700,
+                border: '1px solid rgba(255, 255, 255, 0.3)'
+              }}>
+                {isFromSupabase ? '🟢 Supabase DB' : '📁 Offline Data'}
+              </span>
             </div>
             <h1 style={{ fontSize: '20px', fontWeight: 900, margin: '4px 0 0 0', color: '#ffffff', letterSpacing: '-0.3px' }}>
               Realisasi Produksi Padi & Palawija Kota Cilegon
