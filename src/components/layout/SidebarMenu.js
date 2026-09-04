@@ -64,8 +64,16 @@ function SidebarMenu({
       key: 'showPeternakan',
     },
     {
-      id: 'poktan_kwt',
-      label: 'Poktan & KWT',
+      id: 'poktan',
+      label: 'Kelompok Tani (Poktan)',
+      icon: '🧑‍🌾',
+      view: 'poktan_kwt',
+      checked: layerStates.showPoktanPin,
+      key: 'showPoktanPin',
+    },
+    {
+      id: 'kwt',
+      label: 'Kelompok Wanita Tani (KWT)',
       icon: '👩‍🌾',
       view: 'poktan_kwt',
       checked: layerStates.showKWTPin,

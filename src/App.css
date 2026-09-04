@@ -66,109 +66,38 @@ body {
 }
 
 /* ==========================================================================
-   1. LEFT ICON RAIL (SISI PALING KIRI)
+   1. FLOATING SIDEBAR TOGGLE BUTTON (MUNCUL SAAT SIDEBAR TERTUTUP)
    ========================================================================== */
-.sp-icon-rail {
-  width: 52px;
-  height: 100vh;
-  background-color: var(--color-dkpp-dark);
+.sp-sidebar-toggle-btn {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  padding: 10px 0;
-  z-index: 1100;
-  flex-shrink: 0;
-  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.25);
-}
-
-.sp-icon-rail__logo {
+  justify-content: center;
+  position: fixed;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2400;
+  width: 42px;
+  height: 42px;
+  background: #ffffff;
+  border: 2.5px solid #22c55e;
+  border-radius: 12px;
   cursor: pointer;
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.2s;
-}
-
-.sp-icon-rail__logo:hover {
-  transform: scale(1.08);
-}
-
-.sp-icon-rail__logo-badge {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.15);
-  border: 1.5px solid rgba(255, 255, 255, 0.35);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-/* Saat sidebar collapsed: Ubah menjadi trigger panah chevron */
-.sp-icon-rail__logo-badge.is-collapsed-trigger {
-  background: #22c55e;
-  border-color: #86efac;
-  box-shadow: 0 2px 10px rgba(34, 197, 94, 0.6);
+  box-shadow: 0 4px 16px rgba(34, 197, 94, 0.45);
+  padding: 0;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
   animation: sp-subtle-bounce 2.2s infinite ease-in-out;
 }
 
+.sp-sidebar-toggle-btn:hover {
+  transform: translateY(-50%) scale(1.08);
+  box-shadow: 0 6px 20px rgba(34, 197, 94, 0.6);
+  background: #f0fdf4;
+}
+
 @keyframes sp-subtle-bounce {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.08); }
-}
-
-.sp-icon-rail__list {
-  flex: 1;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 0 4px;
-  scrollbar-width: none;
-}
-
-.sp-icon-rail__list::-webkit-scrollbar {
-  display: none;
-}
-
-.sp-icon-rail__btn {
-  width: 38px;
-  height: 38px;
-  background: transparent;
-  border: none;
-  border-radius: 8px;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.sp-icon-rail__btn:hover {
-  background: rgba(255, 255, 255, 0.18);
-  transform: scale(1.05);
-}
-
-.sp-icon-rail__btn.is-active {
-  background: #22c55e;
-  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.45);
-}
-
-.sp-icon-rail__bottom {
-  margin-top: auto;
-  padding-top: 8px;
-}
-
-.sp-icon-rail__btn--help {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 50%;
+  0%, 100% { transform: translateY(-50%) scale(1); }
+  50% { transform: translateY(-50%) scale(1.06); }
 }
 
 /* ==========================================================================
@@ -816,35 +745,35 @@ body {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 10px;
-  padding: 0 2px 14px 2px;
+  gap: 8px;
+  padding: 0 2px 8px 2px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.22);
   margin-bottom: 2px;
 }
 
 .sp-dash-panel-title {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 900;
   color: #0f172a;
-  letter-spacing: 0.8px;
+  letter-spacing: 0.6px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   text-transform: uppercase;
 }
 
 .sp-dash-panel-dot {
-  width: 9px;
-  height: 9px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: #22c55e;
-  box-shadow: 0 0 8px #22c55e;
+  box-shadow: 0 0 6px #22c55e;
   flex-shrink: 0;
 }
 
 .sp-dash-panel-close-btn {
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   background: #d1d5db;
   border: none;
@@ -1474,7 +1403,7 @@ body {
 @media (max-width: 900px) {
   .sp-sidebar {
     position: fixed;
-    left: 52px;
+    left: 0;
     height: 100vh;
     box-shadow: 6px 0 24px rgba(0, 0, 0, 0.35);
   }
@@ -1615,21 +1544,6 @@ body {
     height: 22px !important;
   }
 
-  /* ── MOBILE: Hide the entire permanent icon rail by default ── */
-  .sp-icon-rail {
-    display: none !important;
-  }
-
-  /* Show icon rail only when sidebar is open (controlled via parent class) */
-  .sp-app.is-mobile-sidebar-open .sp-icon-rail {
-    display: flex !important;
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    height: 100vh !important;
-    z-index: 1200 !important;
-  }
-
   /* Hide sidebar when not open on mobile */
   .sp-sidebar {
     display: none !important;
@@ -1639,38 +1553,15 @@ body {
     display: flex !important;
     position: fixed !important;
     top: 0 !important;
-    left: 52px !important;
+    left: 0 !important;
     height: 100vh !important;
-    z-index: 1150 !important;
-    width: 240px !important;
+    z-index: 1250 !important;
+    width: 270px !important;
   }
 
-  /* ── Mobile expand sidebar button: left-center floating ── */
-  /* Mobile Sidebar Toggle Button matching Capture 2 Mockup */
-  .sp-mobile-sidebar-toggle {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    position: fixed !important;
+  /* ── Sidebar Floating Toggle Button on Mobile ── */
+  .sp-sidebar-toggle-btn {
     left: 8px !important;
-    top: 50% !important;
-    transform: translateY(-50%) !important;
-    z-index: 2400 !important;
-    width: 44px !important;
-    height: 44px !important;
-    background: #ffffff !important;
-    border: 2.5px solid #22c55e !important;
-    border-radius: 12px !important;
-    cursor: pointer !important;
-    box-shadow: 0 4px 16px rgba(34, 197, 94, 0.45) !important;
-    padding: 0 !important;
-    transition: transform 0.15s ease, box-shadow 0.15s ease !important;
-    animation: sp-subtle-bounce 2.2s infinite ease-in-out !important;
-  }
-
-  .sp-mobile-sidebar-toggle:hover {
-    transform: translateY(-50%) scale(1.08) !important;
-    box-shadow: 0 6px 20px rgba(34, 197, 94, 0.6) !important;
   }
 
   /* 3. Dashboard Ringkasan Metrik: 90% width on mobile */
@@ -1912,8 +1803,7 @@ body {
 .sp-app.is-picking-location .sp-overlay,
 .sp-app.is-picking-location .sp-right-dashboard,
 .sp-app.is-picking-location .sp-sidebar,
-.sp-app.is-picking-location .sp-icon-rail,
-.sp-app.is-picking-location .sp-mobile-sidebar-toggle {
+.sp-app.is-picking-location .sp-sidebar-toggle-btn {
   display: none !important;
 }
 
@@ -1955,14 +1845,6 @@ body {
   border-color: #fca5a5 !important;
 }
 
-/* Ruang kosong di belakang tombol floating toggle sidebar agar tidak menutupi ikon rail */
-.sp-icon-rail__toggle-gap {
-  height: 56px;
-  width: 100%;
-  flex-shrink: 0;
-  pointer-events: none;
-}
-
 /* ── Desktop/Mobile Display Helper Classes ── */
 @media (max-width: 768px) {
   .sp-desktop-only {
@@ -1985,7 +1867,7 @@ body {
 .sp-full-page-view {
   position: absolute;
   top: 56px;
-  left: 52px;
+  left: 0;
   right: 0;
   bottom: 0;
   background: #f8fafc;

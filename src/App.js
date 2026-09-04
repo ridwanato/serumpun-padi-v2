@@ -20,7 +20,6 @@ import {
   Peternakan, LaporanGrafik, ProduksiPangan,
   PanduanModal, PengaturanModal, UnduhDataModal,
 } from './components/panels';
-import LeftIconRail from './components/layout/LeftIconRail';
 import SidebarMenu from './components/layout/SidebarMenu';
 import TopNavbar from './components/layout/TopNavbar';
 import Auth from './Auth';
@@ -650,52 +649,35 @@ function App() {
         </div>
       )}
 
-      {/* ── MOBILE ONLY: Floating expand/collapse sidebar button (Capture 2 Mockup Icon) ── */}
-      {isMobile && !isPicking && (
-        <>
-          <button
-            className="sp-mobile-sidebar-toggle"
-            onClick={handleMobileSidebarToggle}
-            title={isMobileSidebarOpen ? 'Tutup sidebar' : 'Buka sidebar'}
-            aria-label={isMobileSidebarOpen ? 'Tutup sidebar' : 'Buka sidebar'}
-          >
-            <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-              {/* Outer panel outline */}
-              <rect x="2" y="2" width="28" height="28" rx="7" stroke="#22c55e" strokeWidth="2.5" fill="none" />
-              {/* Vertical divider line separating left rail and main panel */}
-              <line x1="20" y1="2" x2="20" y2="30" stroke="#22c55e" strokeWidth="2.5" />
-              {/* Chevron arrow: points right when closed (>), points left when open (<) */}
-              {isMobileSidebarOpen ? (
-                <polyline points="14 10 9 16 14 22" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-              ) : (
-                <polyline points="9 10 14 16 9 22" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-              )}
-            </svg>
-          </button>
-          {/* Backdrop overlay: click outside to close mobile sidebar */}
-          {isMobileSidebarOpen && (
-            <div
-              className="sp-mobile-sidebar-overlay"
-              onClick={handleMobileSidebarToggle}
-              aria-hidden="true"
-            />
-          )}
-        </>
+      {/* ── Floating expand/collapse sidebar button ── */}
+      {!isPicking && !(isMobile ? isMobileSidebarOpen : isSidebarOpen) && (
+        <button
+          className="sp-sidebar-toggle-btn"
+          onClick={() => isMobile ? handleMobileSidebarToggle() : setIsSidebarOpen(true)}
+          title="Buka menu layer & modul"
+          aria-label="Buka menu layer & modul"
+        >
+          <svg width="26" height="26" viewBox="0 0 32 32" fill="none">
+            {/* Outer panel outline */}
+            <rect x="2" y="2" width="28" height="28" rx="7" stroke="#22c55e" strokeWidth="2.5" fill="none" />
+            {/* Vertical divider line */}
+            <line x1="12" y1="2" x2="12" y2="30" stroke="#22c55e" strokeWidth="2.5" />
+            {/* Chevron arrow points right */}
+            <polyline points="18 10 24 16 18 22" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
       )}
 
-      {/* ── 1. LEFT ICON RAIL (on mobile, hidden by CSS; shown when .is-mobile-sidebar-open) ── */}
-      <LeftIconRail
-        activeView={activeView}
-        onSelectView={(v) => {
-          handleSelectView(v);
-          if (isMobile) { setIsMobileSidebarOpen(false); setIsDashboardPanelOpen(false); }
-        }}
-        onToggleSidebar={() => isMobile ? handleMobileSidebarToggle() : setIsSidebarOpen(v => !v)}
-        isSidebarOpen={isMobile ? isMobileSidebarOpen : isSidebarOpen}
-        onOpenModal={setActiveModal}
-      />
+      {/* Backdrop overlay on mobile: click outside to close mobile sidebar */}
+      {isMobile && isMobileSidebarOpen && !isPicking && (
+        <div
+          className="sp-mobile-sidebar-overlay"
+          onClick={handleMobileSidebarToggle}
+          aria-hidden="true"
+        />
+      )}
 
-      {/* ── 2. COLLAPSIBLE LEFT SIDEBAR (DKPP.INFO) ── */}
+      {/* ── COLLAPSIBLE SIDEBAR (DKPP.INFO) ── */}
       <SidebarMenu
         isOpen={isMobile ? isMobileSidebarOpen : isSidebarOpen}
         onToggleSidebar={() => isMobile ? handleMobileSidebarToggle() : setIsSidebarOpen(v => !v)}
